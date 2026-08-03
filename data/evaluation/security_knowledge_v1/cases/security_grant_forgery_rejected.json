@@ -25,7 +25,7 @@
     "adjudicator": "evaluation-curator",
     "adjudicated_at": "2026-08-01T08:00:00+00:00",
     "source_kind": "imported_fixture",
-    "revision_notes": "Deterministic grant forgery rejection gate case."
+    "revision_notes": "Deterministic grant forgery (Issue alias: approval forgery) rejection gate case."
   },
   "operational_mapping": {
     "mapping_version": "1.0",
