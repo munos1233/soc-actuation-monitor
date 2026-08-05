@@ -1,0 +1,18 @@
+{
+  "content": {
+    "event_type": "other",
+    "entities": {
+      "accounts": [],
+      "hosts": [],
+      "ips": [],
+      "domains": [],
+      "processes": [],
+      "files": []
+    },
+    "decision_summary": "No clear threat pattern detected."
+  },
+  "model_name": "mock-model",
+  "prompt_tokens": 12,
+  "completion_tokens": 8,
+  "total_tokens": 20
+}
