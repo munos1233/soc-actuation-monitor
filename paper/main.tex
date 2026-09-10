@@ -57,7 +57,7 @@ Under that model we build four mediators on the actuation path---an evidence
 predicate for ticket closure, a content-addressed approval recheck at dispatch
 time, a split between observing an effect and performing one, and an allowlist
 on everything leaving for the vendor---and evaluate them by injecting at the
-system boundary and driving the unmodified service chain against a real
+system boundary and driving the production service chain against a real
 database and a vendor stub.
 With every mediator unloaded, 33 of 43 injections produce their harm; with all
 four loaded, one does, and it is a case the mock vendor path is declared too weak
@@ -420,7 +420,7 @@ identity. We do not claim any of these away.
 \label{sec:eval}
 
 \paragraph{Method.}
-Cases are injected at the system boundary and executed by the unmodified
+Cases are injected at the system boundary and executed by the production
 service chain: the planner's rows are written as a planner would write them, the
 vendor stub supplies receipts and answers verification queries, dispatch goes
 through the outbox worker, and verification runs the real verification agent.
@@ -431,6 +431,22 @@ deliberately do not present a table of gate-function outputs: a table in which
 each row is ``the check we disabled did not fire'' measures the switch, not the
 system. Predicate-level checks are kept as an appendix
 (\S\ref{app:component}).
+
+Two properties of that chain need stating precisely, because both are places
+where a reader could credit us with more than we did. First, the service code is
+unmodified in every arm, but the process runs with
+\texttt{EVAL\_HARNESS\_MODE} set, which is what permits the gate switches to be
+honoured at all (\S\ref{sec:impl-switches}), and the substrate arms of
+\S\ref{sec:eval-substrate} additionally weaken the evaluation database and
+substitute the naive shape of four code-level mechanisms. That weakening lives
+entirely in the harness; production code neither contains it nor imports it.
+Second, the planner is adversarial but not a language model. It is a
+deterministic script that writes the rows a compromised or confused planner
+would write, which is what makes 1290 executions repeatable to the row. The
+claim under test is whether the mediators are interposed on the actuation path,
+and that claim does not depend on how the offending row was authored---but it
+does leave open whether a real model produces the same rows, which
+\S\ref{sec:eval-planner} addresses directly.
 
 \paragraph{Setup.}
 Suite~B is 21 injections in the mock column and 22 in the pseudo-live column
@@ -443,8 +459,9 @@ Each case runs under fifteen configurations---\emph{naive} with all four
 switchable mediators unloaded, four single-mediator configurations, \emph{full},
 four leave-one-out configurations, and five substrate arms that weaken a
 mechanism no deployment can switch off (\S\ref{sec:eval-substrate})---in two
-vendor columns and against two planners, for $43 \times 15 \times 2$ case
-executions plus a golden-path suite. The two
+vendor columns and against two planners, for $43 \times 15 \times 2 = 1290$ case
+executions plus a golden-path suite; the 43 already ranges over both vendor
+columns, and the factor of two is the planner. The two
 vendor columns are never merged: \emph{mock} uses a mock connector whose
 receipts are marked simulated and whose writeback is disabled, and
 \emph{pseudo-live} uses the HTTP adapter against a stub that may lie about the
@@ -528,15 +545,19 @@ called, so no closure in the table is a bypass. Against the same four cases with
 every mediator unloaded, closure is also 4/4---the mediators cost no
 closures---but the naive arm needs 4 manual resolutions where \emph{full} needs
 0, because the evidence the closure gate demands is produced by the same
-writeback the guard admits. The measured cost is 2 extra worker passes per
-column, which is the deferred-verification round trip.
+writeback the guard admits. Both arms take the same 2 extra worker passes per
+column, so the deferred-verification round trip is a property of the writeback
+protocol and not a cost the mediators impose; on this suite the only measurable
+usability difference runs in the mediators' favour. What this paragraph does
+\emph{not} measure is per-request latency, which \S\ref{sec:eval-overhead}
+reports separately.
 
 \paragraph{Baseline: a fixed playbook.}
 Replaying the suite against a planner that emits a fixed, pre-approved plan and
-never revises it leaves 10 of the 43 cases inapplicable by construction: a plan
+never revises it leaves 20 of the 43 cases inapplicable by construction: a plan
 that cannot move its own content cannot commit approval drift, cannot rewrite an
 idempotency key, and cannot swap a locator. We exclude those cells rather than
-scoring them as successes. On the 33 that remain, the harm profile is the same
+scoring them as successes. On the 23 that remain, the harm profile is the same
 shape as the untrusted-planner arm (17/23 naive, 1/23 full), which says the
 mediators are not doing work that a disciplined playbook already does: the harms
 that survive a fixed playbook are the evidence-and-observation ones, and those
