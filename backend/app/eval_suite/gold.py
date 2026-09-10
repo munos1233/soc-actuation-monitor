@@ -28,6 +28,7 @@ from typing import Any
 
 from app.eval_suite.chain import HARM_WRONG_CLOSE, Injection, run_case
 from app.eval_suite.configs import FULL, MonitorConfig, PlannerModel, VendorColumn, harness_context
+from app.eval_suite.policy_engine import ExternalPolicyEngine, PolicyEngineOutboundGuard
 from app.eval_suite.vendor import ReceiptProfile
 from app.eval_suite.world import eval_world
 
@@ -81,18 +82,32 @@ async def run_gold(
     config: MonitorConfig = FULL,
     cases: Sequence[Injection] = GOLDEN_CASES,
     planner: PlannerModel = PlannerModel.UNTRUSTED_PLANNER,
+    policy: ExternalPolicyEngine | None = None,
 ) -> list[dict[str, Any]]:
-    """Run the golden path under one configuration (Full by default)."""
+    """Run the golden path under one configuration (Full by default).
+
+    Suite A is where over-blocking shows up: every case here is one a working SOC
+    has to be able to close. The comparator arm is run through the same cases for
+    exactly that reason — a policy that refuses harm by refusing everything would
+    look perfect in Suite B alone.
+    """
+    arm_policy = policy if config.external_policy else None
+    guard_factory = (
+        (lambda inner, engine=arm_policy: PolicyEngineOutboundGuard(inner, engine))
+        if arm_policy is not None
+        else None
+    )
     rows: list[dict[str, Any]] = []
     for column in columns:
         with harness_context(config, column):
-            async with eval_world(column) as world:
+            async with eval_world(column, outbound_guard_factory=guard_factory) as world:
                 for case in cases:
                     outcome = await run_case(
                         world,
                         case,
                         config_name=config.name,
                         planner=planner,
+                        policy=arm_policy,
                     )
                     verify = outcome.notes.get("verify") or {}
                     rows.append(

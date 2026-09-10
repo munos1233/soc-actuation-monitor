@@ -32,11 +32,38 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend"))
 
+
+def _load_backend_env() -> str | None:
+    """Read credentials from backend/.env for the real-planner arm only.
+
+    Settings resolves its ``env_file`` relative to the working directory, and this
+    CLI runs from the repository root, so the file the operator actually edits is
+    invisible without this. It is loaded only when the run asks for a live
+    provider: the default matrix must stay offline and reproducible, and silently
+    switching every arm to a paid provider because a file exists would be a trap.
+    Values already in the environment win, so a command line still overrides.
+    """
+    path = ROOT / "backend" / ".env"
+    if not path.exists():
+        return None
+    import os
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, _, value = stripped.partition("=")
+        os.environ.setdefault(key.strip(), value.strip())
+    return str(path)
+
+
+from app.core.config import get_settings  # noqa: E402
 from app.eval_suite.cases import ALL_CASES  # noqa: E402
 from app.eval_suite.component import run_component_checks  # noqa: E402
 from app.eval_suite.configs import (  # noqa: E402
     ALL_CONFIGS,
     CONFIGS,
+    EXTERNAL_OPA,
     FULL,
     NAIVE,
     PlannerModel,
@@ -48,9 +75,18 @@ from app.eval_suite.gold import (  # noqa: E402
     summarize_gold,
     usability_delta,
 )
+from app.eval_suite.planner import LLMPlanner  # noqa: E402
+from app.eval_suite.policy_engine import (  # noqa: E402
+    ExternalPolicyEngine,
+    PolicyEngineUnavailable,
+)
 from app.eval_suite.runner import (  # noqa: E402
     leave_one_out_table,
+    pareto_table,
+    planner_table,
     render_markdown,
+    render_pareto_markdown,
+    render_planner_markdown,
     run_matrix,
     substrate_table,
     summarize,
@@ -78,6 +114,21 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--planners",
         default="untrusted_planner,dead_playbook",
         help="comma-separated planner models (default: both, for the baseline)",
+    )
+    parser.add_argument(
+        "--trials",
+        type=int,
+        default=1,
+        help=(
+            "repetitions per case in the llm_planner arm (default 1); the scripted "
+            "arms are deterministic and always run once"
+        ),
+    )
+    parser.add_argument(
+        "--llm-token-budget",
+        type=int,
+        default=0,
+        help="stop authoring plans once this many provider tokens are spent (0 = no cap)",
     )
     parser.add_argument("--skip-gold", action="store_true", help="skip suite A")
     parser.add_argument("--skip-suite-b", action="store_true", help="skip suite B")
@@ -131,14 +182,53 @@ async def _run(args: argparse.Namespace) -> int:
     }
     markdown: list[str] = ["# Actuation-integrity evaluation", ""]
 
+    # The comparator needs to outlive both suites: Suite B measures the harm it
+    # stops and Suite A measures what that costs, and one number without the other
+    # is not a result.
+    policy: ExternalPolicyEngine | None = None
+    if any(config.external_policy for config in configs):
+        policy = ExternalPolicyEngine()
+        try:
+            await policy.probe()
+        except PolicyEngineUnavailable as exc:
+            await policy.aclose()
+            raise SystemExit(
+                f"the external_opa arm needs a reachable OPA server: {exc}\n"
+                "start one with: make paper-opa-up"
+            ) from exc
+        report["external_policy"] = {"url": policy.url}
+
     if not args.skip_suite_b:
-        rows = await run_matrix(
-            configs=configs,
-            columns=columns,
-            planners=planners,
-            cases=cases,
-            progress=lambda message: print(message, file=sys.stderr),
-        )
+        llm_planner: LLMPlanner | None = None
+        if PlannerModel.LLM_PLANNER in planners:
+            env_path = _load_backend_env()
+            get_settings.cache_clear()
+            llm_planner = LLMPlanner(token_budget=args.llm_token_budget or None)
+            if llm_planner.settings.llm_mode.strip().lower() == "mock":
+                raise SystemExit(
+                    "the llm_planner arm needs LLM_MODE=openai_compatible and provider "
+                    f"credentials; loaded {env_path or 'no env file'} and still saw mock mode"
+                )
+            report["llm_planner"] = {
+                "model": llm_planner.model_name,
+                "trials": max(1, args.trials),
+                "token_budget": args.llm_token_budget or None,
+            }
+        try:
+            rows = await run_matrix(
+                configs=configs,
+                columns=columns,
+                planners=planners,
+                cases=cases,
+                progress=lambda message: print(message, file=sys.stderr),
+                trials=args.trials,
+                llm_planner=llm_planner,
+                policy=policy,
+            )
+        finally:
+            if llm_planner is not None:
+                report.setdefault("llm_planner", {})["telemetry"] = llm_planner.telemetry.summary()
+                await llm_planner.aclose()
         report["suite_b_rows"] = rows
         report["suite_b_summary"] = summarize(rows)
         report["leave_one_out"] = leave_one_out_table(
@@ -182,6 +272,14 @@ async def _run(args: argparse.Namespace) -> int:
                     f"| {'—' if marginal is None else f'+{marginal}'} |"
                 )
             markdown.append("")
+        if len({row["planner"] for row in rows}) > 1 or any(
+            row["planner"] == PlannerModel.LLM_PLANNER.value for row in rows
+        ):
+            report["planner_comparison"] = planner_table(rows)
+            markdown.append("### planner arms: who authored the proposal")
+            markdown.append("")
+            markdown.append(render_planner_markdown(report["planner_comparison"]))
+            markdown.append("")
         dead = [row for row in rows if row["planner"] == PlannerModel.DEAD_PLAYBOOK.value]
         if dead:
             markdown.append("## Baseline: dead playbook (no adaptive planner)")
@@ -194,11 +292,16 @@ async def _run(args: argparse.Namespace) -> int:
         # closure rate meaningful.
         gold_rows = await run_gold(columns=columns, config=FULL)
         naive_rows = await run_gold(columns=columns, config=NAIVE)
-        report["suite_a_rows"] = [*gold_rows, *naive_rows]
+        comparator_rows: list[dict[str, Any]] = []
+        if policy is not None:
+            comparator_rows = await run_gold(columns=columns, config=EXTERNAL_OPA, policy=policy)
+        report["suite_a_rows"] = [*gold_rows, *naive_rows, *comparator_rows]
         report["suite_a_summary"] = {
             "full": summarize_gold(gold_rows),
             "naive": summarize_gold(naive_rows),
         }
+        if comparator_rows:
+            report["suite_a_summary"]["external_opa"] = summarize_gold(comparator_rows)
         report["suite_a_usability_delta"] = usability_delta(gold_rows, naive_rows)
         markdown.append(
             render_gold_markdown(
@@ -212,6 +315,31 @@ async def _run(args: argparse.Namespace) -> int:
                 title="### suite A control: same cases with every mediator unloaded",
             )
         )
+        if comparator_rows:
+            markdown.append(
+                render_gold_markdown(
+                    comparator_rows,
+                    title=(
+                        "### suite A comparator: same cases with an external policy "
+                        "engine in place of the mediators"
+                    ),
+                )
+            )
+        if comparator_rows and not args.skip_suite_b:
+            report["pareto"] = pareto_table(
+                suite_a_rows=report["suite_a_rows"],
+                suite_b_rows=[
+                    row for row in rows if row["planner"] == PlannerModel.UNTRUSTED_PLANNER.value
+                ],
+            )
+            markdown.append("### where each arm sits: benign closure against harm")
+            markdown.append("")
+            markdown.append(render_pareto_markdown(report["pareto"]))
+            markdown.append("")
+
+    if policy is not None:
+        report.setdefault("external_policy", {}).update(policy.summary())
+        await policy.aclose()
 
     checks = await run_component_checks()
     report["component_checks"] = checks

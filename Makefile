@@ -87,7 +87,7 @@ CELERY_SIGKILL_ARTIFACT_DIR ?= $(CURDIR)/artifacts/issue-283
 CI_DATABASE_URL ?= postgresql+asyncpg://shadowtrace:shadowtrace@localhost:$(POSTGRES_PORT)/shadowtrace
 CI_REDIS_URL ?= redis://localhost:$(REDIS_PORT)/0
 
-.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-cases paper-pdf paper-pages
+.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-cases paper-opa-up paper-opa-down paper-eval-comparator paper-pdf paper-pages
 
 up:
 	$(COMPOSE) $(WORKER_COMPOSE) $(WORKER_PROFILE) $(SCHEDULER_PROFILE) up -d --build
@@ -971,7 +971,7 @@ paper-eval-down:
 # Structural guards only: coverage of the adversary set, scorer positive
 # controls, substrate arm nesting. Does not assert the ablation table.
 paper-eval-test:
-	cd "$(CURDIR)/backend" && $(PAPER_EVAL_ENV) \
+	cd "$(CURDIR)/backend" && $(PAPER_EVAL_ENV) LLM_MODE=mock \
 		$(UV) run --frozen --extra dev pytest tests/eval -q -p no:randomly
 
 # The headline run: every configuration, both vendor columns, both planners.
@@ -987,6 +987,35 @@ paper-eval-quick:
 paper-eval-cases:
 	$(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
 		--export-cases "$(CURDIR)/eval/cases/adversary_set.json"
+
+# The external policy comparator (Experiment 2). A real OPA server evaluating
+# eval/policy/actuation.rego, deployed the way a sidecar would be.
+PAPER_OPA_PORT ?= 58181
+PAPER_OPA_CONTAINER ?= shadowtrace-eval-opa
+PAPER_OPA_IMAGE ?= openpolicyagent/opa:latest
+paper-opa-up:
+	@docker rm -f "$(PAPER_OPA_CONTAINER)" >/dev/null 2>&1 || true
+	docker run -d --name "$(PAPER_OPA_CONTAINER)" \
+		-p "$(PAPER_OPA_PORT)":8181 \
+		-v "$(CURDIR)/eval/policy":/policy:ro \
+		"$(PAPER_OPA_IMAGE)" \
+		run --server --addr=0.0.0.0:8181 --log-level=error /policy
+	@for i in $$(seq 1 30); do \
+		if curl -fsS "http://127.0.0.1:$(PAPER_OPA_PORT)/health" >/dev/null 2>&1; then \
+			echo "opa ready on :$(PAPER_OPA_PORT)"; exit 0; \
+		fi; sleep 1; \
+	done; echo "opa did not become ready" >&2; exit 1
+
+paper-opa-down:
+	@docker rm -f "$(PAPER_OPA_CONTAINER)" >/dev/null 2>&1 || true
+
+# Suite A + Suite B for the comparator arm alongside naive and full, so the
+# Pareto table has all four rows from one run.
+paper-eval-comparator:
+	$(PAPER_EVAL_ENV) EVAL_OPA_URL="http://127.0.0.1:$(PAPER_OPA_PORT)/v1/data/shadowtrace/actuation" \
+		$(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
+		--configs naive,full,external_opa --columns mock,pseudo_live \
+		--planners untrusted_planner --out "$(CURDIR)/eval/results/comparator"
 
 paper-pdf:
 	cd "$(CURDIR)/paper" && "$(LATEXMK)" -pdf -interaction=nonstopmode -halt-on-error main.tex

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -432,6 +432,46 @@ class EvalWorld:
         async with self.session_factory() as session:
             return await session.get(orm.Action, action_id)
 
+    async def pending_approved_actions(self, event_id: str) -> int:
+        """Approved immediate actions nobody has run yet.
+
+        Deferred (``post_verify``) actions are excluded: the terminal writeback is
+        activated by closure, so counting it here would make every close look
+        unfinished. Facts a caller can serialise, which is why the comparator arm
+        is allowed to use them.
+        """
+        async with self.session_factory() as session:
+            rows = list(
+                await session.scalars(
+                    select(orm.Action.action_id).where(
+                        orm.Action.event_id == event_id,
+                        orm.Action.status == ActionStatus.APPROVED.value,
+                        orm.Action.execution_phase != ActionExecutionPhase.POST_VERIFY.value,
+                    )
+                )
+            )
+        return len(rows)
+
+    async def terminal_writeback_planned(self, event_id: str) -> bool:
+        """Is a terminal writeback action on the plan for this event.
+
+        The strongest terminal-writeback question a sidecar can be asked before
+        the close it is gating: the head itself does not exist yet, because
+        closure is what enqueues it. What the head *becomes* at delivery — active
+        or superseded — is not visible from outside the caller's transaction,
+        which is the boundary the comparator arm exists to measure.
+        """
+        async with self.session_factory() as session:
+            rows = list(
+                await session.scalars(
+                    select(orm.Action.action_id).where(
+                        orm.Action.event_id == event_id,
+                        orm.Action.execution_phase == ActionExecutionPhase.POST_VERIFY.value,
+                    )
+                )
+            )
+        return bool(rows)
+
     # -- driving the chain -------------------------------------------------- #
 
     async def attempt_close(self, event_id: str, *, operator: str = "eval-harness") -> str | None:
@@ -469,6 +509,7 @@ async def eval_world(
     column: VendorColumn,
     *,
     observation_lie: ObservationLie = ObservationLie.HONEST,
+    outbound_guard_factory: Callable[[OutboundDispositionGuard], Any] | None = None,
 ) -> AsyncIterator[EvalWorld]:
     """Build the production service chain against a live PostgreSQL/Redis."""
     # Alembic's env.py owns its own event loop, so migrations run off-thread.
@@ -490,12 +531,18 @@ async def eval_world(
     registry.register(vendor.name, vendor)
     command_factory = DispositionCommandFactory()
 
+    # The comparator arm substitutes a wrapper here rather than editing the
+    # service: the call site, its arguments and its failure mode stay exactly
+    # what production uses.
+    guard: Any = OutboundDispositionGuard()
+    if outbound_guard_factory is not None:
+        guard = outbound_guard_factory(guard)
     sync = DispositionSyncService(
         session_factory,
         context_store=context_store,
         adapter_registry=registry,
         command_factory=command_factory,
-        outbound_guard=OutboundDispositionGuard(),
+        outbound_guard=guard,
         event_bus=event_bus,
     )
     state_machine = StateMachineService(

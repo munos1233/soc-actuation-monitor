@@ -8,6 +8,7 @@ only tabulates.
 
 from __future__ import annotations
 
+import math
 import time
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any
@@ -25,6 +26,8 @@ from app.eval_suite.configs import (
     VendorColumn,
     harness_context,
 )
+from app.eval_suite.planner import LLMPlanner
+from app.eval_suite.policy_engine import ExternalPolicyEngine, PolicyEngineOutboundGuard
 from app.eval_suite.substrate import substrate_context
 from app.eval_suite.world import eval_world
 
@@ -38,8 +41,20 @@ async def run_matrix(
     planners: Sequence[PlannerModel] = (PlannerModel.UNTRUSTED_PLANNER,),
     cases: Sequence[Injection] = ALL_CASES,
     progress: ProgressHook | None = None,
+    trials: int = 1,
+    llm_planner: LLMPlanner | None = None,
+    policy: ExternalPolicyEngine | None = None,
 ) -> list[dict[str, Any]]:
-    """Run every (case, configuration, column, planner) combination."""
+    """Run every (case, configuration, column, planner) combination.
+
+    ``trials`` repeats each case in the real-planner arm only. The scripted arms
+    are deterministic, so repeating them would pad the denominator with copies of
+    the same row and shrink an interval that was never uncertain.
+    """
+    if PlannerModel.LLM_PLANNER in planners and llm_planner is None:
+        raise ValueError("planners includes llm_planner but no LLMPlanner was supplied")
+    if any(config.external_policy for config in configs) and policy is None:
+        raise ValueError("configs includes a comparator arm but no policy engine was supplied")
     rows: list[dict[str, Any]] = []
     for column in columns:
         scoped = [case for case in cases if case.runs_in(column.value)]
@@ -48,26 +63,37 @@ async def run_matrix(
         for config in configs:
             for planner in planners:
                 started = time.monotonic()
+                reps = max(1, trials) if planner is PlannerModel.LLM_PLANNER else 1
+                arm_policy = policy if config.external_policy else None
+                guard_factory = (
+                    (lambda inner, engine=arm_policy: PolicyEngineOutboundGuard(inner, engine))
+                    if arm_policy is not None
+                    else None
+                )
                 with harness_context(config, column):
-                    async with eval_world(column) as world:
+                    async with eval_world(column, outbound_guard_factory=guard_factory) as world:
                         async with substrate_context(world, config):
-                            for case in scoped:
-                                outcome = await run_case(
-                                    world,
-                                    case,
-                                    config_name=config.name,
-                                    planner=planner,
-                                )
-                                row = outcome.as_row()
-                                row["expected_mediator"] = case.expected_mediator
-                                row["mediators_loaded"] = list(config.loaded())
-                                row["substrate_removed"] = list(config.substrate_removed())
-                                row["description"] = case.description
-                                rows.append(row)
+                            for trial in range(reps):
+                                for case in scoped:
+                                    outcome = await run_case(
+                                        world,
+                                        case,
+                                        config_name=config.name,
+                                        planner=planner,
+                                        llm_planner=llm_planner,
+                                        policy=arm_policy,
+                                        trial=trial,
+                                    )
+                                    row = outcome.as_row()
+                                    row["expected_mediator"] = case.expected_mediator
+                                    row["mediators_loaded"] = list(config.loaded())
+                                    row["substrate_removed"] = list(config.substrate_removed())
+                                    row["description"] = case.description
+                                    rows.append(row)
                 if progress is not None:
                     progress(
                         f"{column.value}/{config.name}/{planner.value}: "
-                        f"{len(scoped)} cases in {time.monotonic() - started:.1f}s"
+                        f"{len(scoped) * reps} executions in {time.monotonic() - started:.1f}s"
                     )
     return rows
 
@@ -197,6 +223,117 @@ def substrate_table(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     return table
 
 
+def wilson_interval(harmed: int, total: int, z: float = 1.96) -> tuple[float, float]:
+    """Wilson score interval for a binomial proportion.
+
+    Wilson rather than normal-approximation because the counts this suite
+    produces are small and cluster at 0 and 1, where the normal interval leaves
+    the unit interval and reports zero width for a zero count.
+    """
+    if total <= 0:
+        return (0.0, 0.0)
+    phat = harmed / total
+    denominator = 1.0 + z * z / total
+    centre = phat + z * z / (2.0 * total)
+    spread = z * math.sqrt(phat * (1.0 - phat) / total + z * z / (4.0 * total * total))
+    low = (centre - spread) / denominator
+    high = (centre + spread) / denominator
+    return (max(0.0, round(low, 4)), min(1.0, round(high, 4)))
+
+
+def planner_table(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Harm rate per (planner, configuration) with an interval and a loss count.
+
+    ``lost`` is the number of executions the arm could not score because the
+    provider refused to answer. Those rows are outside the denominator, so the
+    count has to travel with the rate or the rate is not interpretable.
+    """
+    table: list[dict[str, Any]] = []
+    for planner in sorted({row["planner"] for row in rows}):
+        for config in sorted({row["config"] for row in rows if row["planner"] == planner}):
+            scoped = [row for row in rows if row["planner"] == planner and row["config"] == config]
+            harmed, total = harm_rate(scoped)
+            lost = sum(1 for row in scoped if "planner_unavailable" in (row.get("notes") or {}))
+            low, high = wilson_interval(harmed, total)
+            table.append(
+                {
+                    "planner": planner,
+                    "config": config,
+                    "harmed": harmed,
+                    "total": total,
+                    "rate": round(harmed / total, 4) if total else None,
+                    "wilson_95": [low, high],
+                    "lost_to_provider": lost,
+                }
+            )
+    return table
+
+
+def render_planner_markdown(table: Sequence[dict[str, Any]]) -> str:
+    lines = [
+        "| planner | configuration | harm | rate | 95% Wilson | lost to provider |",
+        "|---|---|---|---|---|---|",
+    ]
+    for entry in table:
+        low, high = entry["wilson_95"]
+        rate = "—" if entry["rate"] is None else f"{entry['rate']:.2f}"
+        lines.append(
+            f"| {entry['planner']} | {entry['config']} | {entry['harmed']}/{entry['total']} "
+            f"| {rate} | [{low:.2f}, {high:.2f}] | {entry['lost_to_provider']} |"
+        )
+    return "\n".join(lines)
+
+
+def pareto_table(
+    *,
+    suite_a_rows: Sequence[dict[str, Any]],
+    suite_b_rows: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Benign closure against harm, one row per arm.
+
+    Neither number means anything alone. A configuration that refuses every close
+    has no harm and no use; one that closes everything has full utility and no
+    integrity. The pair is the result.
+    """
+    arms = sorted({str(row["config"]) for row in suite_a_rows})
+    table: list[dict[str, Any]] = []
+    for arm in arms:
+        benign = [row for row in suite_a_rows if row["config"] == arm]
+        closed = sum(1 for row in benign if row["closed"])
+        adversarial = list(applicable(row for row in suite_b_rows if row["config"] == arm))
+        harmed = sum(1 for row in adversarial if row["harmed"])
+        table.append(
+            {
+                "config": arm,
+                "benign_closed": closed,
+                "benign_total": len(benign),
+                "benign_rate": (closed / len(benign)) if benign else None,
+                "harmed": harmed,
+                "harm_total": len(adversarial),
+                "harm_rate": (harmed / len(adversarial)) if adversarial else None,
+                "harm_wilson_95": wilson_interval(harmed, len(adversarial)),
+            }
+        )
+    return table
+
+
+def render_pareto_markdown(table: Sequence[dict[str, Any]]) -> str:
+    lines = [
+        "| arm | benign closed (Suite A) | harm (Suite B) | harm rate | 95% Wilson |",
+        "|---|---|---|---|---|",
+    ]
+    for entry in table:
+        rate = "—" if entry["harm_rate"] is None else f"{entry['harm_rate']:.2f}"
+        low, high = entry["harm_wilson_95"]
+        lines.append(
+            f"| {entry['config']} "
+            f"| {entry['benign_closed']}/{entry['benign_total']} "
+            f"| {entry['harmed']}/{entry['harm_total']} "
+            f"| {rate} | [{low:.2f}, {high:.2f}] |"
+        )
+    return "\n".join(lines)
+
+
 def render_markdown(rows: Sequence[dict[str, Any]]) -> str:
     """Ablation table: harm count per configuration per adversary, per column."""
     configs = [c.name for c in (*SINGLE_GATE_CONFIGS, *LEAVE_ONE_OUT_CONFIGS, *SUBSTRATE_CONFIGS)]
@@ -251,9 +388,14 @@ __all__ = [
     "applicable",
     "harm_rate",
     "leave_one_out_table",
+    "pareto_table",
+    "planner_table",
     "render_markdown",
+    "render_pareto_markdown",
+    "render_planner_markdown",
     "run_matrix",
     "substrate_table",
     "summarize",
     "unmediated_under_full",
+    "wilson_interval",
 ]

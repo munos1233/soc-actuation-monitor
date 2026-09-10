@@ -5,3 +5,5 @@
 *.out
 *.pdf
 *.synctex.gz
+main.fdb_latexmk
+main.fls

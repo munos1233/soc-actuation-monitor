@@ -67,6 +67,11 @@ class MonitorConfig:
     head_supersede: bool = True
     head_assertion: bool = True
     claim_cas: bool = True
+    # Comparator arm: every internal gate is unloaded and an external policy
+    # engine is consulted at the same four points instead
+    # (:mod:`app.eval_suite.policy_engine`). Not a mediator configuration —
+    # a different mediator, which is why it is not in ``ALL_CONFIGS``.
+    external_policy: bool = False
 
     def loaded(self) -> tuple[str, ...]:
         return tuple(m for m in MEDIATORS if getattr(self, m))
@@ -144,7 +149,19 @@ SUBSTRATE_CONFIGS: tuple[MonitorConfig, ...] = (
 ALL_CONFIGS: tuple[MonitorConfig, ...] = (
     SINGLE_GATE_CONFIGS + LEAVE_ONE_OUT_CONFIGS + SUBSTRATE_CONFIGS
 )
-CONFIGS: dict[str, MonitorConfig] = {cfg.name: cfg for cfg in ALL_CONFIGS}
+
+# The comparator arm. Excluded from ALL_CONFIGS because it needs an OPA server
+# running, and because it belongs in a different table: it does not answer "is
+# this mediator load-bearing" but "would an external policy engine have done this
+# mediator's work".
+EXTERNAL_OPA = MonitorConfig(
+    name="external_opa",
+    **{m: False for m in MEDIATORS},
+    external_policy=True,
+)
+COMPARATOR_CONFIGS: tuple[MonitorConfig, ...] = (EXTERNAL_OPA,)
+
+CONFIGS: dict[str, MonitorConfig] = {cfg.name: cfg for cfg in (*ALL_CONFIGS, *COMPARATOR_CONFIGS)}
 
 # full_minus_X pairs with the mediator it removes, so the runner can assert that
 # removing X reopens exactly the classes X is claimed to mediate.
@@ -195,10 +212,16 @@ class PlannerModel(StrEnum):
     in the loop, used to separate "harm caused by an untrusted planner" from
     "harm that a static playbook suffers anyway" (weak vendor receipts, tool
     echo, stale heads).
+    ``LLM_PLANNER`` puts a real language model in the seat
+    (:mod:`app.eval_suite.planner`). It answers the one question the scripted arm
+    cannot: does a model actually author the row the scripted adversary writes by
+    hand. It is not the default, because a provider with no seed cannot produce a
+    matrix that reproduces to the row.
     """
 
     UNTRUSTED_PLANNER = "untrusted_planner"
     DEAD_PLAYBOOK = "dead_playbook"
+    LLM_PLANNER = "llm_planner"
 
 
 @contextmanager
@@ -234,7 +257,9 @@ def harness_context(config: MonitorConfig, column: VendorColumn) -> Iterator[Non
 
 __all__ = [
     "ALL_CONFIGS",
+    "COMPARATOR_CONFIGS",
     "CONFIGS",
+    "EXTERNAL_OPA",
     "LEAVE_ONE_OUT_BY_MEDIATOR",
     "LEAVE_ONE_OUT_CONFIGS",
     "MEDIATORS",
