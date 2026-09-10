@@ -177,6 +177,37 @@ class Settings(BaseSettings):
     )
     simulation_enabled: bool = Field(default=True, alias="SIMULATION_ENABLED")
 
+    eval_harness_mode: bool = Field(
+        default=False,
+        alias="EVAL_HARNESS_MODE",
+        description=(
+            "Ablation harness build flag. The EVAL_DISABLE_* mediator switches are "
+            "rejected at construction unless this is explicitly true, so a normal "
+            "deployment cannot unload a gate by setting a single environment "
+            "variable. Never true in a shipped configuration."
+        ),
+    )
+    eval_disable_closed_gate: bool = Field(
+        default=False,
+        alias="EVAL_DISABLE_CLOSED_GATE",
+        description="Eval-only: skip validate_closed_gate (production must stay false).",
+    )
+    eval_disable_fingerprint_recheck: bool = Field(
+        default=False,
+        alias="EVAL_DISABLE_FINGERPRINT_RECHECK",
+        description="Eval-only: skip approval fingerprint re-check at delivery.",
+    )
+    eval_disable_verify_phase_split: bool = Field(
+        default=False,
+        alias="EVAL_DISABLE_VERIFY_PHASE_SPLIT",
+        description="Eval-only: treat tool SUCCESS as verified and count deferred as failed.",
+    )
+    eval_disable_outbound_guard: bool = Field(
+        default=False,
+        alias="EVAL_DISABLE_OUTBOUND_GUARD",
+        description="Eval-only: skip OutboundDispositionGuard (production must stay false).",
+    )
+
     llm_mode: str = Field(default="mock", alias="LLM_MODE")
     llm_api_base_url: str = Field(default="", alias="LLM_API_BASE_URL")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
@@ -300,6 +331,27 @@ class Settings(BaseSettings):
         """Hash vectors + Cross-Encoder has no precision (plan §4). Gold path stays mock."""
         if self.embedding_mode.strip().lower() == "mock" and self.rerank_mode == "remote":
             self.rerank_mode = "mock"
+        return self
+
+    @model_validator(mode="after")
+    def reject_mediator_switches_outside_harness(self) -> "Settings":
+        """A mediator may only be unloaded by an explicitly declared harness build."""
+        disabled = [
+            name
+            for name, enabled in (
+                ("EVAL_DISABLE_CLOSED_GATE", self.eval_disable_closed_gate),
+                ("EVAL_DISABLE_FINGERPRINT_RECHECK", self.eval_disable_fingerprint_recheck),
+                ("EVAL_DISABLE_VERIFY_PHASE_SPLIT", self.eval_disable_verify_phase_split),
+                ("EVAL_DISABLE_OUTBOUND_GUARD", self.eval_disable_outbound_guard),
+            )
+            if enabled
+        ]
+        if disabled and not self.eval_harness_mode:
+            raise ConfigurationError(
+                "mediator switches require EVAL_HARNESS_MODE=true: " + ", ".join(disabled),
+                error_code="configuration_error",
+                details={"switches": disabled},
+            )
         return self
 
     retrieval_default_tenant_id: str = Field(default="local", alias="RETRIEVAL_DEFAULT_TENANT_ID")
@@ -790,6 +842,8 @@ class Settings(BaseSettings):
             violations.append("playbook_fixture_fallback=true")
         if self.execution_job_fixture_enabled:
             violations.append("execution_job_fixture_enabled=true")
+        if self.eval_harness_mode:
+            violations.append("eval_harness_mode=true: ablation build forbidden in production")
         if self.task_mode is TaskMode.BACKGROUND:
             violations.append("task_mode=background: volatile execution forbidden in production")
         if self.react_enabled and not self.tool_call_grant_required:

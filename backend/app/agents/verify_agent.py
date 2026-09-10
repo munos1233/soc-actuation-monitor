@@ -38,6 +38,11 @@ from app.agents.rules.verification_mapping import (
 )
 from app.core.config import get_settings, is_mock_disposition_mode
 from app.db import models as orm
+from app.eval_monitor import (
+    eval_count_deferred_as_failure,
+    eval_disable_verify_phase_split,
+    eval_skip_phase2_when_phase1_blocked,
+)
 from app.models.action import Action
 from app.models.agent_io import (
     EffectStatus,
@@ -515,6 +520,22 @@ class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
         for action in actions:
             # POST_VERIFY deferred → skipped, never in failed_actions.
             if action.execution_phase == ActionExecutionPhase.POST_VERIFY:
+                if eval_count_deferred_as_failure():
+                    results.append(
+                        VerificationActionResult(
+                            action_id=action.action_id,
+                            effect_status=EffectStatus.FAILED,
+                            writeback_required=True,
+                            writeback_readiness=WritebackReadiness.READY,
+                            writeback_status=WritebackStatus.PENDING,
+                            writeback_ids=[],
+                            detail="eval_deferred_counted_as_failed",
+                            verification_phase=VerificationPhase.EFFECT,
+                        )
+                    )
+                    failed_action_ids.add(action.action_id)
+                    need_replan = True
+                    continue
                 results.append(
                     _make_skipped_result(
                         action,
@@ -791,19 +812,27 @@ class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
                 )
             elif tool_result.status == ToolResultStatus.SUCCESS:
                 data = tool_result.data or {}
-                if "is_verified" not in data:
+                data_dict = data if isinstance(data, dict) else {}
+                if eval_disable_verify_phase_split():
+                    effect_status = EffectStatus.VERIFIED
+                    detail = (
+                        "effect_verified"
+                        if data_dict.get("is_verified")
+                        else "eval_tool_success_echo"
+                    )
+                elif "is_verified" not in data_dict:
                     # Provider returned SUCCESS but didn't include the
                     # is_verified key — the observation is inconclusive,
                     # not failed.  Treating it as FAILED would trigger
                     # a spurious re-plan that wastes agent budget.
                     effect_status = EffectStatus.UNVERIFIABLE
                     detail = "verification_result_missing_is_verified_field"
-                elif data["is_verified"]:
+                elif data_dict["is_verified"]:
                     effect_status = EffectStatus.VERIFIED
                     detail = "effect_verified"
                 else:
                     effect_status = EffectStatus.FAILED
-                    detail = data.get("detail", "effect_not_observed")
+                    detail = data_dict.get("detail", "effect_not_observed")
                 await self._finalize_verification_action(
                     verification_action,
                     target_status=ActionStatus.SUCCESS,
@@ -943,7 +972,7 @@ class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
         overall_status = VerificationOverallStatus.SUCCESS
 
         # If phase 1 already requires replan or manual, skip activation.
-        if phase1_need_replan or phase1_need_manual:
+        if (phase1_need_replan or phase1_need_manual) and eval_skip_phase2_when_phase1_blocked():
             logger.info(
                 "Phase 2 skipped: phase1 need_replan=%s need_manual=%s event=%s",
                 phase1_need_replan,

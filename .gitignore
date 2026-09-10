@@ -38,6 +38,9 @@ frontend/playwright-report/
 *.swp
 .cursor/
 
+# Large binary decks belong in release assets, not in the source tree
+*.pptx
+
 # Local / temp
 tmp/
 .worktrees/

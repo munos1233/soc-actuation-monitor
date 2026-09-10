@@ -764,6 +764,10 @@ class OutboundDispositionGuard:
         payload: DispositionCommand | Mapping[str, Any],
         context: Mapping[str, Any] | None = None,
     ) -> GuardResult:
+        from app.eval_monitor import eval_disable_outbound_guard
+
+        if eval_disable_outbound_guard():
+            return GuardResult(passed=True, violations=[], sanitized_output=None)
         ctx = dict(context or {})
         try:
             violations = self._evaluate(payload, ctx)

@@ -18,6 +18,7 @@ from sqlalchemy.pool import NullPool
 from app.core.config import Settings
 from app.core.embedding.service import EmbeddingService
 from app.core.errors import ValidationError
+from app.models.action import Action
 from app.models.knowledge_release import KnowledgeReleaseProvenance
 from app.models.playbook_release import PlaybookRef
 from app.services.knowledge_store import KnowledgeStore
@@ -240,6 +241,24 @@ async def test_retired_release_still_resolves_historically(
     assert release.lifecycle_state.value == "retired"
 
 
+def _response_action(**overrides: object) -> Action:
+    from app.models.enums import ActionCategory, ActionLevel, ExecutionOwner
+
+    base: dict[str, object] = {
+        "action_id": "act-001",
+        "event_id": "evt-001",
+        "plan_revision": 1,
+        "action_fingerprint": "fp-original",
+        "action_category": ActionCategory.RESPONSE,
+        "action_name": "Block IP",
+        "tool_name": "block_ip",
+        "action_level": ActionLevel.L2,
+        "execution_owner": ExecutionOwner.XDR_MANAGED,
+    }
+    base.update(overrides)
+    return Action(**base)  # type: ignore[arg-type]
+
+
 def test_approval_binding_invalidates_on_fingerprint_change() -> None:
     from app.models.action import Action
     from app.models.enums import ActionCategory, ActionLevel, ExecutionOwner
@@ -276,6 +295,40 @@ def test_approval_binding_invalidates_on_fingerprint_change() -> None:
     mutated = action.model_copy(update={"action_fingerprint": "fp-changed"})
     with pytest.raises(ValidationError, match="fingerprint changed"):
         validate_approval_binding(mutated, detail)
+
+
+def test_approval_binding_no_playbook_invalidates_on_fingerprint_change() -> None:
+    action = _response_action()
+    detail = build_approval_binding_detail(action)
+    mutated = action.model_copy(update={"action_fingerprint": "fp-changed"})
+    with pytest.raises(ValidationError, match="fingerprint changed") as exc:
+        validate_approval_binding(mutated, detail)
+    assert exc.value.details["reason"] == "action_fingerprint_mismatch"
+
+
+def test_approval_binding_no_playbook_accepts_matching_fingerprint_and_revision() -> None:
+    action = _response_action()
+    detail = build_approval_binding_detail(action)
+    validate_approval_binding(action, detail)
+
+
+def test_approval_binding_no_playbook_allows_absent_detail() -> None:
+    """Absent evidence is an approval-existence question, not a drift question.
+
+    Whether an L2+ action may be APPROVED without a persisted decision is
+    enforced by ``validate_action_status_transition``; this validator only
+    compares dispatched content against a decision that was recorded.
+    """
+    validate_approval_binding(_response_action(), None)
+
+
+def test_approval_binding_no_playbook_invalidates_on_plan_revision_change() -> None:
+    action = _response_action()
+    detail = build_approval_binding_detail(action)
+    mutated = action.model_copy(update={"plan_revision": 2})
+    with pytest.raises(ValidationError, match="plan revision changed") as exc:
+        validate_approval_binding(mutated, detail)
+    assert exc.value.details["reason"] == "plan_revision_mismatch"
 
 
 def test_approval_binding_invalidates_on_plan_revision_change() -> None:

@@ -1,0 +1,209 @@
+%% ---------------------------------------------------------------
+%% Classical mediation, integrity, and confused-deputy background
+%% ---------------------------------------------------------------
+
+@techreport{anderson1972computer,
+  author      = {Anderson, James P.},
+  title       = {Computer Security Technology Planning Study},
+  institution = {U.S. Air Force Electronic Systems Division},
+  number      = {ESD-TR-73-51, Vol.~II},
+  year        = {1972},
+}
+
+@article{saltzer1975protection,
+  author  = {Saltzer, Jerome H. and Schroeder, Michael D.},
+  title   = {The Protection of Information in Computer Systems},
+  journal = {Proceedings of the IEEE},
+  year    = {1975},
+  volume  = {63},
+  number  = {9},
+  pages   = {1278--1308},
+}
+
+@inproceedings{clark1987comparison,
+  author    = {Clark, David D. and Wilson, David R.},
+  title     = {A Comparison of Commercial and Military Computer Security Policies},
+  booktitle = {Proceedings of the IEEE Symposium on Security and Privacy},
+  year      = {1987},
+  pages     = {184--194},
+}
+
+@article{hardy1988confused,
+  author  = {Hardy, Norman},
+  title   = {The Confused Deputy: (Or Why Capabilities Might Have Been Invented)},
+  journal = {ACM SIGOPS Operating Systems Review},
+  year    = {1988},
+  volume  = {22},
+  number  = {4},
+  pages   = {36--38},
+}
+
+@article{bishop1996tocttou,
+  author  = {Bishop, Matt and Dilger, Michael},
+  title   = {Checking for Race Conditions in File Accesses},
+  journal = {Computing Systems},
+  year    = {1996},
+  volume  = {9},
+  number  = {2},
+  pages   = {131--152},
+  note    = {Time-of-check-to-time-of-use},
+}
+
+%% ---------------------------------------------------------------
+%% Control-plane admission and policy mediation
+%% ---------------------------------------------------------------
+
+@misc{k8s-admission,
+  author       = {{The Kubernetes Authors}},
+  title        = {Admission Controllers Reference},
+  howpublished = {Kubernetes documentation},
+  year         = {2025},
+  note         = {\url{https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/}},
+}
+
+@misc{opa,
+  author       = {{Open Policy Agent Authors}},
+  title        = {Open Policy Agent: Policy-Based Control for Cloud Native Environments},
+  howpublished = {Cloud Native Computing Foundation project},
+  year         = {2025},
+  note         = {\url{https://www.openpolicyagent.org/}},
+}
+
+@misc{gatekeeper,
+  author       = {{Open Policy Agent Authors}},
+  title        = {{OPA} {Gatekeeper}: Policy Controller for {Kubernetes}},
+  howpublished = {Project documentation},
+  year         = {2025},
+  note         = {\url{https://open-policy-agent.github.io/gatekeeper/}},
+}
+
+@misc{aws-iam-conditions,
+  author       = {{Amazon Web Services}},
+  title        = {{IAM} {JSON} Policy Elements: Condition},
+  howpublished = {AWS IAM User Guide},
+  year         = {2025},
+  note         = {\url{https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html}},
+}
+
+%% ---------------------------------------------------------------
+%% Trusted computing bases for tool-using language-model agents
+%% ---------------------------------------------------------------
+
+@inproceedings{debenedetti2026camel,
+  author    = {Debenedetti, Edoardo and Shumailov, Ilia and Fan, Tianqi and
+               Hayes, Jamie and Carlini, Nicholas and Fabian, Daniel and
+               Kern, Christoph and Shi, Chongyang and Terzis, Andreas and
+               Tram{\`e}r, Florian},
+  title     = {Defeating Prompt Injections by Design},
+  booktitle = {IEEE Conference on Secure and Trustworthy Machine Learning (SaTML)},
+  year      = {2026},
+  note      = {arXiv:2503.18813},
+}
+
+@inproceedings{wu2025isolategpt,
+  author    = {Wu, Yuhao and Roesner, Franziska and Kohno, Tadayoshi and
+               Zhang, Ning and Iqbal, Umar},
+  title     = {{IsolateGPT}: An Execution Isolation Architecture for
+               {LLM}-Based Agentic Systems},
+  booktitle = {Network and Distributed System Security Symposium (NDSS)},
+  year      = {2025},
+}
+
+@inproceedings{debenedetti2024agentdojo,
+  author    = {Debenedetti, Edoardo and Zhang, Jie and Balunovi{\'c}, Mislav and
+               Beurer-Kellner, Luca and Fischer, Marc and Tram{\`e}r, Florian},
+  title     = {{AgentDojo}: A Dynamic Environment to Evaluate Prompt Injection
+               Attacks and Defenses for {LLM} Agents},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS),
+               Datasets and Benchmarks Track},
+  year      = {2024},
+}
+
+@misc{willison2023duallm,
+  author       = {Willison, Simon},
+  title        = {The Dual {LLM} Pattern for Building {AI} Assistants That Can
+                  Resist Prompt Injection},
+  howpublished = {Blog post},
+  year         = {2023},
+  note         = {\url{https://simonwillison.net/2023/Apr/25/dual-llm-pattern/}},
+}
+
+%% ---------------------------------------------------------------
+%% Security orchestration, approval workflow, idempotency
+%% ---------------------------------------------------------------
+
+@article{islam2019orchestration,
+  author  = {Islam, Chadni and Babar, Muhammad Ali and Nepal, Surya},
+  title   = {A Multi-Vocal Review of Security Orchestration},
+  journal = {ACM Computing Surveys},
+  year    = {2019},
+  volume  = {52},
+  number  = {2},
+  pages   = {37:1--37:45},
+}
+
+@misc{xsoar-manual-tasks,
+  author       = {{Palo Alto Networks}},
+  title        = {Cortex {XSOAR}: Manual Tasks and Playbook Approvals},
+  howpublished = {Product documentation},
+  year         = {2025},
+  note         = {\url{https://docs-cortex.paloaltonetworks.com/}},
+}
+
+%% ---------------------------------------------------------------
+%% Commit protocols and receipts
+%% ---------------------------------------------------------------
+
+@incollection{gray1978notes,
+  author    = {Gray, Jim},
+  title     = {Notes on Data Base Operating Systems},
+  booktitle = {Operating Systems: An Advanced Course},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {60},
+  publisher = {Springer},
+  year      = {1978},
+  pages     = {393--481},
+}
+
+@inproceedings{helland2007apostate,
+  author    = {Helland, Pat},
+  title     = {Life Beyond Distributed Transactions: An Apostate's Opinion},
+  booktitle = {Conference on Innovative Data Systems Research (CIDR)},
+  year      = {2007},
+}
+
+%% ---------------------------------------------------------------
+%% Language models evaluated on SOC analysis (quality, not actuation)
+%% ---------------------------------------------------------------
+
+@misc{wei2025cortex,
+  author       = {Wei, Bowen and Tay, Yuan Shen and Liu, Howard and Pan, Jinhao
+                  and Luo, Kun and Zhu, Ziwei and Jordan, Chris},
+  title        = {{CORTEX}: Collaborative {LLM} Agents for High-Stakes Alert Triage},
+  howpublished = {arXiv:2510.00311},
+  year         = {2025},
+}
+
+@misc{deason2025cybersoceval,
+  author       = {Deason, Lauren and Bali, Adam and Bejean, Ciprian and
+                  Bolocan, Diana and Crnkovich, James and Croitoru, Ioana and
+                  Durai, Krishna and Midler, Chase and Miron, Calin and
+                  Molnar, David and Moon, Brad and Ostarcevic, Bruno and
+                  Peltea, Alberto and Rosenberg, Matt and Sandu, Catalin and
+                  Saputkin, Arthur and Shah, Sagar and Stan, Daniel and
+                  Szocs, Ernest and Wan, Shengye and Whitman, Spencer and
+                  Krasser, Sven and Saxe, Joshua},
+  title        = {{CyberSOCEval}: Benchmarking {LLM} Capabilities for Malware
+                  Analysis and Threat Intelligence Reasoning},
+  howpublished = {arXiv:2509.20166},
+  year         = {2025},
+}
+
+@misc{jajodia2026siabench,
+  author       = {Jajodia, Sourov and Sultana, Madeena and Majumdar, Suryadipta
+                  and Taylor, Adrian and Vandenberghe, Grant},
+  title        = {Before You Hand Over the Wheel: Evaluating {LLMs} for
+                  Security Incident Analysis},
+  howpublished = {arXiv:2603.06422},
+  year         = {2026},
+}

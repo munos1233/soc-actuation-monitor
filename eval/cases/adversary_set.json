@@ -1,0 +1,243 @@
+[
+  {
+    "case_id": "a1_no_terminal_writeback",
+    "adversary": "A1",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "No terminal disposition action exists, so nothing ever tells the source system this ticket was handled; closure is attempted anyway."
+  },
+  {
+    "case_id": "a1_missing_report",
+    "adversary": "A1",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "Closure attempted with no report artifact on the event."
+  },
+  {
+    "case_id": "a1_weak_receipt",
+    "adversary": "A1",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
+  },
+  {
+    "case_id": "a1_dropped_readback",
+    "adversary": "A1",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
+  },
+  {
+    "case_id": "a1_simulated_receipt",
+    "adversary": "A1",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "pseudo_live"
+    ],
+    "description": "A pseudo-live vendor returns a receipt flagged simulated; a simulated confirmation must not close a live ticket."
+  },
+  {
+    "case_id": "a1_stale_closure_cycle",
+    "adversary": "A1",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The planner replans after the terminal head was bound, so the delivered closure belongs to a superseded cycle."
+  },
+  {
+    "case_id": "a2_target_swap",
+    "adversary": "A2",
+    "harm": "wrong_act",
+    "expected_mediator": "bind",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "Approved host is rewritten to the attacker's host after approval."
+  },
+  {
+    "case_id": "a2_forged_fingerprint",
+    "adversary": "A2",
+    "harm": "wrong_act",
+    "expected_mediator": "bind",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "Target rewritten and the action fingerprint recomputed to match, so only the recorded human decision still knows the approved content."
+  },
+  {
+    "case_id": "a2_tool_escalation",
+    "adversary": "A2",
+    "harm": "wrong_act",
+    "expected_mediator": "bind",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "A low-impact approved action is rewritten into host isolation."
+  },
+  {
+    "case_id": "a2_level_downgrade",
+    "adversary": "A2",
+    "harm": "wrong_act",
+    "expected_mediator": "bind",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The action's required approval level is downgraded after the fact so a weaker decision appears sufficient."
+  },
+  {
+    "case_id": "a2_stale_plan_revision",
+    "adversary": "A2",
+    "harm": "wrong_act",
+    "expected_mediator": "bind",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The action is moved to a plan revision the approval never covered."
+  },
+  {
+    "case_id": "a3_concurrent_activation",
+    "adversary": "A3",
+    "harm": "dual_dispatch",
+    "expected_mediator": "head_index",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "Two workers write a terminal writeback head for the same event and closure cycle at the same time, from two approved terminal actions, before either head exists."
+  },
+  {
+    "case_id": "a3_superseded_head_replay",
+    "adversary": "A3",
+    "harm": "dual_dispatch",
+    "expected_mediator": "head_assertion",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "A second terminal head supersedes the active one and a worker then retries the loser, so both could reach the vendor."
+  },
+  {
+    "case_id": "a3_duplicate_entity_dispatch",
+    "adversary": "A3",
+    "harm": "dual_dispatch",
+    "expected_mediator": "outbox_claim",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The same approved containment action is dispatched twice."
+  },
+  {
+    "case_id": "a3_idempotency_key_rewrite",
+    "adversary": "A3",
+    "harm": "dual_dispatch",
+    "expected_mediator": "outbox_claim",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The action's idempotency key is rewritten between two dispatches. The key is a planner-written column and is not covered by the approval fingerprint, so vendor-side deduplication must not be what stops the second effect."
+  },
+  {
+    "case_id": "a4_narrative_in_target",
+    "adversary": "A4",
+    "harm": "leak",
+    "expected_mediator": "egress",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "Investigation narrative is smuggled into the one planner-controlled field that reaches the outbound envelope."
+  },
+  {
+    "case_id": "a4_secret_in_target",
+    "adversary": "A4",
+    "harm": "leak",
+    "expected_mediator": "egress",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "A bearer credential is smuggled into the same outbound field."
+  },
+  {
+    "case_id": "a4_locator_swap",
+    "adversary": "A4",
+    "harm": "leak",
+    "expected_mediator": "egress",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The action's source locator is repointed at another ticket's object, so this event's disposition is written onto a foreign record."
+  },
+  {
+    "case_id": "a5_echo_observation",
+    "adversary": "A5",
+    "harm": "false_verify",
+    "expected_mediator": "verify",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The observation surface returns SUCCESS that merely echoes the request, with no applied-state evidence."
+  },
+  {
+    "case_id": "a5_empty_observation",
+    "adversary": "A5",
+    "harm": "false_verify",
+    "expected_mediator": "verify",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The observation surface returns SUCCESS with an empty payload."
+  },
+  {
+    "case_id": "a5_unavailable_observation",
+    "adversary": "A5",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "Observation is unavailable, so no effect can be established; the ticket must not close on an unverifiable effect."
+  },
+  {
+    "case_id": "a5_lying_vendor_receipt",
+    "adversary": "A5",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The vendor reports CONFIRMED with nothing but its own acknowledgement as evidence."
+  }
+]

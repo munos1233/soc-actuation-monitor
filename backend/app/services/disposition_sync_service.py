@@ -170,6 +170,24 @@ def _payload_sha256(payload: dict[str, Any]) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def _trusted_event_locator(event_row: orm.SecurityEvent) -> dict[str, Any] | None:
+    """The disposition source selected for the event, if one has been selected.
+
+    ``SecurityEvent.disposition_source_ref`` is written by
+    ``DispositionSourceService.select_disposition_source`` — an operator action
+    on the event, never a field a plan can author — which is what makes it
+    usable as the witness for object identity. ``creation_source_ref`` is
+    deliberately not consulted: it records the ingesting product and tenant, not
+    a full object locator, so it cannot decide whether two locators name the
+    same object. When no source has been selected there is no witness here, and
+    writeback readiness is ``source_unresolved`` on that path anyway.
+    """
+    candidate = getattr(event_row, "disposition_source_ref", None)
+    if isinstance(candidate, dict) and candidate:
+        return candidate
+    return None
+
+
 def _mirror_writeback_status_to_action(action: orm.Action | None, status: str) -> None:
     """Denormalize outbox writeback status onto the bound action when allowed.
 
@@ -252,19 +270,6 @@ class DispositionSyncService:
         logical_slot: str = "default",
         guard_context: dict[str, Any] | None = None,
     ) -> DispositionOutboxRecord:
-        ctx = {
-            "event_id": event_id,
-            "source_locator": command.source_locator,
-            **(guard_context or {}),
-        }
-        if "approved_action_ids" not in ctx:
-            ctx["approved_action_ids"] = await resolve_approved_action_ids(
-                session,
-                event_id=event_id,
-                plan_revision=command.closure_cycle,
-            )
-        await self._guard.validate(command, ctx)
-
         event_row = await session.get(
             orm.SecurityEvent,
             event_id,
@@ -275,6 +280,23 @@ class DispositionSyncService:
                 "security_event not found for outbox enqueue",
                 details={"event_id": event_id},
             )
+
+        # The command's own locator cannot be its own witness: it is copied from
+        # the action row, and whoever writes the plan writes that row. The
+        # trusted anchor is the event's ingest-owned source reference, so a
+        # repointed action is a cross-object write and the guard sees it.
+        ctx = {
+            "event_id": event_id,
+            "source_locator": _trusted_event_locator(event_row) or command.source_locator,
+            **(guard_context or {}),
+        }
+        if "approved_action_ids" not in ctx:
+            ctx["approved_action_ids"] = await resolve_approved_action_ids(
+                session,
+                event_id=event_id,
+                plan_revision=command.closure_cycle,
+            )
+        await self._guard.validate(command, ctx)
 
         source_row = await session.get(
             orm.SourceObject,
