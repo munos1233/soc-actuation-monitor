@@ -627,6 +627,128 @@ counts effects per idempotency key and the reason the key-rewrite case exists at
 all. The key is planner-written, so a system that relies on the vendor to
 deduplicate is relying on the untrusted component.
 
+\subsection{Comparator: an external policy engine at the same four points}
+\label{sec:eval-comparator}
+
+The mediators are in-system, and the obvious objection is that they need not be:
+a policy sidecar is the standard way to put authorization in front of an action,
+and if one would have done this work then the contribution is a deployment detail.
+We tested that directly. The \emph{external\_opa} arm unloads all four gates and
+consults a real Open Policy Agent server~\cite{opa2025}\footnote{OPA v1.20.2, run
+as a server from the same container image a deployment would use.} at the same four decision
+points---before dispatch, after observation, before closure, and on every outbound
+envelope---honouring a deny by not proceeding. The policy is
+\S\ref{app:rego} verbatim.
+
+We made the comparison as favourable to the comparator as we could, because a
+comparator that loses to a straw man proves nothing. OPA is the real binary rather
+than a re-implementation of our own rules. It is consulted synchronously on every
+decision, with no cache and no fail-open on timeout, which is better than a
+sidecar deployment usually manages. Its egress rule allowlists the actual
+writeback envelope schema, field by field, rather than a guess at it. And it is
+handed the two facts that a naive framing would have withheld: the trusted source
+locator, which the caller passes to the in-system guard and therefore can pass to
+a sidecar, and the verification result's own detail code, which is what tells a
+reader that the evidence behind a claimed effect was the request's success echo
+rather than an independent readback. Withholding either would have made the
+comparator lose for a reason that has nothing to do with where mediation sits.
+
+What the comparator does not get is a transaction on the caller's database, and no
+sidecar has one. Every fact in its decision document is a value the caller
+serialised and sent. That single difference accounts for the result.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Benign closure against harm, untrusted-planner arm. Suite A is the
+golden path (4 cases $\times$ 2 columns); Suite B is the 43 injections. Wilson
+95\% intervals on the harm rate. No arm over-blocks, so the harm column is the
+only axis on which they differ.}
+\label{tab:pareto}
+\begin{tabular}{@{}lccc@{}}
+\hline
+arm & Suite A closed & Suite B harm & 95\% CI\\
+\hline
+\emph{naive}          & 8/8 & 33/43 (0.77) & [0.62, 0.87]\\
+\emph{external\_opa}  & 8/8 & 14/43 (0.33) & [0.20, 0.47]\\
+\emph{full}           & 8/8 & \phantom{0}1/43 (0.02) & [0.00, 0.12]\\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:pareto} is the result, and the first thing to say about it is that
+the comparator works. It stops 19 of the 33 harms the unmediated arm suffers, and
+it costs nothing: all eight benign closures still close, with no over-block. A
+reader who takes only one number from this paper should take that one, because it
+says an OPA sidecar is a real control and not a foil.
+
+The second thing to say is which 14 survive, because they are not a scattering.
+They fall into two groups, and both are the same failure. The A2 content-drift
+cases---a target rewritten after approval, a fingerprint forged to match, a tool
+escalated---survive because the sidecar is shown an action row that is internally
+consistent. It can check that the row's plan revision matches the revision the
+caller reports for the event, and it does; two A2 cases die there. It cannot check
+the row against the approval that was actually recorded, because that comparison
+needs a read of a table the sidecar cannot see, in the same transaction as the
+dispatch. A caller that rewrites the row and reports the rewrite is believed. The
+A1 and A5 closure cases survive for the same reason in a different place: whether
+the terminal writeback head that eventually goes out is the active one for the
+current closure cycle, and whether a receipt's confirmation is strong enough for
+the declared vendor mode, are properties of rows the sidecar is told about rather
+than rows it reads.
+
+This is the boundary the arm exists to locate, and we state it as a finding rather
+than as a limitation of our setup: the decisions on this path are transactional,
+and a mediator that cannot join the transaction can only police the
+self-consistency of what it is handed. Section~\ref{sec:tcb} says the mediators
+are not tamper-proof in Anderson's sense, and that remains true; what
+Table~\ref{tab:pareto} adds is that moving them out of the process to gain
+tamper-proofness costs a third of the harm coverage, and the trade is not obviously
+worth making. The honest reading is that the two are complementary. A sidecar is
+the better place for rules about what a tool may ever do; the transaction is the
+only place for rules about whether this dispatch matches this approval.
+
+\subsection{Coverage against agent-security benchmarks}
+\label{sec:eval-coverage}
+
+Our suite is not a substitute for the public agent-security benchmarks, and
+Table~\ref{tab:coverage} is meant to make the division of labour legible rather
+than to claim breadth. AgentDojo~\cite{debenedetti2024agentdojo},
+InjecAgent~\cite{zhan2024injecagent}, and the Agent Security
+Bench~\cite{zhang2024asb} all measure whether a model can be induced to propose a
+harmful call. That is the question upstream of ours: we assume the answer is yes
+and ask what happens next. The consequence is that the injection-shaped classes
+overlap and the record-integrity classes do not overlap at all.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Which adversary classes the public benchmarks reach. \checkmark{}
+means the benchmark contains cases of that shape; --- means it does not, in most
+rows because the benchmark has no persistent record to corrupt and no vendor
+transaction to duplicate.}
+\label{tab:coverage}
+\begin{tabular}{@{}lcccc@{}}
+\hline
+class & AgentDojo & InjecAgent & ASB & ours\\
+\hline
+A1 closure evidence   & ---          & ---          & ---          & \checkmark\\
+A2 approval binding   & ---          & ---          & \checkmark   & \checkmark\\
+A3 dual dispatch      & ---          & ---          & ---          & \checkmark\\
+A4 egress             & \checkmark   & \checkmark   & \checkmark   & \checkmark\\
+A5 false verification & \checkmark   & ---          & ---          & \checkmark\\
+\hline
+\end{tabular}
+\end{table}
+
+Only A4 is well covered elsewhere, and there our contribution is narrower than
+theirs: they ask whether the model leaks, we ask whether the envelope leaves.
+A5 partially overlaps AgentDojo's notion of a task the model claims to have
+completed. A1 and A3 have no counterpart we could find, and we think the reason is
+structural: a benchmark that runs an agent against a simulated tool surface has no
+ticket to close and no outbox to double-write, so those harms have nowhere to
+happen. That is an argument for both kinds of suite, not for ours over theirs.
+
 \subsection{Harm not reachable under the naive configuration}
 \label{sec:eval-falsify}
 
@@ -821,5 +943,112 @@ planner choose what it is compared against.
 These call a mediator directly and assert its verdict. They are unit evidence
 that a check is wired to the switch it claims, and they are not evidence of
 mediation on the actuation path; the boundary suite in \S\ref{sec:eval} is.
+
+\section{Comparator policy}
+\label{app:rego}
+
+The policy evaluated by the OPA server in \S\ref{sec:eval-comparator}, in full, so
+that a reader who thinks it is weaker than it should be can say which rule is
+missing. Comments are as written. \texttt{deny} is a partial set: the aggregate
+decision allows only when the set is empty, and the reasons travel with the denial
+so the harness can tell a prevented harm from an over-block.
+
+\begin{flushleft}\scriptsize\ttfamily
+package shadowtrace.actuation\\
+import rego.v1\\
+\medskip
+default allow := false\\
+allow if count(deny) == 0\\
+\medskip
+high\_impact\_tools := \{"isolate\_host", "disable\_account", "block\_ip"\}\\
+\medskip
+\% the writeback envelope schema, enumerated so a field\\
+\% nobody designed in is refused rather than forwarded\\
+allowed\_egress\_fields := \{"action\_id", "closure\_cycle",\\
+\quad "disposition\_id", "execution\_owner", "idempotency\_key",\\
+\quad "intent\_kind", "operation\_code", "operation\_params",\\
+\quad "operator\_id", "parent\_disposition\_id",\\
+\quad "source\_concurrency\_token", "source\_locator",\\
+\quad "supersedes\_disposition\_id", "target\_results"\}\\
+\medskip
+\% close --- an action nobody ran means the ticket is not finished\\
+deny contains "close:unrun\_approved\_action" if \{\\
+\quad input.decision == "close"\\
+\quad input.event.pending\_approved\_actions > 0 \}\\
+\medskip
+deny contains "close:no\_report" if \{\\
+\quad input.decision == "close"\\
+\quad not input.event.has\_report \}\\
+\medskip
+\% delivery cannot be required here: closure is what activates it\\
+deny contains "close:no\_terminal\_writeback" if \{\\
+\quad input.decision == "close"\\
+\quad not input.event.terminal\_writeback\_planned \}\\
+\medskip
+deny contains "close:simulated\_receipt\_in\_live\_mode" if \{\\
+\quad input.decision == "close"\\
+\quad input.event.disposition\_mode != "mock\_xdr"\\
+\quad input.event.receipt\_simulated \}\\
+\medskip
+\% bind --- only approved actions, on the current revision\\
+deny contains "bind:not\_approved" if \{\\
+\quad input.decision == "bind"\\
+\quad input.action.status != "approved" \}\\
+\medskip
+deny contains "bind:plan\_revision\_drift" if \{\\
+\quad input.decision == "bind"\\
+\quad input.action.plan\_revision != input.event.plan\_revision \}\\
+\medskip
+deny contains "bind:level\_below\_tool\_requirement" if \{\\
+\quad input.decision == "bind"\\
+\quad high\_impact\_tools[input.action.tool\_name]\\
+\quad input.action.action\_level == "L1" \}\\
+\medskip
+\% verify --- an echo is not evidence\\
+deny contains "verify:no\_observation" if \{\\
+\quad input.decision == "verify"\\
+\quad not input.observation.present \}\\
+\medskip
+deny contains "verify:echo\_only" if \{\\
+\quad input.decision == "verify"\\
+\quad input.observation.echoes\_request \}\\
+\medskip
+deny contains "verify:deferred\_not\_performed" if \{\\
+\quad input.decision == "verify"\\
+\quad input.action.execution\_phase == "post\_verify"\\
+\quad not input.observation.effect\_confirmed \}\\
+\medskip
+\% egress --- allowlist, then shape checks on the values\\
+deny contains sprintf("egress:field\_not\_allowed:\%v", [field]) if \{\\
+\quad input.decision == "egress"\\
+\quad some field in input.envelope.fields\\
+\quad not allowed\_egress\_fields[field] \}\\
+\medskip
+deny contains "egress:narrative\_in\_value" if \{\\
+\quad input.decision == "egress"\\
+\quad some value in outbound\_values\\
+\quad regex.match(`(?i)(investigation|lateral movement|\\
+\quad\quad confirmed|report|analysis|summary)`, value) \}\\
+\medskip
+deny contains "egress:credential\_in\_value" if \{\\
+\quad input.decision == "egress"\\
+\quad some value in outbound\_values\\
+\quad regex.match(`(?i)(bearer\textbackslash s+[a-z0-9.\_\~+/-]\{8,\}|\\
+\quad\quad sk-[a-z0-9-]\{8,\}|api[\_-]?key)`, value) \}\\
+\medskip
+deny contains "egress:target\_not\_atomic" if \{\\
+\quad input.decision == "egress"\\
+\quad contains(input.envelope.canonical\_target, " ") \}\\
+\medskip
+outbound\_values contains value if \{\\
+\quad some value in object.get(input.envelope, "values", []) \}\\
+\medskip
+\% the caller passes the trusted locator, as it does to the\\
+\% in-system guard; a caller that rewrites both is believed\\
+deny contains "egress:locator\_mismatch" if \{\\
+\quad input.decision == "egress"\\
+\quad input.envelope.locator\_supplied\\
+\quad input.envelope.source\_locator != input.event.trusted\_locator \}\\
+\end{flushleft}
 
 \end{document}
