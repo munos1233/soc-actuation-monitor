@@ -2,3 +2,4 @@
 # newest snapshot (latest.json / latest.md) is versioned. The per-run
 # markdown summaries are kept because they are small and diffable.
 results/run-*.json
+results/**/run-*.json

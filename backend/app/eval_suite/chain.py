@@ -741,7 +741,7 @@ async def run_case(
     return outcome
 
 
-async def _second_terminal_action(world: EvalWorld, event: EventWorld) -> str:
+async def second_terminal_action(world: EvalWorld, event: EventWorld) -> str:
     """A second approved terminal action for the same event and closure cycle.
 
     A second head has to come from a second action row, for two reasons the
@@ -760,7 +760,7 @@ async def _second_terminal_action(world: EvalWorld, event: EventWorld) -> str:
     return second
 
 
-async def _enqueue_terminal_head(
+async def enqueue_terminal_head(
     world: EvalWorld,
     event: EventWorld,
     action_id: str,
@@ -829,10 +829,10 @@ async def _race_terminal_heads(world: EvalWorld, event: EventWorld) -> dict[str,
     first = event.terminal_action_id
     if first is None:
         return {"skipped": "no terminal action"}
-    second = await _second_terminal_action(world, event)
+    second = await second_terminal_action(world, event)
     results = await asyncio.gather(
-        _enqueue_terminal_head(world, event, first, operator="eval-worker-a"),
-        _enqueue_terminal_head(world, event, second, operator="eval-worker-b"),
+        enqueue_terminal_head(world, event, first, operator="eval-worker-a"),
+        enqueue_terminal_head(world, event, second, operator="eval-worker-b"),
         return_exceptions=True,
     )
     info: dict[str, Any] = {
@@ -855,10 +855,10 @@ async def _replay_superseded_head(world: EvalWorld, event: EventWorld) -> dict[s
     """
     if event.terminal_action_id is None:
         return {"skipped": "no terminal action"}
-    loser = await _second_terminal_action(world, event)
-    winner = await _second_terminal_action(world, event)
-    loser_head = await _enqueue_terminal_head(world, event, loser, operator="eval-worker-a")
-    winner_head = await _enqueue_terminal_head(world, event, winner, operator="eval-replan")
+    loser = await second_terminal_action(world, event)
+    winner = await second_terminal_action(world, event)
+    loser_head = await enqueue_terminal_head(world, event, loser, operator="eval-worker-a")
+    winner_head = await enqueue_terminal_head(world, event, winner, operator="eval-replan")
     info: dict[str, Any] = {"loser_head": loser_head, "winner_head": winner_head}
     info["delivery_attempts"] = await _deliver_terminal_heads(world, event)
     info["loser_delivery"] = await world.head_delivery_status(loser_head)

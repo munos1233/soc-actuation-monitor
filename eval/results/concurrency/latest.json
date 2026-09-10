@@ -1,0 +1,1470 @@
+{
+  "generated_at": "2026-09-10T08:42:33.737353+00:00",
+  "workers": 4,
+  "rounds": 5,
+  "column": "mock",
+  "configs": [
+    "full",
+    "full_minus_claim_cas",
+    "full_minus_head_uniqueness"
+  ],
+  "rows": [
+    {
+      "config": "full",
+      "mode": "dispatch",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-dispatch-0-mock-0001-519634153e2",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "dispatch",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-dispatch-1-mock-0001-51963c06f27",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "dispatch",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-dispatch-2-mock-0001-51963477ebf",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "dispatch",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-dispatch-3-mock-0001-51963a1fef6",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "dispatch",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-dispatch-4-mock-0001-5196378b845",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "deliver",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-deliver-0-mock-0001-51963916be7",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:1"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "deliver",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-deliver-1-mock-0001-51963e48e77",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:1",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "deliver",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-deliver-2-mock-0001-51963c3977f",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "deliver",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-deliver-3-mock-0001-51963da4d7d",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:1",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "deliver",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-deliver-4-mock-0001-51963d077bb",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:1"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "head",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full-head-0-mock-0001-51963e3372f",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-54c032be",
+        "head:obx-c2b6c4a7",
+        "head:obx-7be2361c",
+        "head:obx-ea13b8e1"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "head",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full-head-1-mock-0001-51963328c01",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-6fc021da",
+        "head:obx-536df594",
+        "head:obx-b2f2d7ab",
+        "head:obx-9a6cbf45"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "head",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full-head-2-mock-0001-51963650cea",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-8e6b754d",
+        "head:obx-9b966274",
+        "head:obx-3d1cfb7c",
+        "head:obx-63459895"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "head",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full-head-3-mock-0001-519632ad901",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-018feaf9",
+        "head:obx-734a3c85",
+        "head:obx-fa6e7efb",
+        "head:obx-7f7ccb15"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "head",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full-head-4-mock-0001-5196322bba3",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-33b9c9bd",
+        "head:obx-a7d12ae8",
+        "head:obx-813d198e",
+        "head:obx-33da7b6f"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "rekey",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-rekey-0-mock-0001-51963edc311",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "rekey",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-rekey-1-mock-0001-51963e473e1",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "rekey",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-rekey-2-mock-0001-51963486828",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "rekey",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-rekey-3-mock-0001-51963ced3c1",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full",
+      "mode": "rekey",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full-rekey-4-mock-0001-51963f4b2a5",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "dispatch",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-dispatch-0-mock-0001-51963db3258",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "dispatch",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-dispatch-1-mock-0001-51963a152f5",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "dispatch",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-dispatch-2-mock-0001-519632fc4aa",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "dispatch",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-dispatch-3-mock-0001-51963aaa592",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "dispatch",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-dispatch-4-mock-0001-519632d3250",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "deliver",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-deliver-0-mock-0001-51963fe2b28",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:1",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "deliver",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-deliver-1-mock-0001-519635ae4ef",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:1",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "deliver",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-deliver-2-mock-0001-519631023ae",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "deliver",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-deliver-3-mock-0001-51963356e0d",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "deliver",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-deliver-4-mock-0001-5196334dba7",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:1",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "head",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full_minus_claim_cas-head-0-mock-0001-51963445fa0",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-83665c4c",
+        "head:obx-36b4be24",
+        "head:obx-be0c22f5",
+        "head:obx-482195e0"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "head",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full_minus_claim_cas-head-1-mock-0001-51963bbcedb",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-c131df7e",
+        "head:obx-a4d55ba9",
+        "head:obx-69b8078d",
+        "head:obx-c6c758d1"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "head",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full_minus_claim_cas-head-2-mock-0001-51963d6fe36",
+      "outbox": {
+        "event_status_update:delivered": 1,
+        "event_status_update:dead_letter": 3
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-d4e2f137",
+        "head:obx-323a7643",
+        "head:obx-d33b954d",
+        "head:obx-a149b0c8"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "head",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full_minus_claim_cas-head-3-mock-0001-51963a9d8f7",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-b555b2c3",
+        "head:obx-fa2d84cc",
+        "head:obx-03510a29",
+        "head:obx-03dfb14a"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "head",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 1,
+      "event_id": "evt-conc-full_minus_claim_cas-head-4-mock-0001-51963882cac",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-33b2d183",
+        "head:obx-5e2d96a3",
+        "head:obx-7e76a070",
+        "head:obx-2e2f0836"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "rekey",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-rekey-0-mock-0001-519631d4a0a",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "rekey",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-rekey-1-mock-0001-519634b7a88",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "rekey",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-rekey-2-mock-0001-519638e4d1e",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "rekey",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-rekey-3-mock-0001-519634e6cbd",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "rekey",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_claim_cas-rekey-4-mock-0001-51963904a20",
+      "outbox": {
+        "entity_action_submit:dead_letter": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "dispatch",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-dispatch-0-mock-0001-5196319ab80",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "dispatch",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-dispatch-1-mock-0001-51963b3672c",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "dispatch",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-dispatch-2-mock-0001-519632b5991",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "dispatch",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-dispatch-3-mock-0001-51963204933",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "dispatch",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-dispatch-4-mock-0001-519630a7f31",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "deliver",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-deliver-0-mock-0001-51963f0687a",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "deliver",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-deliver-1-mock-0001-5196358b9ad",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:1",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "deliver",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-deliver-2-mock-0001-51963e51307",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "deliver",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-deliver-3-mock-0001-519639536a0",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:1"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "deliver",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 0,
+      "submit_calls": 0,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-deliver-4-mock-0001-5196326e1f4",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "delivered:0",
+        "delivered:0",
+        "delivered:0",
+        "delivered:0"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "head",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 4,
+      "event_id": "evt-conc-full_minus_head_uniqueness-head-0-mock-0001-51963af0970",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": true,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-4e63de3f",
+        "head:obx-923dfddc",
+        "head:obx-02028f34",
+        "head:obx-194cda68"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "head",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 4,
+      "event_id": "evt-conc-full_minus_head_uniqueness-head-1-mock-0001-519631d4b80",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": true,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-cbf7c9b1",
+        "head:obx-c69dcb1a",
+        "head:obx-b9cf7454",
+        "head:obx-df4a0e32"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "head",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 4,
+      "event_id": "evt-conc-full_minus_head_uniqueness-head-2-mock-0001-519636da61a",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": true,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-078b0c9a",
+        "head:obx-c8c8fd1e",
+        "head:obx-29b27001",
+        "head:obx-e4db817c"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "head",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 4,
+      "event_id": "evt-conc-full_minus_head_uniqueness-head-3-mock-0001-51963ec4fba",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": true,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-5f049677",
+        "head:obx-181a75e2",
+        "head:obx-2c604034",
+        "head:obx-ca66897c"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "head",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 0,
+      "terminal_effects": 1,
+      "submit_calls": 1,
+      "active_terminal_heads": 4,
+      "event_id": "evt-conc-full_minus_head_uniqueness-head-4-mock-0001-51963f51e2f",
+      "outbox": {
+        "event_status_update:dead_letter": 3,
+        "event_status_update:delivered": 1
+      },
+      "duplicated": true,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "head:obx-5c89cca5",
+        "head:obx-54595772",
+        "head:obx-486cb24e",
+        "head:obx-f42b2001"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "rekey",
+      "round": 0,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-rekey-0-mock-0001-5196334e35f",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "rekey",
+      "round": 1,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-rekey-1-mock-0001-51963eaff17",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "rekey",
+      "round": 2,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-rekey-2-mock-0001-51963460d87",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "rekey",
+      "round": 3,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-rekey-3-mock-0001-51963e60c19",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "dispatched",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition"
+      ]
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "rekey",
+      "round": 4,
+      "workers": 4,
+      "entity_effects": 1,
+      "terminal_effects": 0,
+      "submit_calls": 1,
+      "active_terminal_heads": 0,
+      "event_id": "evt-conc-full_minus_head_uniqueness-rekey-4-mock-0001-5196374ebc9",
+      "outbox": {
+        "entity_action_submit:delivered": 1
+      },
+      "duplicated": false,
+      "late_workers": 0,
+      "worker_outcomes": [
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "rejected:invalid_state_transition",
+        "dispatched"
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "config": "full",
+      "mode": "deliver",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 1,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full",
+      "mode": "dispatch",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 1,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full",
+      "mode": "head",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 0,
+      "max_terminal_effects": 1,
+      "max_active_heads": 1,
+      "late_workers": 0
+    },
+    {
+      "config": "full",
+      "mode": "rekey",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 1,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "deliver",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 1,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "dispatch",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 0,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "head",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 0,
+      "max_terminal_effects": 1,
+      "max_active_heads": 1,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_claim_cas",
+      "mode": "rekey",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 0,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "deliver",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 1,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "dispatch",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 1,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "head",
+      "rounds": 5,
+      "duplicated_rounds": 5,
+      "max_entity_effects": 0,
+      "max_terminal_effects": 1,
+      "max_active_heads": 4,
+      "late_workers": 0
+    },
+    {
+      "config": "full_minus_head_uniqueness",
+      "mode": "rekey",
+      "rounds": 5,
+      "duplicated_rounds": 0,
+      "max_entity_effects": 1,
+      "max_terminal_effects": 0,
+      "max_active_heads": 0,
+      "late_workers": 0
+    }
+  ]
+}

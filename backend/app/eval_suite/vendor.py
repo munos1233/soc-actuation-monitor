@@ -19,6 +19,7 @@ columns and never as a live deployment.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
@@ -105,6 +106,14 @@ class RecordingVendor(BaseDispositionAdapter):
         self.readback_calls = 0
         self.replayed_submits = 0
         self._receipts_by_key: dict[str, DispositionReceipt] = {}
+        self.tally_sink: Callable[[dict[str, Any]], Awaitable[None]] | None = None
+        """Optional out-of-process record of what crossed the boundary.
+
+        ``received`` is per-instance, which is all a single-process run needs. The
+        contention probe runs several processes against one database, each with its
+        own vendor, so there is no instance to count against; it installs a sink
+        here that writes to shared storage. Left ``None`` everywhere else.
+        """
 
     # -- observation ------------------------------------------------------- #
 
@@ -201,7 +210,10 @@ class RecordingVendor(BaseDispositionAdapter):
         # first effect, so a delivery retry must not look like a second action.
         # The payload is still recorded: egress scoring cares about what crossed
         # the wire, not about how many distinct effects it caused.
-        self.received.append(command.model_dump(mode="json"))
+        payload = command.model_dump(mode="json")
+        self.received.append(payload)
+        if self.tally_sink is not None:
+            await self.tally_sink(payload)
         replayed = self._receipts_by_key.get(command.idempotency_key)
         if replayed is not None:
             self.replayed_submits += 1

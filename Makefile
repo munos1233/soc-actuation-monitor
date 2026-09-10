@@ -87,7 +87,7 @@ CELERY_SIGKILL_ARTIFACT_DIR ?= $(CURDIR)/artifacts/issue-283
 CI_DATABASE_URL ?= postgresql+asyncpg://shadowtrace:shadowtrace@localhost:$(POSTGRES_PORT)/shadowtrace
 CI_REDIS_URL ?= redis://localhost:$(REDIS_PORT)/0
 
-.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-cases paper-opa-up paper-opa-down paper-eval-comparator paper-pdf paper-pages
+.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-cases paper-eval-concurrency paper-opa-up paper-opa-down paper-eval-comparator paper-pdf paper-pages
 
 up:
 	$(COMPOSE) $(WORKER_COMPOSE) $(WORKER_PROFILE) $(SCHEDULER_PROFILE) up -d --build
@@ -993,6 +993,16 @@ paper-eval-cases:
 PAPER_OPA_PORT ?= 58181
 PAPER_OPA_CONTAINER ?= shadowtrace-eval-opa
 PAPER_OPA_IMAGE ?= openpolicyagent/opa:latest
+# Experiment 3: several OS processes racing on one row. Slow (roughly 15 minutes
+# for the default 4 workers x 5 rounds) because each round seeds a fresh event and
+# spawns four interpreters.
+PAPER_CONC_WORKERS ?= 4
+PAPER_CONC_ROUNDS ?= 5
+paper-eval-concurrency:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_concurrency.py" \
+		--workers $(PAPER_CONC_WORKERS) --rounds $(PAPER_CONC_ROUNDS) \
+		--out "$(CURDIR)/eval/results/concurrency"
+
 paper-opa-up:
 	@docker rm -f "$(PAPER_OPA_CONTAINER)" >/dev/null 2>&1 || true
 	docker run -d --name "$(PAPER_OPA_CONTAINER)" \

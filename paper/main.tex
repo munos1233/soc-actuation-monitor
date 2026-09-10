@@ -627,6 +627,92 @@ counts effects per idempotency key and the reason the key-rewrite case exists at
 all. The key is planner-written, so a system that relies on the vendor to
 deduplicate is relying on the untrusted component.
 
+\subsection{Real contention: several processes, one row}
+\label{sec:eval-concurrency}
+
+Every A3 row above is contention the harness constructs inside one process: two
+dispatch attempts in sequence, two enqueues in sequence. That is enough to show
+whether a mechanism refuses the second attempt and it is not enough to show the
+mechanism is why nothing bad happens under load, because a sequential harness
+never produces the interleaving the mechanism was written for. The outbox worker
+in particular is built for concurrency---a lease, a per-worker identity, a
+\texttt{SKIP LOCKED} claim---and none of that is exercised by a runner that never
+runs two of them.
+
+So we ran four separate OS processes, each with its own event loop, its own
+connections and its own service instances, sharing nothing but PostgreSQL and
+Redis, and had them race on the same row at four points: all four calling
+\texttt{execute\_action} on one approved action; all four doing that with the
+idempotency key rewritten per worker first; all four running the outbox worker
+over one queued writeback; and all four enqueueing a terminal head for the same
+event and closure cycle. Five rounds each, on a freshly seeded event per round.
+Because each process has its own vendor stub, effects are counted in Redis rather
+than in memory: a set of idempotency keys per action, so a delivery retry of one
+key stays distinguishable from a second dispatch.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Four processes racing, five rounds per cell, mock column. ``duplicate''
+means more than one distinct external effect or more than one active terminal
+head. Effect counts are the maximum observed over the five rounds.}
+\label{tab:concurrency}
+\begin{tabular}{@{}llccc@{}}
+\hline
+configuration & contention & dup.\ & effects & heads\\
+\hline
+\emph{full} & dispatch          & 0/5 & 1 & ---\\
+            & dispatch $+$ rekey& 0/5 & 1 & ---\\
+            & delivery          & 0/5 & 1 & ---\\
+            & head enqueue      & 0/5 & 1 & 1\\
+\hline
+$-$claim CAS & dispatch          & 0/5 & 0 & ---\\
+             & dispatch $+$ rekey& 0/5 & 0 & ---\\
+             & delivery          & 0/5 & 1 & ---\\
+             & head enqueue      & 0/5 & 1 & 1\\
+\hline
+$-$head uniq.\ & dispatch        & 0/5 & 1 & ---\\
+               & dispatch $+$ rekey& 0/5 & 1 & ---\\
+               & delivery        & 0/5 & 1 & ---\\
+               & head enqueue    & \textbf{5/5} & 1 & \textbf{4}\\
+\hline
+\end{tabular}
+\end{table}
+
+The \emph{full} configuration produces exactly one effect at every contention
+point in every round, which is the result we were looking for: three of the four
+dispatch racers are refused at the claim with an invalid status transition, and
+three of the four delivery racers find nothing to lease. The head race is the one
+place where all four workers succeed and the outcome is still one head, because
+each enqueue supersedes the one before it inside its own transaction.
+
+Two things in Table~\ref{tab:concurrency} we did not expect, and both are more
+interesting than the row we were aiming at.
+
+The first is that removing the claim compare-and-set does not produce a duplicate
+effect under real contention. It produces \emph{no} effect. Two of the four
+workers get past the unlocked claim, both write a status transition, and the row
+ends in a status neither of them intended; the pre-delivery approval fence then
+re-reads that status, does not recognise it, and dead-letters the writeback with
+\texttt{writeback\_fence\_blocked}. Losing single-claim execution under
+concurrency therefore costs availability rather than integrity, and it costs it
+because a second mechanism below the one we were ablating catches the damage. The
+sequential suite could not see this: with one process, the two claims never
+overlap, so the status never becomes incoherent and the fence never fires. We
+report it as a finding about the system rather than as a correction to
+Table~\ref{tab:substrate}, which measured something real---a rewritten key does
+produce two effects when the claims are serialised.
+
+The second is that the head race under weakened uniqueness produces four active
+terminal heads in every round, and still only one external effect. The four heads
+carry the same planner-written idempotency key, so the vendor collapses them. That
+is precisely the dependency \S\ref{sec:eval-substrate} warns about stated in the
+strongest possible form: with the index and the supersede both gone, the record
+says four different things about how this incident was resolved, and the only
+reason the outside world sees one of them is that the vendor chose to honour a key
+the untrusted planner wrote. A system that treats that as its duplicate-suppression
+mechanism has delegated an integrity property to the component it does not trust.
+
 \subsection{Comparator: an external policy engine at the same four points}
 \label{sec:eval-comparator}
 
