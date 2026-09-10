@@ -860,3 +860,33 @@ jobs:
             --project-name "${COMPOSE_PROJECT_NAME}" \
             -f "${GITHUB_WORKSPACE}/infra/docker-compose.yml" \
             down --volumes --remove-orphans || true
+
+  paper-eval-smoke:
+    name: paper-eval-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend (frozen dev)
+        working-directory: backend
+        run: uv sync --frozen --extra dev
+
+      - name: Structural eval guards and head-invariant model check
+        working-directory: backend
+        env:
+          LLM_MODE: mock
+        run: uv run --frozen --extra dev pytest tests/eval -q -p no:randomly
+
+      - name: Enumerate the head protocol at K=2 (the paper's claim)
+        run: python3 eval/model/head_invariants.py --workers 2
+

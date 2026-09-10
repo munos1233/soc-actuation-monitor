@@ -1,8 +1,9 @@
-%% Venue: ACSAC (acmart sigconf, anonymous). DSN Regular is the alternative and
-%% needs IEEEtran; keep the prose venue-neutral so either target compiles.
-\documentclass[sigconf,anonymous,review]{acmart}
+%% Venue: ACM TOPS (acmart acmsmall). manuscript produces the single-column
+%% review layout TOPS accepts; the camera-ready drops manuscript and keeps acmsmall.
+\documentclass[acmsmall,manuscript,review,anonymous]{acmart}
 
 \settopmatter{printacmref=false}
+\acmJournal{TOPS}
 
 %% snake_case identifiers are long enough to overhang a two-column measure, and
 %% hyphenating code is worse than breaking it, so break after the underscore.
@@ -12,6 +13,17 @@
 %% them is what an invariant is. Give it its own environment and counter, so the
 %% invariant numbers the evaluation refers to stay stable.
 \newtheorem{invariant}{Invariant}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc}
+
+\tikzset{
+  stbox/.style={draw, rounded corners=1.5pt, align=center, font=\scriptsize,
+    inner sep=3.5pt, text width=2.15cm},
+  sttrust/.style={stbox, fill=black!8},
+  stuntrust/.style={stbox, fill=white},
+  starr/.style={-{Latex[length=4pt]}, thick},
+}
 
 %% Working title. No product name, no "reference monitor": the mediators run in
 %% the planner's own process, so the Anderson tamper-proofness claim is not ours
@@ -93,6 +105,20 @@ incident. A hallucinated summary that reaches a human analyst is a bad
 document. The same summary that reaches the closure step is an incident that
 the organization now believes is handled.
 
+The pressure to automate that last step is not hypothetical. Bridges
+et~al.~\cite{bridges2023testing} ran the first hands-on study of commercial
+SOAR tools in use: 24 participants, six products, more than 200 hours of
+controlled investigations. The tools improved efficiency and reduced context
+switching, and they also reduced ticket accuracy and completeness. Automation
+that makes the analyst faster at writing a ticket that is wrong is not a
+quality improvement; once that ticket is allowed to close itself, it is an
+integrity failure. Islam, Babar and Nepal's survey of security
+orchestration~\cite{islam2019orchestration} already noted that playbook
+semantics are treated as ground truth. An untrusted planner---a language model,
+or a playbook compiler fed on retrieved context---makes that assumption
+indefensible: the component that proposes the step is the component that would
+also certify it.
+
 Two bodies of practice sit on either side of this gap. Work on language models
 in the SOC evaluates the quality of analysis: triage accuracy, root-cause
 agreement, alert reduction. Work on SOAR platforms automates the actuation but
@@ -108,7 +134,8 @@ tamper-proofness claim and do not call the result a reference monitor
 (Section~\ref{sec:tcb} states what is left in the trusted computing base). What
 we claim is that four specific decisions on the actuation path can be made
 independent of planner output, and that this is worth doing because the
-alternative fails in ways an operator cannot see.
+alternative fails in ways an operator cannot see. Figure~\ref{fig:arch} places
+those four decisions on the production write path.
 
 \paragraph{Contributions.}
 \begin{itemize}
@@ -135,8 +162,15 @@ alternative fails in ways an operator cannot see.
   vendor-side facts rather than from a mediator's return value. We report a
   leave-one-out ablation, a substrate ablation for the mechanisms that have no
   switch, a golden-path suite under the identical configuration with over-block
-  accounting, a planner-free baseline, and separate mock and pseudo-live vendor
-  columns (\S\ref{sec:eval}).
+  accounting, a planner-free baseline, a real language-model planner arm with
+  Wilson intervals, an external policy-engine comparator at the same four
+  points, a multi-process contention probe, and per-mediator overhead
+  (\S\ref{sec:eval}).
+  \item \textbf{C4 (invariants with a checkable model).} We state four
+  invariants over persistent state, each paired with the code that maintains it
+  and the ablation under which it fails, and we exhaustively enumerate the
+  terminal-head protocol so that ``the index is load-bearing'' is a shortest
+  counterexample, not a sequential-harness artefact (\S\ref{sec:inv}).
 \end{itemize}
 
 \paragraph{Non-claims.}
@@ -158,9 +192,63 @@ decision. Approved actions are claimed and executed, either through a managed
 vendor adapter or through a direct tool. A verification phase observes whether
 the effect happened. A terminal disposition is written back to the vendor
 through an outbox. Only then may the event become \texttt{CLOSED}.
+Figure~\ref{fig:arch} is that pipeline drawn so that every arrow into the vendor
+or into \texttt{CLOSED} is labelled with the mediator that sits on it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=3.4mm and 5.5mm,
+  font=\scriptsize,
+]
+  \node[stuntrust] (ingest) {vendor ingest};
+  \node[sttrust, right=of ingest] (event) {event row};
+  \node[stuntrust, right=of event] (planner) {planner\\proposal};
+  \node[sttrust, right=of planner] (approval) {approval\\record};
+  \node[sttrust, below=of approval] (claim) {claim $+$\\binding recheck};
+  \node[sttrust, left=of claim] (execute) {entity\\execute};
+  \node[sttrust, left=of execute] (verify) {phase-1\\observe};
+  \node[sttrust, below=of verify] (phase2) {phase-2\\activate};
+  \node[sttrust, right=of phase2] (guard) {outbound\\guard};
+  \node[sttrust, right=of guard] (outbox) {outbox\\worker};
+  \node[stuntrust, right=of outbox] (vendor) {vendor\\adapter};
+  \node[sttrust, below=of guard] (close) {closure\\gate};
+  \node[sttrust, right=of close] (closed) {\texttt{CLOSED}};
+
+  \draw[starr] (ingest) -- (event);
+  \draw[starr] (event) -- (planner);
+  \draw[starr] (planner) -- (approval);
+  \draw[starr] (approval) -- (claim);
+  \draw[starr] (claim) -- (execute);
+  \draw[starr] (execute) -- (verify);
+  \draw[starr] (verify) -- (phase2);
+  \draw[starr] (phase2) -- (guard);
+  \draw[starr] (guard) -- (outbox);
+  \draw[starr] (outbox) -- (vendor);
+  \draw[starr] (close) -- (closed);
+  \draw[starr] (verify.south) -- ++(0,-0.22) -| (close.north);
+\end{tikzpicture}
+\caption{Production actuation path. Shaded boxes are inside the trusted
+computing base of \S\ref{sec:tcb}; white boxes are not. The four mediators sit
+on claim, phase split, enqueue, and the \texttt{CLOSED} transition. The outbox
+worker is the sole caller of the vendor adapter.}
+\label{fig:arch}
+\end{figure}
 
 The external world consists of entity containment at the vendor, the terminal
-disposition on the vendor's object, and the closure record on our side.
+disposition on the vendor's object, and the closure record on our side. Those
+three are not interchangeable. A host can be isolated while the ticket stays
+open; the ticket can close while the vendor object is untouched; a writeback can
+reach the vendor for the wrong object. The mediators exist because a planner
+that is allowed to declare any one of the three from the others will eventually
+do so.
+
+What the planner is allowed to write is plan content: tool names, targets,
+parameters, a fingerprint \emph{label}, a playbook reference. What it is not
+allowed to write is status columns, approval records, outbox delivery state, or
+the event's disposition source---the operator-selected locator the outbound
+guard uses as its witness of object identity. That split is the data-plane
+assumption, and every injection in the evaluation respects it.
 
 \subsection{Adversary}
 \label{sec:threat-adv}
@@ -171,7 +259,13 @@ labels, template hashes, playbook references. It supplies what tools and
 adapters return, including receipts that claim success, receipts that are
 simulated, receipts with only an acknowledgement, and answers to verification
 queries that echo the request. It may cause dispatch to be retried and may
-revise a plan after a human decision was recorded.
+revise a plan after a human decision was recorded. When the planner is a
+language model, the same adversary also writes upstream free text---a
+compromised evidence or triage stage---that lands in the prompt; that is how
+the A4 cases in \S\ref{sec:eval-planner} are mounted, and it is the only
+injection that does not go through a row the harness writes itself. Indirect
+prompt injection~\cite{greshake2023notwhat,zhan2024injecagent} is in scope as
+a way of authoring that row, and out of scope as a property of the model.
 
 It is not a code-execution adversary. It does not run inside the mediators, it
 does not set environment variables in the serving process, and it does not write
@@ -180,6 +274,17 @@ status columns or approval records directly---moving an action into
 \texttt{force\_close} is a declared bypass, out of the model, and never counted
 as a closure. We state these exclusions because they are what makes the
 evaluation interpretable, not because they are comfortable.
+
+The model is closer to Clark and Wilson's well-formed
+transaction~\cite{clark1987comparison} than to a confidentiality lattice, and
+closer to Hardy's confused deputy~\cite{hardy1988confused} than to a
+sandbox-escape story. The planner is asked to act on the organisation's
+authority with input it cannot vouch for. The mediators are the integrity
+verification procedures that certify the resulting state rather than the
+program that proposed it. They are not a reference monitor in Anderson's
+sense~\cite{anderson1972computer}: they share an address space with the
+proposer, so tamper-proofness is out of scope, and we say so in
+\S\ref{sec:tcb} before claiming anything else.
 
 \subsection{Adversary classes and harms}
 
@@ -241,9 +346,12 @@ error code, and what the evaluation observes when it is removed.
 event to \texttt{CLOSED} on the strength of its own narrative, a receipt that
 was never confirmed, or a receipt the vendor stub marked simulated.
 
-\emph{Check.} Every ordinary transition into \texttt{CLOSED} is mediated.
-An unknown disposition policy is denied rather than defaulted. When the policy
-requires writeback, closure additionally requires a report, gate-applicable side
+\emph{Check.} Every ordinary transition into \texttt{CLOSED} is mediated. The
+state machine rebuilds the closure context from the database rather than from
+the caller's argument, so a planner that has a well-formed context object in
+hand still has to satisfy the predicate against current rows. An unknown
+disposition policy is denied rather than defaulted. When the policy requires
+writeback, closure additionally requires a report, gate-applicable side
 effects converged, a terminal writeback bound to the current plan revision and
 closure cycle, approved and actual terminal dispositions that agree, a
 \texttt{CONFIRMED} receipt, and---on a non-mock disposition path---confirmation
@@ -252,6 +360,19 @@ is not simulated. The representative codes are
 \texttt{closed\_requires\_report}, \texttt{closed\_side\_effects\_pending},
 \texttt{closed\_weak\_confirmation\_evidence}, and
 \texttt{closed\_simulated\_receipt\_rejected}.
+
+The last conjunct requires the terminal writeback \emph{row}, not its delivery
+and not a vendor receipt. It cannot require the receipt, because closure is the
+transition that makes the head deliverable; requiring the receipt would be a
+cycle. Invariant~\ref{inv:close} states this bound explicitly. What rules out a
+permanent local/remote divergence is the outbox, not the gate: the head is
+durable, the worker retries, and a head that cannot be delivered lands in the
+dead-letter state where it is visible.
+
+\emph{What the evaluation observes.} Unloading this mediator restores A1. The
+leave-one-out of \S\ref{sec:eval} is $+14$ harms, the largest single-mediator
+margin, which is the expected shape: most of the suite is trying to close a
+ticket on incomplete evidence.
 
 \subsection{Dispatch must match what was approved}
 \label{sec:design-bind}
@@ -264,13 +385,27 @@ rewritten to match.
 \emph{Check.} The approval record stores a fingerprint \emph{recomputed} over
 the dispatched content: event, plan revision, tool, target type and canonical
 target, normalized parameters, execution owner, source locator, execution phase,
-approved template, and playbook binding. At claim time the monitor recomputes
-that fingerprint from the action row and compares. Comparing the action's
-\emph{stored} fingerprint column against the approval's copy of the same column
-is not a binding, because the planner writes that column; this is the first of
-the two fail-open paths the boundary evaluation exposed
-(\S\ref{sec:eval-found}). Codes: \texttt{action\_content\_drift},
+approved template, and playbook binding (Appendix~\ref{app:fp}). At claim time
+the monitor recomputes that fingerprint from the action row, under the row lock
+the claim's conditional update takes, and compares. A second check before
+delivery refuses a command whose action has since been revoked or superseded.
+Comparing the action's \emph{stored} fingerprint column against the approval's
+copy of the same column is not a binding, because the planner writes that
+column; this is the first of the two fail-open paths the boundary evaluation
+exposed (\S\ref{sec:eval-found}). Codes: \texttt{action\_content\_drift},
 \texttt{plan\_revision\_mismatch}, \texttt{playbook\_binding\_mismatch}.
+
+The fingerprint is a content-addressed commitment in Merkle's
+sense~\cite{merkle1980protocols}: the approval binds to a digest of what will
+be dispatched, not to a workflow-step identifier. SOAR platforms typically bind
+approval to a step in a workflow instance~\cite{xsoar-manual-tasks}; an
+untrusted planner that can rewrite the step's payload after the fact makes that
+the wrong object to sign.
+
+\emph{What the evaluation observes.} Unloading this mediator restores A2. It
+also restores one A4 case, the locator swap, because the disposition source
+locator is one of the eleven segments, so moving it after approval is content
+drift as well as a foreign-object write.
 
 \subsection{Observing an effect must not produce one}
 \label{sec:design-verify}
@@ -284,6 +419,17 @@ activate a terminal writeback; a deferred post-verification action is skipped,
 not failed. A tool result that says \texttt{SUCCESS} without an explicit
 \texttt{is\_verified} is unverifiable, not verified. A Phase~1 outcome of
 \texttt{need\_replan} or \texttt{need\_manual} cannot advance to activation.
+The split is the prepare/commit distinction~\cite{gray1978notes} applied to a
+participant that is not trusted to report its own state: ``prepared'' is a
+claim to be verified, not a protocol message to be believed.
+
+\emph{What the evaluation observes.} Unloading this mediator restores A5. It
+also \emph{hides} the one case that harms under \emph{full}, because without the
+split a deferred verification counts as a failure, the action never becomes
+closable, and the weak-receipt closure never happens. A mediator can mask
+another's failure by aborting the workflow earlier; that is why we report cells
+rather than a single aggregate. The overhead in \S\ref{sec:eval-overhead} is
+almost entirely this split's extra round trip.
 
 \subsection{Analysis content must not leave}
 \label{sec:design-egress}
@@ -293,15 +439,41 @@ disposition payload, either as extra keys or by repointing the command at
 another object.
 
 \emph{Check.} Outbound disposition commands must stay within the per-intent
-field allowlist, must carry no analysis or secret-shaped content, and must name
+field allowlist (the fourteen fields of the production envelope, not a
+guessed set), must carry no analysis or secret-shaped content, and must name
 the object the event's operator-selected disposition source names. An internal
-failure in the scan denies the command. Codes:
+failure in the scan denies the command. The allowlist is complete mediation for
+egress~\cite{saltzer1975protection}; the locator check is the confused-deputy
+fix~\cite{hardy1988confused}. Codes:
 \texttt{no\_analysis\_content\_outbound},
 \texttt{disposition\_field\_allowlist}, \texttt{disposition\_source\_match},
 \texttt{outbound\_guard\_internal\_error}.
 
+The second fail-open path of \S\ref{sec:eval-found} was here: the first version
+of the locator check compared the command's own \texttt{source\_locator}
+against itself. Getting the witness from the event's creation source was the
+second mistake, because compensation commands legitimately name a different
+object than the one that created the event. The operator-selected disposition
+source is the one that is allowed to identify the object.
+
+\emph{What the evaluation observes.} Unloading this mediator restores A4. Three
+of four switchable mediators decide in tens of microseconds
+(\S\ref{sec:eval-overhead}); this is one of them. The cost of the check is not
+why a deployment would leave it off.
+
 \section{Implementation}
 \label{sec:impl}
+
+The prototype is a FastAPI service over PostgreSQL~16 and Redis, with SQLAlchemy
+2 asynchronous sessions, an Alembic-managed schema, and a Celery worker that
+drains the outbox. The four mediators are ordinary functions on that path, not
+a sidecar. The outbox is the transactional-outbox pattern: a command is inserted
+in the same database transaction as the state change that justifies it, and a
+worker later delivers it, so a crash between ``we decided to write back'' and
+``the vendor heard us'' cannot drop the writeback on the floor. Lineage on
+terminal heads is a saga~\cite{garciamolina1987sagas} rather than a distributed
+transaction: each new head retires the previous one, compensation is itself an
+outbox command, and there is no two-phase commit with the vendor.
 
 \subsection{Mediators below the switchable layer}
 \label{sec:impl-nonswitch}
@@ -313,8 +485,11 @@ separately: a partial unique index admitting at most one active terminal head pe
 and takes it out of the delivery queue; a re-read at delivery time asserting that
 the head about to be sent is still the active one; and a compare-and-set on
 action status under a row lock, so a second worker pass finds nothing to claim.
-Field-level writer authority and the single-execution-owner rule are in the same
-category.
+The compare-and-set is linearizability for one
+row~\cite{herlihy1990linearizability}; the head invariant is a safety
+property~\cite{alpern1989defining}, which is why a counterexample is a finite
+trace. Field-level writer authority and the single-execution-owner rule are in
+the same category.
 
 Giving these a switch would weaken the system to measure it, so the harness
 weakens the substrate instead (\S\ref{sec:eval-substrate}): it drops the index in
@@ -337,6 +512,28 @@ variable cannot unload a mediator: a process that tries fails to start. This is
 a guard against operator error, not a tamper-proofness argument, and the
 switches are excluded from the boundary in \S\ref{sec:tcb}.
 \end{sloppypar}
+
+The evaluation harness lives in a separate package that production code does not
+import. It constructs the same service graph the worker constructs, substitutes
+a recording vendor adapter and an optional lying observation surface, and scores
+from database and vendor-side facts. Substrate weakening---dropping the partial
+unique index, substituting a lock-free claim, a no-op supersede, an
+always-true delivery assertion---is confined to that package. A reviewer who
+wants to know whether production can be talked into the naive claim can grep
+for it: the string is not there.
+
+\subsection{What a deployment actually runs}
+\label{sec:impl-deploy}
+
+A production process starts with the four mediators loaded, the partial unique
+index installed by migration, and no environment variable that can unload
+either. The outbox worker is the only process that calls the vendor adapter.
+Human approval is a recorded decision with a recomputed fingerprint, not a
+button that flips a boolean. \texttt{force\_close} exists, is role-checked,
+marks the event \texttt{external\_unsynced}, and is excluded from every closure
+count we report. That is the system the evaluation is about, and it is the
+system a reader could deploy; the switches and the substrate weakening are
+measurement apparatus.
 
 \section{Invariants}
 \label{sec:inv}
@@ -672,7 +869,27 @@ did an effect get marked verified---never from a mediator's return value. We
 deliberately do not present a table of gate-function outputs: a table in which
 each row is ``the check we disabled did not fire'' measures the switch, not the
 system. Predicate-level checks are kept as an appendix
-(\S\ref{app:component}).
+(\S\ref{app:component}). Figure~\ref{fig:eval} is the same method as a picture:
+the injection writes to the same tables a planner or vendor could write to, the
+production chain runs, and scoring reads facts the mediators do not get to
+narrate.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=4mm and 7mm,
+  font=\scriptsize,
+]
+  \node[stuntrust, text width=2.4cm] (inj) {injection\\planner rows, receipts,\\observation answers};
+  \node[sttrust, right=of inj, text width=2.6cm] (chain) {production chain\\PostgreSQL, outbox,\\four mediators};
+  \node[sttrust, right=of chain, text width=2.4cm] (score) {score from facts\\CLOSED? vendor\\submit? verified?};
+  \draw[starr] (inj) -- (chain);
+  \draw[starr] (chain) -- (score);
+\end{tikzpicture}
+\caption{Evaluation method. Harm is a property of stored and vendor-side
+state after the chain runs, not a property of a mediator return value.}
+\label{fig:eval}
+\end{figure}
 
 Two properties of that chain need stating precisely, because both are places
 where a reader could credit us with more than we did. First, the service code is
@@ -703,7 +920,9 @@ four leave-one-out configurations, and five substrate arms that weaken a
 mechanism no deployment can switch off (\S\ref{sec:eval-substrate})---in two
 vendor columns and against two planners, for $43 \times 15 \times 2 = 1290$ case
 executions plus a golden-path suite; the 43 already ranges over both vendor
-columns, and the factor of two is the planner. The two
+columns, and the factor of two is the planner (untrusted versus a fixed
+playbook). The language-model arm of \S\ref{sec:eval-planner} is additional:
+21 mock-column cases, two configurations, five trials. The two
 vendor columns are never merged: \emph{mock} uses a mock connector whose
 receipts are marked simulated and whose writeback is disabled, and
 \emph{pseudo-live} uses the HTTP adapter against a stub that may lie about the
@@ -778,6 +997,25 @@ becomes closable, and the weak-receipt closure never happens. A mediator can
 therefore mask another's failure by failing the workflow earlier, which is an
 argument for reporting each cell rather than a single aggregate.
 
+\begin{table}
+\centering
+\small
+\caption{Leave-one-out: harm with one mediator removed from \emph{full},
+pooled across both vendor columns. Marginal is the increase over 1/43.}
+\label{tab:loo}
+\begin{tabular}{@{}lccc@{}}
+\hline
+configuration & removed & harm & marginal \\
+\hline
+full            & ---    & 1/43  & --- \\
+full$-$close    & close  & 15/43 & $+14$ \\
+full$-$bind     & bind   & 9/43  & $+8$ \\
+full$-$egress   & egress & 5/43  & $+4$ \\
+full$-$verify   & verify & 4/43  & $+3$ \\
+\hline
+\end{tabular}
+\end{table}
+
 \paragraph{Golden path.}
 Suite~A runs four end-to-end incidents that should complete, under the identical
 \emph{full} configuration, and scores closure from the event's status column
@@ -794,6 +1032,24 @@ usability difference runs in the mediators' favour. What this paragraph does
 \emph{not} measure is per-request latency, which \S\ref{sec:eval-overhead}
 reports separately.
 
+\begin{table}
+\centering
+\small
+\caption{Suite A: four golden-path incidents that should close. Manual is
+extra human resolutions; worker passes are identical in both arms.}
+\label{tab:gold}
+\begin{tabular}{@{}llcccc@{}}
+\hline
+arm & column & closed & over-blocked & manual & extra worker passes \\
+\hline
+full  & mock         & 4/4 & 0 & 0 & 2 \\
+full  & pseudo-live  & 4/4 & 0 & 0 & 2 \\
+naive & mock         & 4/4 & 0 & 4 & 2 \\
+naive & pseudo-live  & 4/4 & 0 & 4 & 2 \\
+\hline
+\end{tabular}
+\end{table}
+
 \paragraph{Baseline: a fixed playbook.}
 Replaying the suite against a planner that emits a fixed, pre-approved plan and
 never revises it leaves 20 of the 43 cases inapplicable by construction: a plan
@@ -804,6 +1060,30 @@ shape as the untrusted-planner arm (17/23 naive, 1/23 full), which says the
 mediators are not doing work that a disciplined playbook already does: the harms
 that survive a fixed playbook are the evidence-and-observation ones, and those
 are exactly what the closure gate and the phase split cover.
+
+\begin{table}
+\centering
+\small
+\caption{Dead-playbook baseline: cases that do not require planner drift.
+20 of 43 are inapplicable by construction and are excluded, not scored as
+successes. Pooled 17/23 naive, 1/23 full.}
+\label{tab:dead}
+\begin{tabular}{@{}lcccccc@{}}
+\hline
+\multicolumn{7}{@{}l}{\emph{mock} (11 applicable)}\\
+configuration & A1 & A2 & A3 & A4 & A5 & total\\
+\hline
+naive & 4/4 & --- & 0/3 & --- & 4/4 & 8/11\\
+full  & 1/4 & --- & 0/3 & --- & 0/4 & 1/11\\
+\hline
+\multicolumn{7}{@{}l}{\emph{pseudo-live} (12 applicable)}\\
+configuration & A1 & A2 & A3 & A4 & A5 & total\\
+\hline
+naive & 5/5 & --- & 0/3 & --- & 4/4 & 9/12\\
+full  & 0/5 & --- & 0/3 & --- & 0/4 & 0/12\\
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{A real language model in the planner seat}
 \label{sec:eval-planner}
@@ -965,6 +1245,29 @@ outbound guard             & 0.01 (0.02) & 0.09 (0.12) & $+0.08$\\
 \hline
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \draw[->, thick] (0,0) -- (8.2,0) node[right] {\scriptsize ms};
+  \draw[->, thick] (0,0) -- (0,2.6);
+  \foreach \y/\t in {0.5/40, 1.0/80, 1.5/120, 2.0/160}
+    \draw (0,\y) -- ++(-0.08,0) node[left, font=\scriptsize] {\t};
+  \fill[black!15] (0.4,0) rectangle (1.3,0.02);
+  \node[font=\scriptsize, below] at (0.85,-0.15) {close};
+  \fill[black!15] (1.8,0) rectangle (2.7,0.02);
+  \node[font=\scriptsize, below] at (2.25,-0.15) {bind};
+  \fill[black!70] (3.2,0) rectangle (4.1,1.46);
+  \node[font=\scriptsize, below] at (3.65,-0.15) {verify};
+  \fill[black!15] (4.6,0) rectangle (5.5,0.02);
+  \node[font=\scriptsize, below] at (5.05,-0.15) {egress};
+  \fill[black!40] (6.4,0) rectangle (7.5,1.89);
+  \node[font=\scriptsize, below] at (6.95,-0.15) {end-to-end};
+\end{tikzpicture}
+\caption{Added p50 latency of each mediator (full minus naive) on the golden
+path. Three checks are a line on this scale; the phase split is the round trip.}
+\label{fig:overhead}
+\end{figure}
 
 Table~\ref{tab:overhead} says something we did not expect to be so lopsided. Three
 of the four mediators are free at any scale a SOC operates at: the closure gate,
@@ -1265,11 +1568,62 @@ are in the production path, not in the harness.
 \section{Discussion}
 \label{sec:disc}
 
-The planner is not in the boundary; the process is. Mock confirmation is weaker
-than live vendor readback and the two columns are never merged.
-\texttt{UNVERIFIABLE} is not success. A single adapter does not generalize to
-every vendor API. Administrator \texttt{force\_close} is a declared bypass, not
-a closure.
+\paragraph{The planner is not in the boundary; the process is.}
+Everything we claim is a claim about decisions made from database state, not a
+claim about the planner's honesty. A language model that never proposes a bad
+row would make the mediators look idle; a language model that always does would
+make them look essential. Neither is a result about the mediators. The
+scripted planner exists so that the question ``is the check interposed'' has a
+yes-or-no answer per case. The language-model arm exists so that the question
+``does a real model author the row'' has an interval. Mixing the two in one
+table would let a lucky model inflate a mediation result.
+
+\paragraph{Mock confirmation is weaker than live vendor readback.}
+The two vendor columns are never merged, and the one residual harm under
+\emph{full} is a mock-column closure on a receipt with no confirmation fields.
+That is a declared property of the mock path, not a scoring rule we applied
+after seeing the number. A deployment that treats a mock adapter's
+acknowledgement as live confirmation has a weaker closure gate than the one we
+measured on the pseudo-live column, and we do not claim otherwise.
+
+\paragraph{\texttt{UNVERIFIABLE} is not success.}
+A tool result that says \texttt{SUCCESS} without \texttt{is\_verified} is
+unverified. Collapsing that into a pass is how an observation becomes an
+effect. The phase split exists to keep the two apart; the overhead of
+\S\ref{sec:eval-overhead} is the cost of looking.
+
+\paragraph{A single adapter does not generalize to every vendor API.}
+The recording vendor implements the production adapter contract: submit,
+confirm-readback, idempotency. A vendor whose API cannot express a confirmed
+readback cannot satisfy the closure gate's non-mock evidence requirement, and
+the honest behaviour is to refuse to close, not to invent a receipt. We did
+not evaluate against a third vendor, and we do not claim the envelope maps
+onto one.
+
+\paragraph{Administrator \texttt{force\_close} is a declared bypass.}
+It is role-checked, it marks the event externally unsynchronized, and it is
+excluded from every closure count. A reader who wants to treat it as a
+mediated closure can; the paper does not. The threat model is the data plane,
+and an administrator with that role is not on it.
+
+\paragraph{Complete mediation, not a reference monitor.}
+Anderson's reference monitor is tamper-proof, always invoked, and small enough
+to verify~\cite{anderson1972computer}. We claim the second of those three for
+vendor-facing commands (Invariant~\ref{inv:mediate}) and we explicitly refuse
+the first. Saltzer, Reed and Clark's end-to-end argument~\cite{saltzer1984endtoend}
+is the reason the closure gate rebuilds its context from the database rather
+than trusting a context object the caller already holds: the property that
+matters is a property of the stored state, and checking it anywhere else is
+checking a copy. Schneider's enforceable security policies~\cite{schneider2000enforceable}
+bound what a runtime monitor can guarantee; we stay inside that bound by
+restricting the claim to prefixes of the write path we actually intercept.
+
+\paragraph{What we would not want a reader to take away.}
+That four Python functions make a SOC safe. That a model that scores well on
+AgentDojo is therefore safe to connect to an outbox. That the unique index is
+optional because the supersede exists---Table~\ref{tab:model} is the reason it
+is not. That the overhead is ``151\,ms, therefore cheap'' without noticing that
+151\,ms is one round trip and three of the four checks are free.
 
 \section{Related Work}
 \label{sec:rw}
@@ -1310,7 +1664,8 @@ express.
 CaMeL~\cite{debenedetti2026camel} places a capability-tracking interpreter
 between a privileged and a quarantined model, IsolateGPT~\cite{wu2025isolategpt}
 isolates third-party agent apps from each other, the dual-LLM
-pattern~\cite{willison2023duallm} keeps untrusted content out of the
+pattern~\cite{willison2023duallm} and the instruction
+hierarchy~\cite{wallace2024instruction} keep untrusted content out of the
 control flow, and AgentDojo~\cite{debenedetti2024agentdojo} evaluates such
 defenses under prompt injection.
 \emph{Difference:} that line mediates \emph{information and control flow inside
@@ -1322,10 +1677,27 @@ record may close. Data-flow capabilities do not answer any of the three,
 because the evidence lives at the vendor and in the database, not in the
 agent's variables.
 
+\paragraph{Agent-security benchmarks and tool-level policy.}
+InjecAgent~\cite{zhan2024injecagent} and ASB~\cite{zhang2024asb} measure whether
+a model can be talked into a tool call; ToolEmu~\cite{ruan2024toolemu} measures
+whether an emulator can catch a dangerous one before it reaches a real API;
+Progent~\cite{shi2025progent} enforces least privilege over tool names and
+arguments with a deterministic checker and an SMT-bounded policy update;
+NeMo Guardrails~\cite{rebedea2023nemo} intercepts dialogue acts against a
+programmable policy; OWASP's LLM Top~10 names the resulting failure
+\texttt{LLM06} Excessive Agency~\cite{owasp2025llm}.
+\emph{Difference:} those systems decide whether a \emph{call} is allowed. We
+decide whether a \emph{world state} may change and whether a \emph{record} may
+close, which requires evidence that is not in the call: a receipt, an approval
+fingerprint, a terminal head. Table~\ref{tab:coverage} is honest about the
+overlap and about the cells those benchmarks do not have.
+
 \paragraph{Security orchestration and workflow approval.}
 SOAR platforms have long automated multi-vendor response~\cite{islam2019orchestration},
 including human approval tasks, playbook versioning, and retries with
-idempotency keys~\cite{xsoar-manual-tasks}.
+idempotency keys~\cite{xsoar-manual-tasks}. Bridges
+et~al.~\cite{bridges2023testing} measured six of them in use and found that
+ticket accuracy dropped even as efficiency rose.
 \emph{Difference:} these treat playbook semantics as ground truth---if the
 containment step returned success and the playbook says the ticket may close,
 it closes---and they bind approval to a step in a workflow instance rather than
@@ -1333,13 +1705,19 @@ to the content that will be dispatched. Both assumptions are exactly what an
 untrusted planner invalidates, and \S\ref{sec:eval-found} shows that getting the
 binding subtly wrong is easy even when you are trying.
 
-\paragraph{Commit protocols and receipts.}
+\paragraph{Commit protocols, receipts, and long-running work.}
 The prepare/commit distinction and the treatment of a receipt as the only
 admissible evidence of a remote effect are database
 folklore~\cite{gray1978notes}, as is the observation that cross-service work
 must be made idempotent and reconciled rather than transacted~\cite{helland2007apostate}.
-Our split between observing an effect and performing one, and our insistence on
-a confirmed non-simulated receipt, are instances of both.
+Sagas~\cite{garciamolina1987sagas} are how we retire a terminal head without a
+distributed transaction; the transactional outbox~\cite{richardson2019microservices}
+is how a crash cannot drop one. Merkle's content-addressed
+commitment~\cite{merkle1980protocols} is what the approval fingerprint is.
+Saltzer, Reed and Clark~\cite{saltzer1984endtoend} are why the closure gate
+re-reads the database rather than trusting a context object. Schneider's EM
+enforceable policies~\cite{schneider2000enforceable} are the upper bound on
+what a runtime monitor can guarantee, and we stay inside it.
 \emph{Difference:} in the classical setting the participants are trusted to
 report their own state; here the component that reports the outcome is the one
 under adversary control, so ``prepared'' is a claim to be verified rather than a
@@ -1347,11 +1725,17 @@ protocol message to be believed, and the failure we care about is a safety
 violation rather than a stuck transaction.
 
 \paragraph{Language models in the SOC.}
-Recent work evaluates models and agents on SOC analysis: multi-agent alert
-triage with auditable evidence~\cite{wei2025cortex}, malware-analysis and
-threat-intelligence reasoning benchmarks~\cite{deason2025cybersoceval}, and
-agentic incident-analysis benchmarks measuring junior-analyst
-competency~\cite{jajodia2026siabench}.
+SOC work itself is a usability and process
+literature~\cite{kokulu2019matched,goodall2004work,sundaramurthy2016turning}
+long before it is a language-model one. Recent work evaluates models and agents
+on SOC analysis: multi-agent alert triage with auditable
+evidence~\cite{wei2025cortex}, malware-analysis and threat-intelligence
+reasoning benchmarks~\cite{deason2025cybersoceval}, and agentic
+incident-analysis benchmarks measuring junior-analyst
+competency~\cite{jajodia2026siabench}. The planner in this paper is the ReAct
+shape~\cite{yao2023react} with tools~\cite{schick2023toolformer}, which is why
+a tool-level policy~\cite{shi2025progent,rebedea2023nemo} looks like a neighbour
+and is not one.
 \emph{Difference:} all of them score the quality of analysis. None of them
 lets the system change the world, so none of them can report a wrong-close or a
 leak, and their metrics do not compose with ours; we keep the two off the same
@@ -1363,8 +1747,19 @@ table.
 Analysis may be wrong; the external world and the record of what happened to it
 must not be. Making closure, dispatch, verification, and outbound writeback
 depend on evidence the planner did not author is enough to turn that
-distinction into code, and evaluating it by injection at the boundary is what
-tells you whether the code is doing it.
+distinction into code. Evaluating it by injection at the boundary, rather than
+by asking a gate function for its verdict, is what tells you whether the code
+is doing it: with the four switchable mediators unloaded, 33 of 43 injections
+produce their harm; with them loaded, one does, and it is a case the mock
+vendor path is declared too weak to decide. The mechanisms a deployment cannot
+switch off are load-bearing under interleavings a sequential harness never
+produces, which is why we both weakened the substrate and enumerated the
+protocol. Three of the four mediators decide in tens of microseconds; the
+fourth buys its guarantee with a round trip. None of this is a protection
+domain, and none of it is a claim against prompt injection. It is a claim
+about four decisions on one write path, stated as invariants, measured by
+ablation, and cheap enough that the reason not to deploy them is not the
+cost.
 
 \begin{acks}
 Removed for double-blind review.

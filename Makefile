@@ -1,6 +1,6 @@
 # Prefer uv when lockfile is present; fall back to project venv / system python.
 UV ?= uv
-PYTHON ?= $(shell if [ -f "$(CURDIR)/backend/uv.lock" ]; then echo "$(UV) run --frozen python"; elif [ -x "$(CURDIR)/backend/.venv/bin/python" ]; then echo "$(CURDIR)/backend/.venv/bin/python"; else echo python3; fi)
+PYTHON ?= $(shell if [ -f "$(CURDIR)/backend/uv.lock" ]; then echo "$(UV) run --frozen --directory $(CURDIR)/backend python"; elif [ -x "$(CURDIR)/backend/.venv/bin/python" ]; then echo "$(CURDIR)/backend/.venv/bin/python"; else echo python3; fi)
 
 WORKTREE_ID ?= $(shell printf '%s' "$(CURDIR)" | cksum | cut -d ' ' -f 1)
 COMPOSE_PROJECT_NAME ?= shadowtrace-$(WORKTREE_ID)
