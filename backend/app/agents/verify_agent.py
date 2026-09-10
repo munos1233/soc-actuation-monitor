@@ -37,6 +37,7 @@ from app.agents.rules.verification_mapping import (
     validate_verification_tool_params,
 )
 from app.core.config import get_settings, is_mock_disposition_mode
+from app.core.metrics import MEDIATOR_VERIFY, time_mediator
 from app.db import models as orm
 from app.eval_monitor import (
     eval_count_deferred_as_failure,
@@ -378,24 +379,27 @@ class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
         # into EventContext (ISSUE-085 Should-Fix).
         await self._persist_effect_verification_statuses(phase1_results)
 
-        # 3. Phase 2 — terminal writeback activation & verification.
-        (
-            phase2_results,
-            phase2_recoverable_wb,
-            phase2_pending_actions,
-            phase2_blocked_wb,
-            overall_status,
-            need_wb_recovery,
-            need_manual,
-        ) = await self._verify_phase2_disposition(
-            event_id=event_id,
-            disposition_policy=disposition_policy,
-            phase1_need_replan=phase1_need_replan,
-            phase1_need_manual=phase1_need_manual,
-            actions=actions,
-            jobs_map=jobs_map,
-            outbox_map=outbox_map,
-        )
+        # 3. Phase 2 — terminal writeback activation & verification. Timed as the
+        # verify mediator: the split between observing an effect and performing one
+        # is what this phase implements, and its cost is the round trip it adds.
+        with time_mediator(MEDIATOR_VERIFY):
+            (
+                phase2_results,
+                phase2_recoverable_wb,
+                phase2_pending_actions,
+                phase2_blocked_wb,
+                overall_status,
+                need_wb_recovery,
+                need_manual,
+            ) = await self._verify_phase2_disposition(
+                event_id=event_id,
+                disposition_policy=disposition_policy,
+                phase1_need_replan=phase1_need_replan,
+                phase1_need_manual=phase1_need_manual,
+                actions=actions,
+                jobs_map=jobs_map,
+                outbox_map=outbox_map,
+            )
 
         # 4. Assemble final result.
         all_results = phase1_results + phase2_results

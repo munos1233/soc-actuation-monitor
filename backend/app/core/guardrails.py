@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.core.config import Settings, get_settings
 from app.core.errors import GuardrailViolationError
+from app.core.metrics import MEDIATOR_EGRESS, time_mediator
 from app.core.sanitization import is_sensitive_key, redact_sensitive_text, sanitize_data
 from app.models.action import Action
 from app.models.agent_io import (
@@ -760,6 +761,14 @@ class OutboundDispositionGuard:
         self._violation_writer = violation_writer
 
     async def validate(
+        self,
+        payload: DispositionCommand | Mapping[str, Any],
+        context: Mapping[str, Any] | None = None,
+    ) -> GuardResult:
+        with time_mediator(MEDIATOR_EGRESS):
+            return await self._validate(payload, context)
+
+    async def _validate(
         self,
         payload: DispositionCommand | Mapping[str, Any],
         context: Mapping[str, Any] | None = None,

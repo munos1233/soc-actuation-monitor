@@ -627,6 +627,77 @@ counts effects per idempotency key and the reason the key-rewrite case exists at
 all. The key is planner-written, so a system that relies on the vendor to
 deduplicate is relying on the untrusted component.
 
+\subsection{What the mediators cost}
+\label{sec:eval-overhead}
+
+A fail-closed control is only adoptable if it is affordable, and until this point
+the only number behind that claim was the golden path's worker passes. So we
+instrumented each mediator with a timer that wraps it including the path where its
+switch is off---so the unmediated arm reports the cost of asking whether the
+mediator is loaded, not zero---and counted SQL statements with a cursor hook on the
+evaluation engine, which counts statements actually issued rather than statements
+we believe the mediators are responsible for.
+
+The measurement runs on Suite A rather than Suite B, and the reason is worth stating
+because we got it wrong first. On adversarial cases the mediated arm refuses early
+and therefore issues \emph{fewer} statements than the unmediated one: measured that
+way the mediators are a 19\% speedup, which is true and tells the reader nothing.
+On the golden path both arms run the same case to the same successful close, so the
+difference is the cost of mediating and nothing else.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Golden path, 8 repeats of 4 cases across both columns, mock column shown.
+Per-mediator figures are wall time for one decision. The unmediated column is the
+switch check, which is why it is small rather than zero.}
+\label{tab:overhead}
+\begin{tabular}{@{}lrrr@{}}
+\hline
+ & \emph{naive} & \emph{full} & $\Delta$\\
+\hline
+end-to-end p50 (ms)        & 938   & 1089  & $+151$\\
+end-to-end p95 (ms)        & 995   & 1168  & $+173$\\
+SQL statements per case    & 188.5 & 239.5 & $+51.0$\\
+worker passes per case     & 1.50  & 1.50  & $0$\\
+\hline
+\multicolumn{4}{@{}l}{\emph{per decision, p50 (p95) in ms}}\\
+closure gate               & 0.00 (0.00) & 0.01 (0.01) & $+0.01$\\
+approval binding           & 0.01 (0.01) & 0.02 (0.03) & $+0.01$\\
+verification phase split   & 40.9 (49.9) & 158.0 (168.3) & $+117.1$\\
+outbound guard             & 0.01 (0.02) & 0.09 (0.12) & $+0.08$\\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:overhead} says something we did not expect to be so lopsided. Three
+of the four mediators are free at any scale a SOC operates at: the closure gate,
+the approval-binding recheck and the outbound guard each decide in under
+$100\,\mu$s, because each is a predicate over rows the caller has already loaded
+for its own reasons. The approval binding in particular is often assumed expensive
+because it hashes eleven fields; hashing eleven short strings is not expensive, and
+the fingerprint comparison adds no query the dispatch was not already making.
+
+The entire cost is the verification phase split, at $+117$\,ms per decision, which
+accounts for essentially all of the $+151$\,ms end-to-end difference. That is not
+computation. It is the deferred terminal activation and the receipt read that the
+split exists to force: refusing to treat the tool's own reply as the effect means
+someone has to go and look, and looking is a round trip. The 51 extra SQL
+statements are the same fact counted differently, and they include the outbound
+guard running more often in the mediated arm (112 envelopes against 48) because
+the terminal writeback actually happens there.
+
+Worker passes are identical at 1.50 in both arms, which retires a claim an earlier
+draft of this paper made. The deferred-verification round trip is a property of the
+writeback protocol, not a cost the mediators impose: an unmediated system that
+still wants a terminal writeback pays it too.
+
+A tenth of a second on a path whose other steps involve a language model and a
+vendor API is not a number we expect anyone to object to. We report it rather than
+asserting it because the shape matters: a reader deciding which of these four to
+adopt should know that three are nearly free and one buys its guarantee with a
+round trip.
+
 \subsection{Real contention: several processes, one row}
 \label{sec:eval-concurrency}
 

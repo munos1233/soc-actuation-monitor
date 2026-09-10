@@ -8,6 +8,10 @@ bounded ``error_code`` buckets for dead-letter metrics only. Never attach
 from __future__ import annotations
 
 import logging
+import math
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from app.core import telemetry
@@ -35,6 +39,7 @@ _soft_time_limit_outcome_total: Any | None = None
 _socketio_subscriber_failure_total: Any | None = None
 _socketio_subscriber_recovery_total: Any | None = None
 _force_close_total: Any | None = None
+_mediator_latency: Any | None = None
 _initialized = False
 _process_checkpoint_fallback_active = False
 _process_checkpoint_fallback_triggers = 0
@@ -52,6 +57,7 @@ _process_soft_time_limit_reconcile_required = 0
 _process_soft_time_limit_ignored = 0
 _process_socketio_subscriber_failures = 0
 _process_socketio_subscriber_recoveries = 0
+_process_mediator_latency: dict[str, list[float]] = {}
 
 
 def _ensure_metrics() -> None:
@@ -66,6 +72,7 @@ def _ensure_metrics() -> None:
     global _soft_time_limit_outcome_total
     global _socketio_subscriber_failure_total, _socketio_subscriber_recovery_total
     global _force_close_total
+    global _mediator_latency
 
     if not telemetry.is_telemetry_enabled():
         return
@@ -178,9 +185,91 @@ def _ensure_metrics() -> None:
             description="Admin force_close attempts by outcome",
             unit="1",
         )
+        _mediator_latency = _meter.create_histogram(
+            name="shadowtrace_mediator_decision_seconds",
+            description="Wall time for one actuation-path mediator to decide",
+            unit="s",
+        )
     except Exception:
         logger.debug("Business metric registration failed", exc_info=True)
     _initialized = True
+
+
+MEDIATOR_CLOSE = "close"
+MEDIATOR_BIND = "bind"
+MEDIATOR_VERIFY = "verify"
+MEDIATOR_EGRESS = "egress"
+MEDIATORS = (MEDIATOR_CLOSE, MEDIATOR_BIND, MEDIATOR_VERIFY, MEDIATOR_EGRESS)
+
+_MEDIATOR_SAMPLE_CAP = 4096
+"""Bound on retained samples per mediator, so a long-lived process cannot grow
+without limit. Percentiles past this point come from the most recent window."""
+
+
+def observe_mediator_latency(mediator: str, seconds: float) -> None:
+    """Record how long one mediator took to decide.
+
+    Exported as a histogram when telemetry is on, and always kept in a bounded
+    per-process window so a run can report percentiles without a metrics backend.
+    An operator wants the histogram; the evaluation wants the window.
+    """
+    if mediator not in MEDIATORS:
+        return
+    value = max(0.0, seconds)
+    samples = _process_mediator_latency.setdefault(mediator, [])
+    samples.append(value)
+    if len(samples) > _MEDIATOR_SAMPLE_CAP:
+        del samples[: len(samples) - _MEDIATOR_SAMPLE_CAP]
+    _ensure_metrics()
+    if _mediator_latency is None:
+        return
+    try:
+        _mediator_latency.record(value, {"mediator": mediator})
+    except Exception:
+        logger.debug("mediator latency metric export failed", exc_info=True)
+
+
+@contextmanager
+def time_mediator(mediator: str) -> Iterator[None]:
+    """Time a mediator's decision, including the path that raises.
+
+    A refusal is the expensive case for several of these---it reads more rows than
+    an accept does---so excluding it would understate the cost of the thing being
+    measured.
+    """
+    started = time.perf_counter()
+    try:
+        yield
+    finally:
+        observe_mediator_latency(mediator, time.perf_counter() - started)
+
+
+def mediator_latency_snapshot() -> dict[str, dict[str, float]]:
+    """Count, p50 and p95 per mediator over this process's retained window."""
+    snapshot: dict[str, dict[str, float]] = {}
+    for mediator in MEDIATORS:
+        samples = sorted(_process_mediator_latency.get(mediator, ()))
+        if not samples:
+            continue
+        snapshot[mediator] = {
+            "count": float(len(samples)),
+            "p50": _percentile(samples, 0.50),
+            "p95": _percentile(samples, 0.95),
+            "mean": sum(samples) / len(samples),
+        }
+    return snapshot
+
+
+def _percentile(ordered: list[float], fraction: float) -> float:
+    if not ordered:
+        return 0.0
+    index = min(len(ordered) - 1, max(0, math.ceil(fraction * len(ordered)) - 1))
+    return ordered[index]
+
+
+def reset_mediator_latency() -> None:
+    """Drop the retained window. Used between measured arms."""
+    _process_mediator_latency.clear()
 
 
 def record_writeback(*, status: str, adapter: str) -> None:

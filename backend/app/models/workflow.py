@@ -23,6 +23,7 @@ from app.core.errors import (
     InvalidStateTransitionError,
     InvalidVerdictStatusCombinationError,
 )
+from app.core.metrics import MEDIATOR_CLOSE, time_mediator
 from app.models.enums import (
     TERMINAL_SOURCE_DISPOSITIONS,
     ActionCategory,
@@ -933,7 +934,17 @@ def raise_closed_gate_writeback_error(violation: WritebackCloseGateViolation) ->
 
 
 def validate_closed_gate(ctx: TransitionContext) -> None:
-    """Hard gate for every transition into CLOSED (required writeback semantics)."""
+    """Hard gate for every transition into CLOSED (required writeback semantics).
+
+    Timed as a whole, including the unloaded early return, so that the difference
+    between a run with the gate and a run without it is the gate's own cost rather
+    than a figure assembled from two differently-scoped measurements.
+    """
+    with time_mediator(MEDIATOR_CLOSE):
+        _validate_closed_gate(ctx)
+
+
+def _validate_closed_gate(ctx: TransitionContext) -> None:
     from app.eval_monitor import eval_disable_closed_gate
 
     if eval_disable_closed_gate():

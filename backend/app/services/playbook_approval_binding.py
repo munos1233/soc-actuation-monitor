@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from app.core.errors import ValidationError
+from app.core.metrics import MEDIATOR_BIND, time_mediator
 from app.models.action import Action
 from app.models.agent_io import ResponsePlan
 from app.models.enums import CapabilityState
@@ -121,6 +122,11 @@ def validate_approval_binding(action: Action, detail: dict[str, Any] | None) -> 
     Fingerprint and plan_revision are checked for every action. Playbook hash and
     policy version are required only when ``action.playbook_ref`` is set.
     """
+    with time_mediator(MEDIATOR_BIND):
+        _validate_approval_binding(action, detail)
+
+
+def _validate_approval_binding(action: Action, detail: dict[str, Any] | None) -> None:
     from app.eval_monitor import eval_disable_fingerprint_recheck
 
     if eval_disable_fingerprint_recheck():
