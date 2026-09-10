@@ -1,0 +1,827 @@
+[
+  {
+    "mechanisms": "full",
+    "scenario": "shared_action",
+    "workers": 2,
+    "states": 29,
+    "transitions": 40,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_claim_cas",
+    "scenario": "shared_action",
+    "workers": 2,
+    "states": 164,
+    "transitions": 244,
+    "violations": {
+      "single_claim": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: write action 0 EXECUTING on the strength of an earlier read"
+      ],
+      "single_effect_per_action": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w0: submit head 0 to the vendor",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: lock prior head 0",
+        "w1: head 0 is still active, adopt it as prior",
+        "w1: insert head 1, superseding 0",
+        "w1: lease head 1 for delivery",
+        "w1: head 1 carries no supersede pointer",
+        "w1: head 1 is still the active head, proceed to deliver",
+        "w1: submit head 1 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_index",
+    "scenario": "shared_action",
+    "workers": 2,
+    "states": 29,
+    "transitions": 40,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_supersede",
+    "scenario": "shared_action",
+    "workers": 2,
+    "states": 29,
+    "transitions": 40,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness",
+    "scenario": "shared_action",
+    "workers": 2,
+    "states": 29,
+    "transitions": 40,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness_and_assertion",
+    "scenario": "shared_action",
+    "workers": 2,
+    "states": 29,
+    "transitions": 40,
+    "violations": {}
+  },
+  {
+    "mechanisms": "naive",
+    "scenario": "shared_action",
+    "workers": 2,
+    "states": 234,
+    "transitions": 360,
+    "violations": {
+      "single_claim": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: write action 0 EXECUTING on the strength of an earlier read"
+      ],
+      "single_active_head": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ],
+      "single_effect_per_action": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w0: submit head 0 to the vendor",
+        "w1: insert head 1",
+        "w1: lease head 1 for delivery",
+        "w1: head 1 carries no supersede pointer",
+        "w1: deliver head 1 without re-reading the active head",
+        "w1: submit head 1 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "full",
+    "scenario": "shared_action",
+    "workers": 3,
+    "states": 85,
+    "transitions": 159,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_claim_cas",
+    "scenario": "shared_action",
+    "workers": 3,
+    "states": 4033,
+    "transitions": 8331,
+    "violations": {
+      "single_claim": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: write action 0 EXECUTING on the strength of an earlier read"
+      ],
+      "single_effect_per_action": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w0: submit head 0 to the vendor",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: lock prior head 0",
+        "w1: head 0 is still active, adopt it as prior",
+        "w1: insert head 1, superseding 0",
+        "w1: lease head 1 for delivery",
+        "w1: head 1 carries no supersede pointer",
+        "w1: head 1 is still the active head, proceed to deliver",
+        "w1: submit head 1 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_index",
+    "scenario": "shared_action",
+    "workers": 3,
+    "states": 85,
+    "transitions": 159,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_supersede",
+    "scenario": "shared_action",
+    "workers": 3,
+    "states": 85,
+    "transitions": 159,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness",
+    "scenario": "shared_action",
+    "workers": 3,
+    "states": 85,
+    "transitions": 159,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness_and_assertion",
+    "scenario": "shared_action",
+    "workers": 3,
+    "states": 85,
+    "transitions": 159,
+    "violations": {}
+  },
+  {
+    "mechanisms": "naive",
+    "scenario": "shared_action",
+    "workers": 3,
+    "states": 12478,
+    "transitions": 27975,
+    "violations": {
+      "single_claim": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: write action 0 EXECUTING on the strength of an earlier read"
+      ],
+      "single_active_head": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ],
+      "single_effect_per_action": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w0: submit head 0 to the vendor",
+        "w1: insert head 1",
+        "w1: lease head 1 for delivery",
+        "w1: head 1 carries no supersede pointer",
+        "w1: deliver head 1 without re-reading the active head",
+        "w1: submit head 1 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "full",
+    "scenario": "shared_action",
+    "workers": 4,
+    "states": 225,
+    "transitions": 532,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_claim_cas",
+    "scenario": "shared_action",
+    "workers": 4,
+    "states": 128748,
+    "transitions": 341492,
+    "violations": {
+      "single_claim": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: write action 0 EXECUTING on the strength of an earlier read"
+      ],
+      "single_effect_per_action": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w0: submit head 0 to the vendor",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: lock prior head 0",
+        "w1: head 0 is still active, adopt it as prior",
+        "w1: insert head 1, superseding 0",
+        "w1: lease head 1 for delivery",
+        "w1: head 1 carries no supersede pointer",
+        "w1: head 1 is still the active head, proceed to deliver",
+        "w1: submit head 1 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_index",
+    "scenario": "shared_action",
+    "workers": 4,
+    "states": 225,
+    "transitions": 532,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_supersede",
+    "scenario": "shared_action",
+    "workers": 4,
+    "states": 225,
+    "transitions": 532,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness",
+    "scenario": "shared_action",
+    "workers": 4,
+    "states": 225,
+    "transitions": 532,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness_and_assertion",
+    "scenario": "shared_action",
+    "workers": 4,
+    "states": 225,
+    "transitions": 532,
+    "violations": {}
+  },
+  {
+    "mechanisms": "naive",
+    "scenario": "shared_action",
+    "workers": 4,
+    "states": 1190752,
+    "transitions": 3560956,
+    "violations": {
+      "single_claim": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: write action 0 EXECUTING on the strength of an earlier read"
+      ],
+      "single_active_head": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ],
+      "single_effect_per_action": [
+        "w0: read action 0 status (approved)",
+        "w1: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: write action 0 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w0: submit head 0 to the vendor",
+        "w1: insert head 1",
+        "w1: lease head 1 for delivery",
+        "w1: head 1 carries no supersede pointer",
+        "w1: deliver head 1 without re-reading the active head",
+        "w1: submit head 1 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "full",
+    "scenario": "distinct_actions",
+    "workers": 2,
+    "states": 119,
+    "transitions": 174,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_claim_cas",
+    "scenario": "distinct_actions",
+    "workers": 2,
+    "states": 136,
+    "transitions": 206,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_index",
+    "scenario": "distinct_actions",
+    "workers": 2,
+    "states": 179,
+    "transitions": 262,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_supersede",
+    "scenario": "distinct_actions",
+    "workers": 2,
+    "states": 81,
+    "transitions": 114,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness",
+    "scenario": "distinct_actions",
+    "workers": 2,
+    "states": 189,
+    "transitions": 280,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_uniqueness_and_assertion",
+    "scenario": "distinct_actions",
+    "workers": 2,
+    "states": 189,
+    "transitions": 290,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "naive",
+    "scenario": "distinct_actions",
+    "workers": 2,
+    "states": 206,
+    "transitions": 322,
+    "violations": {
+      "single_active_head": [
+        "w0: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: read action 1 status (approved)",
+        "w1: write action 1 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: read action 1 status (approved)",
+        "w1: write action 1 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "full",
+    "scenario": "distinct_actions",
+    "workers": 3,
+    "states": 2775,
+    "transitions": 5640,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_claim_cas",
+    "scenario": "distinct_actions",
+    "workers": 3,
+    "states": 3157,
+    "transitions": 6591,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_index",
+    "scenario": "distinct_actions",
+    "workers": 3,
+    "states": 9870,
+    "transitions": 20010,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_supersede",
+    "scenario": "distinct_actions",
+    "workers": 3,
+    "states": 789,
+    "transitions": 1503,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness",
+    "scenario": "distinct_actions",
+    "workers": 3,
+    "states": 10980,
+    "transitions": 23022,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_uniqueness_and_assertion",
+    "scenario": "distinct_actions",
+    "workers": 3,
+    "states": 10590,
+    "transitions": 23820,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "naive",
+    "scenario": "distinct_actions",
+    "workers": 3,
+    "states": 11182,
+    "transitions": 25329,
+    "violations": {
+      "single_active_head": [
+        "w0: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: read action 1 status (approved)",
+        "w1: write action 1 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: read action 1 status (approved)",
+        "w1: write action 1 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "full",
+    "scenario": "distinct_actions",
+    "workers": 4,
+    "states": 88317,
+    "transitions": 231652,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_claim_cas",
+    "scenario": "distinct_actions",
+    "workers": 4,
+    "states": 100164,
+    "transitions": 267912,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_index",
+    "scenario": "distinct_actions",
+    "workers": 4,
+    "states": 1004749,
+    "transitions": 2606508,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_supersede",
+    "scenario": "distinct_actions",
+    "workers": 4,
+    "states": 7113,
+    "transitions": 17196,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_head_uniqueness",
+    "scenario": "distinct_actions",
+    "workers": 4,
+    "states": 1160881,
+    "transitions": 3162564,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: head 0 is still the active head, proceed to deliver",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_head_uniqueness_and_assertion",
+    "scenario": "distinct_actions",
+    "workers": 4,
+    "states": 1052761,
+    "transitions": 3159132,
+    "violations": {
+      "single_active_head": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: claim action 0 by compare-and-set, succeeds",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: claim action 1 by compare-and-set, succeeds",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  },
+  {
+    "mechanisms": "naive",
+    "scenario": "distinct_actions",
+    "workers": 4,
+    "states": 1096288,
+    "transitions": 3300908,
+    "violations": {
+      "single_active_head": [
+        "w0: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: read action 1 status (approved)",
+        "w1: write action 1 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w1: insert head 1"
+      ],
+      "no_stale_delivery": [
+        "w0: read action 0 status (approved)",
+        "w0: write action 0 EXECUTING on the strength of an earlier read",
+        "w0: SELECT prior head FOR UPDATE returns nothing",
+        "w1: read action 1 status (approved)",
+        "w1: write action 1 EXECUTING on the strength of an earlier read",
+        "w1: SELECT prior head FOR UPDATE returns nothing",
+        "w0: insert head 0",
+        "w0: lease head 0 for delivery",
+        "w0: head 0 carries no supersede pointer",
+        "w0: deliver head 0 without re-reading the active head",
+        "w1: insert head 1",
+        "w0: submit head 0 to the vendor"
+      ]
+    }
+  }
+]

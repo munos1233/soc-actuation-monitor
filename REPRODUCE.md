@@ -94,6 +94,23 @@ make paper-pages          # rebuild and fail if over the 35-page TOPS limit
 | `backend/app/eval_monitor.py` | the four mediator switches, refused outside a declared harness build |
 | `backend/tests/eval/` | structural guards for the harness |
 
+## Additional experiments the paper reports
+
+These are not required to reproduce the main ablation table.
+
+```bash
+make paper-eval-model         # exhaustive interleaving check, ~40 s, no database
+make paper-eval-concurrency   # K=4 OS processes on one row, ~15 min
+make paper-eval-overhead      # mediator p50/p95 and statement counts, ~5 min
+```
+
+The real-planner arm needs provider credentials in `backend/.env` (never
+committed) and takes about two hours at N=5:
+
+```bash
+make paper-eval-planner
+```
+
 ## Known rough edges
 
 - Twenty-nine tests in the wider backend suite fail on a clean checkout for a

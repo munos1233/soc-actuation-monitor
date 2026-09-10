@@ -14,7 +14,7 @@ from collections.abc import Callable, Iterable, Sequence
 from typing import Any
 
 from app.eval_suite.cases import ALL_CASES
-from app.eval_suite.chain import Injection, run_case
+from app.eval_suite.chain import CaseOutcome, Injection, run_case
 from app.eval_suite.configs import (
     ALL_CONFIGS,
     LEAVE_ONE_OUT_CONFIGS,
@@ -32,6 +32,7 @@ from app.eval_suite.substrate import substrate_context
 from app.eval_suite.world import eval_world
 
 ProgressHook = Callable[[str], None]
+ArmHook = Callable[[list[dict[str, Any]]], None]
 
 
 async def run_matrix(
@@ -41,6 +42,7 @@ async def run_matrix(
     planners: Sequence[PlannerModel] = (PlannerModel.UNTRUSTED_PLANNER,),
     cases: Sequence[Injection] = ALL_CASES,
     progress: ProgressHook | None = None,
+    on_arm: ArmHook | None = None,
     trials: int = 1,
     llm_planner: LLMPlanner | None = None,
     policy: ExternalPolicyEngine | None = None,
@@ -75,15 +77,40 @@ async def run_matrix(
                         async with substrate_context(world, config):
                             for trial in range(reps):
                                 for case in scoped:
-                                    outcome = await run_case(
-                                        world,
-                                        case,
-                                        config_name=config.name,
-                                        planner=planner,
-                                        llm_planner=llm_planner,
-                                        policy=arm_policy,
-                                        trial=trial,
-                                    )
+                                    try:
+                                        outcome = await run_case(
+                                            world,
+                                            case,
+                                            config_name=config.name,
+                                            planner=planner,
+                                            llm_planner=llm_planner,
+                                            policy=arm_policy,
+                                            trial=trial,
+                                        )
+                                    except Exception as exc:  # noqa: BLE001
+                                        # One case must not throw away an arm. The
+                                        # planner run that motivated this used to
+                                        # die on a vanished event row after two
+                                        # hours, with nothing written.
+                                        outcome = CaseOutcome(
+                                            case_id=case.case_id,
+                                            adversary=case.adversary,
+                                            harm_kind=case.harm,
+                                            config=config.name,
+                                            column=world.column.value,
+                                            planner=planner.value,
+                                            trial=trial,
+                                            applicable=False,
+                                            harm_detail=(
+                                                f"harness exception: {type(exc).__name__}: {exc}"
+                                            ),
+                                            notes={"harness_exception": repr(exc)[:500]},
+                                        )
+                                        if progress is not None:
+                                            progress(
+                                                f"  {case.case_id} trial={trial} "
+                                                f"raised {type(exc).__name__}"
+                                            )
                                     row = outcome.as_row()
                                     row["expected_mediator"] = case.expected_mediator
                                     row["mediators_loaded"] = list(config.loaded())
@@ -95,6 +122,8 @@ async def run_matrix(
                         f"{column.value}/{config.name}/{planner.value}: "
                         f"{len(scoped) * reps} executions in {time.monotonic() - started:.1f}s"
                     )
+                if on_arm is not None:
+                    on_arm(rows)
     return rows
 
 

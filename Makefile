@@ -87,7 +87,7 @@ CELERY_SIGKILL_ARTIFACT_DIR ?= $(CURDIR)/artifacts/issue-283
 CI_DATABASE_URL ?= postgresql+asyncpg://shadowtrace:shadowtrace@localhost:$(POSTGRES_PORT)/shadowtrace
 CI_REDIS_URL ?= redis://localhost:$(REDIS_PORT)/0
 
-.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-cases paper-eval-concurrency paper-eval-overhead paper-opa-up paper-opa-down paper-eval-comparator paper-pdf paper-pages
+.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-planner paper-eval-cases paper-eval-concurrency paper-eval-overhead paper-eval-model paper-opa-up paper-opa-down paper-eval-comparator paper-pdf paper-pages
 
 up:
 	$(COMPOSE) $(WORKER_COMPOSE) $(WORKER_PROFILE) $(SCHEDULER_PROFILE) up -d --build
@@ -984,6 +984,18 @@ paper-eval-quick:
 	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
 		--configs naive,full --columns mock --planners untrusted_planner --skip-gold
 
+# Experiment 1: a real language model in the planner seat. Needs provider
+# credentials in backend/.env (never committed). N=5, roughly two hours.
+PAPER_PLANNER_TRIALS ?= 5
+PAPER_PLANNER_TOKEN_BUDGET ?= 1200000
+paper-eval-planner:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
+		--configs naive,full --columns mock \
+		--planners untrusted_planner,llm_planner --skip-gold \
+		--trials $(PAPER_PLANNER_TRIALS) \
+		--llm-token-budget $(PAPER_PLANNER_TOKEN_BUDGET) \
+		--out "$(CURDIR)/eval/results/planner_arm"
+
 paper-eval-cases:
 	$(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
 		--export-cases "$(CURDIR)/eval/cases/adversary_set.json"
@@ -1009,6 +1021,10 @@ PAPER_OVERHEAD_REPEATS ?= 8
 paper-eval-overhead:
 	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_overhead.py" \
 		--repeats $(PAPER_OVERHEAD_REPEATS) --out "$(CURDIR)/eval/results/overhead"
+
+# Exhaustive interleaving check of the head protocol. No database. ~40 s at K=4.
+paper-eval-model:
+	$(PYTHON) "$(CURDIR)/eval/harness/run_model.py" --out "$(CURDIR)/eval/results/model"
 
 paper-opa-up:
 	@docker rm -f "$(PAPER_OPA_CONTAINER)" >/dev/null 2>&1 || true

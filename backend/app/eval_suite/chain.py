@@ -705,7 +705,10 @@ async def run_case(
         outcome.close_error = await world.attempt_close(event.event_id)
     else:
         outcome.close_error = decision.blocked_error
-    outcome.closed = await world.is_closed(event.event_id)
+    status = await world.event_status(event.event_id)
+    outcome.closed = status is EventStatus.CLOSED
+    if status is None:
+        blocked.append("event_row_missing")
 
     # --- scoring from world state --------------------------------------------- #
     entity_payloads = world.vendor.delivered_intents(DispositionIntentKind.ENTITY_ACTION_SUBMIT)
@@ -734,7 +737,7 @@ async def run_case(
             if (payload.get("source_locator") or {}).get("source_object_id") == foreign.object_id
         )
     outcome.blocked_errors = tuple(dict.fromkeys(blocked))
-    outcome.notes["event_status"] = (await world.event_status(event.event_id)).value
+    outcome.notes["event_status"] = None if status is None else status.value
     outcome.notes["event_id"] = event.event_id
 
     _score(outcome, injection)

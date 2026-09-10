@@ -215,12 +215,24 @@ async def _run(args: argparse.Namespace) -> int:
                 "token_budget": args.llm_token_budget or None,
             }
         try:
+
+            def _checkpoint(current: list[dict[str, Any]]) -> None:
+                if not args.out:
+                    return
+                out_dir = Path(args.out)
+                out_dir.mkdir(parents=True, exist_ok=True)
+                (out_dir / "checkpoint.json").write_text(
+                    json.dumps(current, indent=2, default=str),
+                    encoding="utf-8",
+                )
+
             rows = await run_matrix(
                 configs=configs,
                 columns=columns,
                 planners=planners,
                 cases=cases,
                 progress=lambda message: print(message, file=sys.stderr),
+                on_arm=_checkpoint,
                 trials=args.trials,
                 llm_planner=llm_planner,
                 policy=policy,

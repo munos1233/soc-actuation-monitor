@@ -358,11 +358,18 @@ class EvalWorld:
 
     # -- observation -------------------------------------------------------- #
 
-    async def event_status(self, event_id: str) -> EventStatus:
+    async def event_status(self, event_id: str) -> EventStatus | None:
+        """Current status, or ``None`` if the row is gone.
+
+        A missing row is a scoring fact (the event did not close), not a
+        harness crash: one vanished event used to abort a multi-hour planner
+        arm and throw away every row that arm had already scored.
+        """
         async with self.session_factory() as session:
             row = await session.get(orm.SecurityEvent, event_id)
-            assert row is not None
-            return EventStatus(row.status)
+        if row is None:
+            return None
+        return EventStatus(row.status)
 
     async def is_closed(self, event_id: str) -> bool:
         return await self.event_status(event_id) is EventStatus.CLOSED

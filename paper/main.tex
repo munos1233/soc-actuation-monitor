@@ -8,6 +8,11 @@
 %% hyphenating code is worse than breaking it, so break after the underscore.
 \renewcommand{\_}{\discretionary{\textunderscore}{}{\textunderscore}}
 
+%% acmart supplies definition/theorem/lemma, but not at preamble time and none of
+%% them is what an invariant is. Give it its own environment and counter, so the
+%% invariant numbers the evaluation refers to stay stable.
+\newtheorem{invariant}{Invariant}
+
 %% Working title. No product name, no "reference monitor": the mediators run in
 %% the planner's own process, so the Anderson tamper-proofness claim is not ours
 %% to make. See Section~\ref{sec:tcb}.
@@ -333,6 +338,243 @@ a guard against operator error, not a tamper-proofness argument, and the
 switches are excluded from the boundary in \S\ref{sec:tcb}.
 \end{sloppypar}
 
+\section{Invariants}
+\label{sec:inv}
+
+The argument in \S\ref{sec:argument} walks the write path in prose. This section
+says what the path is supposed to guarantee. Each invariant is a predicate over
+persistent state, so a reader can check it with a query instead of believing a
+paragraph; each is paired with the code that maintains it and with the ablation
+arm under which it is observed to fail. The pairing is the point. An invariant
+with no ablation is a wish, and an ablation with no invariant is a table of
+numbers.
+
+\begin{definition}[Actuation state]
+\label{def:state}
+An event $e$ carries a plan revision $r(e)$ and a closure cycle $c(e)$. An
+action $a$ carries a status, an execution phase, a plan revision $r(a)$, at most
+one approval record $\alpha(a)$, and the eleven-segment dispatch fingerprint
+$\phi(a)$ of Appendix~\ref{app:fp}. A \emph{terminal head} is an outbox row $h$
+with intent \texttt{event\_status\_update}; its slot is
+$\sigma(h)=(e,\,c,\,\text{intent},\,\text{logical slot})$ and its lineage pointer
+$\mathrm{sup}(h)$ is null exactly when $h$ is \emph{active}. An \emph{external
+effect} is one completed call to the vendor adapter's submit entry point.
+\end{definition}
+
+\begin{invariant}[Complete mediation of egress]
+\label{inv:mediate}
+Every external effect carrying command $\kappa$ is preceded, in the same
+transaction, by an outbound-guard decision that admitted a payload whose
+SHA-256 equals the SHA-256 stored on $\kappa$'s outbox row.
+\end{invariant}
+
+\noindent\emph{Mechanism.} The adapter's submit entry point has one caller, in
+the outbox worker's delivery routine; the guard runs both when a command is
+enqueued and again inside the delivery transaction, and the payload digest is
+written at enqueue and not recomputed, so the object that was checked is the
+object that is sent. \emph{Evidence.} This is a structural claim and the
+ablation cannot test it directly: unloading the guard removes the check, it does
+not add a second call site. What the ablation shows is the contrapositive of the
+guard's usefulness --- with it unloaded, A4 leaks at the rate reported in
+\S\ref{sec:eval}; with it loaded, at zero. The single-call-site half rests on
+inspection, and we say so rather than dress it as a measurement.
+
+\begin{invariant}[Approval binding]
+\label{inv:bind}
+If an external effect is attributable to action $a$, then at the moment $a$ was
+claimed, $\alpha(a)$ existed, was in the approved state, committed to exactly
+the fingerprint $\phi(a)$, and $r(a)=r(e)$.
+\end{invariant}
+
+\noindent\emph{Mechanism.} The binding recheck runs inside the claim
+transaction, under the row lock that the claim's conditional update takes, so no
+window exists between the comparison and the status transition; a second check
+before delivery refuses a command whose action has since been revoked or
+superseded. \emph{Evidence.} A2, where the naive configuration admits the drift
+and the mediated one does not.
+
+\begin{invariant}[Single active head]
+\label{inv:head}
+For every slot $\sigma$, at most one terminal head $h$ with
+$\sigma(h)=\sigma$ has $\mathrm{sup}(h)$ null.
+\end{invariant}
+
+\noindent\emph{Mechanism.} Three layers, in the order they act: the enqueue
+transaction retires the prior head as it inserts the new one; a partial unique
+index on the slot, restricted to rows with a null lineage pointer, refuses an
+insert that would leave two; and delivery re-reads the active head and declines
+to send if it is no longer the newest. \emph{Evidence.} The substrate ablation
+(\S\ref{sec:eval-substrate}), the multi-process probe
+(\S\ref{sec:eval-concurrency}), and the model check below, which is the only one
+of the three that speaks about interleavings the harness did not happen to
+produce.
+
+\begin{invariant}[Closure evidence]
+\label{inv:close}
+An event reaches \texttt{CLOSED} only if, at the moment of the transition and as
+read back from the database rather than from the caller's argument: a report row
+exists; a disposition policy resolved; side-effect convergence is present and
+converged; every applicable required-writeback action is in a closed state; and
+a terminal writeback row exists whose plan revision and closure cycle equal
+$r(e)$ and $c(e)$.
+\end{invariant}
+
+\noindent\emph{Mechanism.} One predicate, evaluated on a context the state
+machine rebuilds from the database, on the only non-administrative edge into
+\texttt{CLOSED}. \emph{Evidence.} A1. \emph{Boundary.} The last conjunct
+requires the terminal writeback \emph{row}, not its delivery and not a vendor
+receipt. It cannot require the receipt, because closure is the transition that
+makes the head deliverable in the first place; requiring the receipt would be a
+cycle. So Invariant~\ref{inv:close} is weaker than ``closed implies the vendor
+agrees'', and an event can be \texttt{CLOSED} locally while its writeback is
+still in the queue. What rules out a permanent divergence is not the gate but
+the outbox: the head is durable, the worker retries, and a head that cannot be
+delivered lands in the dead-letter state where it is visible rather than
+silently dropped. We state this because a reader who assumed the stronger
+version would over-read every A1 row in the paper.
+
+Two properties follow from the invariants above together with the claim
+protocol, and both are directly observable, which is why the evaluation scores
+them: \emph{(\ref{inv:effect})} one approved action produces at most one
+external effect, and \emph{(\ref{inv:stale})} no superseded head is ever
+delivered.
+
+\begin{invariant}[Single effect per action]
+\label{inv:effect}
+For every action $a$, at most one external effect is attributable to $a$.
+\end{invariant}
+
+\begin{invariant}[No stale delivery]
+\label{inv:stale}
+No head is submitted to the vendor at a moment when it is not the newest active
+head of its slot.
+\end{invariant}
+
+\subsection{Model checking the head invariants}
+\label{sec:inv-model}
+
+The substrate ablation and the multi-process probe both answer ``did this
+happen''. Neither can answer ``could this happen'', because both sample
+interleavings: the ablation drives cases sequentially, and four processes over
+five rounds explore whatever the scheduler gave them. The head protocol is small
+enough to settle the second question by enumeration, so we do that.
+
+We model claim, enqueue and delivery as a transition system and explore the
+reachable state space breadth-first, which makes the first counterexample found
+for each invariant a shortest one. The model is written against the awkward parts
+of the real protocol rather than around them: the enqueue holds a row lock on the
+prior active head while it inserts, so two enqueues that both see a prior head
+are serialized and two that both see \emph{none} are not; a waiter on that lock
+does not rescan when it is granted, because PostgreSQL rechecks the locked row
+against the predicate and drops it if it no longer matches instead of
+re-executing the query; the supersede and the insert are one transaction, so a
+unique violation rolls the supersede back with it; the delivery transaction holds
+a row lock on its own head across the adapter call; and a head carrying a lineage
+pointer is refused unconditionally, which is not one of the four switchable
+mechanisms.
+
+Two scenarios matter, and the sequential suite conflates them. Under
+\emph{shared action}, $K$ workers race to execute one approved action. Under
+\emph{distinct actions}, each worker holds its own approved action for the same
+slot --- an amended plan revision, or a second closure attempt --- so every claim
+legitimately succeeds.
+
+\begin{table}
+\centering
+\small
+\caption{Invariants against mechanism ablations, $K=4$ workers, exhaustive.
+Entries give the length in steps of the shortest counterexample; ``--'' means
+the invariant holds over every reachable state. The ``one claimant'' column is
+the precondition of Invariant~\ref{inv:bind}: at most one worker writes a given
+action's execution status, without which the fingerprint comparison protects
+whichever writer happened to go second. All 42 checks
+($K \in \{2,3,4\}$, both scenarios, seven configurations) enumerate 5{,}898{,}819
+states and 16{,}796{,}448 transitions in 40\,s.}
+\label{tab:model}
+\begin{tabular}{@{}lcccc@{}}
+\hline
+ & one active & one & one effect & no stale \\
+Mechanisms unloaded & head & claimant & per action & delivery \\
+ & (\ref{inv:head}) & (\ref{inv:bind}) & (\ref{inv:effect}) & (\ref{inv:stale}) \\
+\hline
+\multicolumn{5}{@{}l}{\emph{shared action}: $K$ workers, one approved action} \\
+none (\texttt{full}) & -- & -- & -- & -- \\
+claim compare-and-set & -- & 4 & 17 & -- \\
+unique index & -- & -- & -- & -- \\
+in-transaction supersede & -- & -- & -- & -- \\
+index $+$ supersede & -- & -- & -- & -- \\
+\quad $+$ delivery assertion & -- & -- & -- & -- \\
+all four (\texttt{naive}) & 8 & 4 & 16 & 12 \\
+\hline
+\multicolumn{5}{@{}l}{\emph{distinct actions}: $K$ workers, one action each} \\
+none (\texttt{full}) & -- & -- & -- & -- \\
+claim compare-and-set & -- & -- & -- & -- \\
+unique index & 6 & -- & -- & 10 \\
+in-transaction supersede & -- & -- & -- & -- \\
+index $+$ supersede & 6 & -- & -- & 10 \\
+\quad $+$ delivery assertion & 6 & -- & -- & 10 \\
+all four (\texttt{naive}) & 8 & -- & -- & 12 \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:model} reports three things worth separating.
+
+First, the deployed configuration holds all four invariants over every reachable
+interleaving at $K=2$, $3$ and $4$. $K=4$ is the same width as the
+multi-process probe, so for that width the probe's zeros are no longer a sample.
+
+Second, the two layers are not redundant, they cover disjoint races. Under the
+shared-action race the head mechanisms decide nothing at all: the claim
+compare-and-set admits one enqueuer, so the state space is 225 states wide and
+identical whether the index is there or not. Under the distinct-actions race the
+compare-and-set decides nothing, because both claims are legitimate, and the
+index becomes the only thing between two approved terminal actions and two live
+writebacks. A reviewer inclined to call one of these mechanisms belt-and-braces
+should read the two halves of the table as the answer.
+
+Third --- and this is the finding we did not expect --- dropping the unique index
+\emph{alone} violates Invariant~\ref{inv:head} in six steps:
+
+\begin{enumerate}\itemsep1pt
+\item $w_0$ claims action $0$ by compare-and-set; succeeds.
+\item $w_0$ selects the prior head \texttt{FOR UPDATE}; returns nothing.
+\item $w_1$ claims action $1$ by compare-and-set; succeeds.
+\item $w_1$ selects the prior head \texttt{FOR UPDATE}; returns nothing.
+\item $w_0$ inserts head $0$.
+\item $w_1$ inserts head $1$.
+\end{enumerate}
+
+The row lock cannot serialize two enqueues that find no row to lock, so the
+in-transaction supersede has nothing to retire and the index is the only
+remaining check. The sequential substrate ablation scored this arm as no change
+at all (\S\ref{sec:eval-substrate}), and it was right about what it measured:
+run one enqueue to completion before the next begins and the second always sees
+the first, so the supersede alone suffices. The arm looked redundant because the
+harness could not produce the interleaving that makes it load-bearing. Two steps
+further on, the same ablation delivers a head that is no longer the newest one,
+because the delivery-time assertion re-reads and finds a \emph{newer} active
+head rather than a superseded own head, and the lineage check it would otherwise
+trip is a check on a pointer that the supersede never had cause to write.
+
+\paragraph{What the model does not cover.} It models claim, enqueue and delivery
+of terminal heads. It does not model the post-execution status transitions, nor
+the delivery-time approval recheck that sits below them. That omission is
+visible in the results: the model says losing the claim compare-and-set
+duplicates the external effect, whereas the multi-process probe found it
+\emph{loses} the effect instead (\S\ref{sec:eval-concurrency}), because two
+conflicting status writes leave the action row in a state the pre-delivery
+approval fence refuses. Both are true of their own subject. The model bounds what
+the head layer guarantees on its own; the probe shows a mechanism below it
+catching the damage the head layer let through. We report the disagreement rather
+than tuning the model until it agrees, because the disagreement is the more
+useful fact: it locates a second fence, and it is a reminder that a model check
+of a subsystem is a statement about that subsystem.
+
+The checker is one standard-library Python file, runs in 40\,s, and fails its own
+exit code if the deployed configuration ever violates an invariant, so the claim
+in Table~\ref{tab:model} is a test rather than a footnote.
+
 \section{Security Argument}
 \label{sec:argument}
 
@@ -562,6 +804,60 @@ shape as the untrusted-planner arm (17/23 naive, 1/23 full), which says the
 mediators are not doing work that a disciplined playbook already does: the harms
 that survive a fixed playbook are the evidence-and-observation ones, and those
 are exactly what the closure gate and the phase split cover.
+
+\subsection{A real language model in the planner seat}
+\label{sec:eval-planner}
+
+The scripted planner answers whether the mediators sit on the path. It does not
+answer whether a real model authors the offending row. That is a different
+question, and the one a reviewer who has seen prompt-injection numbers will ask.
+We put a language model in the planner seat through the production prompt
+builder and the production response schema, so what is under test is the
+deployed contract rather than a prompt written for the paper.
+
+Three consequences of that choice are worth stating before any rate. The
+production prompt already forbids the model from authoring the deferred terminal
+disposition action, so the harness continues to append that action itself,
+exactly as production does: the model never gets to author closure, and A1 is
+therefore out of scope for this arm. Injection reaches the planner the way it
+reaches a real one, through upstream free text a compromised evidence or triage
+stage produced, which lands in the prompt via the decision summary; nobody
+hands the model an instruction out of band. The two A4 cases that smuggle
+narrative or a credential into a vendor field are rewritten this way; the other
+adversaries still apply as post-approval mutations, because a live planner can
+drift whether or not a language model wrote the original row.
+
+The provider has no seed and no temperature-zero guarantee, so one execution is
+a Bernoulli sample. We repeat every case $N=5$ times and report a Wilson score
+interval rather than a point, because the counts are small and cluster at 0 and
+1, where a normal-approximation interval leaves the unit interval. Provider
+refusals are dropped from the denominator and counted separately, so a model
+that will not answer cannot be scored as a prevented harm. The same two
+configurations as the headline table, \emph{naive} and \emph{full}, run against
+the mock column; the scripted planner is the paired control so that a difference
+between arms is attributable to who authored the row.
+
+Table~\ref{tab:planner} reports the rates. A token budget caps the arm so a
+runaway provider cannot silently dominate the cost of the paper.
+
+\begin{table}
+\centering
+\small
+\caption{Planner arms, mock column, $N=5$ trials on the language-model rows.
+Wilson is the 95\% score interval on the harm rate. ``Lost'' is executions the
+provider did not answer, excluded from the denominator.}
+\label{tab:planner}
+\begin{tabular}{@{}llccc@{}}
+\hline
+planner & configuration & harm & 95\% Wilson & lost \\
+\hline
+scripted (untrusted) & naive & --- & --- & 0 \\
+scripted (untrusted) & full  & --- & --- & 0 \\
+language model       & naive & --- & --- & --- \\
+language model       & full  & --- & --- & --- \\
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{Substrate ablation: the layer with no switch}
 \label{sec:eval-substrate}
