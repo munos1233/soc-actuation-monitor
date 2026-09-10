@@ -103,17 +103,24 @@ prevented harm (`Injection.applies_to`).
 
 ## Running it
 
-The suite writes to the database and Redis it is given. Never point it at
-anything you care about.
+The suite writes to the database and Redis it is given, and the substrate arms
+deliberately drop a uniqueness constraint. Never point it at anything you care
+about. `REPRODUCE.md` is the full recipe; the short version:
 
 ```bash
-docker compose -p shadowtrace-eval up -d postgres redis
+make paper-eval-up        # isolated postgres :55432 / redis :56379
+make paper-eval-matrix    # every configuration, both columns, both planners
+make paper-eval-quick     # naive vs full, mock column only — minutes
+make paper-eval-cases     # regenerate eval/cases/adversary_set.json
+make paper-eval-down
+```
+
+Equivalently, by hand:
+
+```bash
 export DATABASE_URL=postgresql+asyncpg://shadowtrace:shadowtrace@localhost:55432/shadowtrace
 export REDIS_URL=redis://localhost:56379/0
-
 python eval/harness/run_suite.py --out eval/results
-python eval/harness/run_suite.py --configs naive,full --columns mock --skip-gold   # quick signal
-python eval/harness/run_suite.py --export-cases eval/cases/adversary_set.json
 ```
 
 ## What the pytest gate does and does not do

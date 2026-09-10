@@ -58,6 +58,25 @@ SCHEDULER ?=
 SCHEDULER_PROFILE = $(if $(SCHEDULER),--profile scheduler,)
 export TASK_MODE := $(if $(WORKER),celery,$(if $(TASK_MODE),$(TASK_MODE),background))
 
+# --- Paper artifact: actuation-integrity evaluation (see REPRODUCE.md) ------ #
+# A dedicated Compose project on non-default ports so the paper matrix can
+# never touch a development database. Everything here is additive; no existing
+# target changes behaviour.
+PAPER_EVAL_PROJECT_NAME ?= shadowtrace-evalchain
+PAPER_EVAL_POSTGRES_PORT ?= 55432
+PAPER_EVAL_REDIS_PORT ?= 56379
+PAPER_EVAL_DATABASE_URL ?= postgresql+asyncpg://shadowtrace:shadowtrace@localhost:$(PAPER_EVAL_POSTGRES_PORT)/shadowtrace
+PAPER_EVAL_REDIS_URL ?= redis://localhost:$(PAPER_EVAL_REDIS_PORT)/0
+PAPER_EVAL_COMPOSE := COMPOSE_PROJECT_NAME="$(PAPER_EVAL_PROJECT_NAME)" \
+	POSTGRES_PORT="$(PAPER_EVAL_POSTGRES_PORT)" REDIS_PORT="$(PAPER_EVAL_REDIS_PORT)" \
+	docker compose --project-name "$(PAPER_EVAL_PROJECT_NAME)" -f "$(COMPOSE_FILE)"
+PAPER_EVAL_ENV := DATABASE_URL="$(PAPER_EVAL_DATABASE_URL)" REDIS_URL="$(PAPER_EVAL_REDIS_URL)"
+PAPER_EVAL_OUT ?= $(CURDIR)/eval/results
+
+TEXBIN ?= /Library/TeX/texbin
+LATEXMK ?= $(shell command -v latexmk 2>/dev/null || echo "$(TEXBIN)/latexmk")
+GS ?= $(shell command -v gs 2>/dev/null || echo gs)
+
 INTEGRATION_PROJECT_NAME ?= $(COMPOSE_PROJECT_NAME)-integration
 CI_TEST_PROJECT_NAME ?= $(COMPOSE_PROJECT_NAME)-ci-test
 CI_BUILD_PROJECT_PREFIX ?= $(COMPOSE_PROJECT_NAME)-ci-build
@@ -68,7 +87,7 @@ CELERY_SIGKILL_ARTIFACT_DIR ?= $(CURDIR)/artifacts/issue-283
 CI_DATABASE_URL ?= postgresql+asyncpg://shadowtrace:shadowtrace@localhost:$(POSTGRES_PORT)/shadowtrace
 CI_REDIS_URL ?= redis://localhost:$(REDIS_PORT)/0
 
-.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run
+.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-cases paper-pdf paper-pages
 
 up:
 	$(COMPOSE) $(WORKER_COMPOSE) $(WORKER_PROFILE) $(SCHEDULER_PROFILE) up -d --build
@@ -938,3 +957,44 @@ ci-build:
 		"http://127.0.0.1:$(FRONTEND_PORT)/health" >/dev/null; \
 	curl --fail --show-error --silent \
 		"http://127.0.0.1:$(MOCK_XDR_PORT)/mock-xdr/v1/health" >/dev/null
+
+# --- Paper artifact reproduction (REPRODUCE.md) ----------------------------- #
+# The evaluation writes to whatever database it is given, so it gets its own
+# Compose project on non-default ports and never shares one with `make up`.
+paper-eval-up:
+	$(PAPER_EVAL_COMPOSE) up -d --wait --wait-timeout 120 postgres redis
+	@echo "paper eval stack: postgres :$(PAPER_EVAL_POSTGRES_PORT), redis :$(PAPER_EVAL_REDIS_PORT)"
+
+paper-eval-down:
+	$(PAPER_EVAL_COMPOSE) down --volumes --remove-orphans
+
+# Structural guards only: coverage of the adversary set, scorer positive
+# controls, substrate arm nesting. Does not assert the ablation table.
+paper-eval-test:
+	cd "$(CURDIR)/backend" && $(PAPER_EVAL_ENV) \
+		$(UV) run --frozen --extra dev pytest tests/eval -q -p no:randomly
+
+# The headline run: every configuration, both vendor columns, both planners.
+# Roughly 20 minutes on a laptop.
+paper-eval-matrix:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" --out "$(PAPER_EVAL_OUT)"
+
+# Minutes, not tens of minutes: the two arms that carry the main claim.
+paper-eval-quick:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
+		--configs naive,full --columns mock --planners untrusted_planner --skip-gold
+
+paper-eval-cases:
+	$(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
+		--export-cases "$(CURDIR)/eval/cases/adversary_set.json"
+
+paper-pdf:
+	cd "$(CURDIR)/paper" && "$(LATEXMK)" -pdf -interaction=nonstopmode -halt-on-error main.tex
+
+# TOPS rejects over-length submissions without review, so the page count is a
+# gate, not a curiosity.
+paper-pages: paper-pdf
+	@pages=$$("$(GS)" -q -dNODISPLAY -dNOSAFER \
+		-c "($(CURDIR)/paper/main.pdf) (r) file runpdfbegin pdfpagecount = quit"); \
+	echo "paper/main.pdf: $$pages pages (ACM TOPS limit: 35)"; \
+	if [ "$$pages" -gt 35 ]; then echo "OVER LIMIT" >&2; exit 1; fi
