@@ -11,7 +11,7 @@ from typing import Any
 import httpx
 import pytest
 import respx
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from app.agents.prompts.triage_prompt import TriageLLMResponse
 from app.core.config import Settings
@@ -494,6 +494,47 @@ async def test_audit_distinguishes_empty_content_and_invalid_json() -> None:
     assert "api_key" not in joined.lower()
     assert "Classify this event" not in joined
     assert "not-json{{{" not in joined
+
+
+class _PlanPayload(BaseModel):
+    """A schema shaped like response_plan: a validator that raises ValueError."""
+
+    actions: list[str] = []
+
+    @model_validator(mode="after")
+    def _require_actions(self) -> _PlanPayload:
+        if not self.actions:
+            raise ValueError("at least one action is required")
+        return self
+
+
+@pytest.mark.asyncio
+async def test_validator_valueerror_is_reported_as_schema_validation() -> None:
+    """Pydantic parks a raised ValueError in ``ctx`` as the exception object.
+
+    Serialising the error list without a fallback encoder then raises TypeError
+    from inside the handler, which the caller can only report as an opaque
+    provider failure — and the JSON repair this error exists to trigger never
+    runs. A real provider hits this every time it returns an empty plan.
+    """
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=_response('{"actions":[]}', model="primary-model"))
+
+    audit = InMemoryLLMCallAuditRecorder()
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        with pytest.raises(LLMInvalidJSONError) as exc_info:
+            await _client(http_client, audit=audit, fallback_models=()).chat(
+                MESSAGES,
+                event_id="evt-2026-validator-valueerror",
+                agent_name="ResponseAgent",
+                prompt_key="response_plan",
+                response_model=_PlanPayload,
+            )
+
+    assert exc_info.value.error_class == "schema_validation"
+    assert "at least one action is required" in exc_info.value.validation_error
+    assert {entry.error_class for entry in audit.entries} == {"schema_validation"}
 
 
 def test_sanitize_llm_error_detail_redacts_and_truncates() -> None:

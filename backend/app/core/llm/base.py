@@ -799,9 +799,15 @@ class BaseLLMClient(ABC):
         except (JsonExtractError, ValidationError, ValueError) as exc:
             if isinstance(exc, ValidationError):
                 error_class = "schema_validation"
+                # A validator that raises ValueError lands in ``ctx`` as the
+                # exception object itself, which is not JSON serialisable. Without
+                # default=str the dump raises TypeError from inside this handler,
+                # the caller reports an opaque provider failure, and the one JSON
+                # repair attempt this error was supposed to trigger never happens.
                 validation_error = json.dumps(
                     exc.errors(include_input=False, include_url=False),
                     ensure_ascii=False,
+                    default=str,
                 )
             elif isinstance(exc, JsonExtractError):
                 error_class = (
