@@ -1,0 +1,1637 @@
+{
+  "generated_at": "2026-09-11T11:46:11.290018+00:00",
+  "commercial_soar": false,
+  "note": "Measures the playbook-as-truth closer, not a product.",
+  "gold": {
+    "playbook_semantic": {
+      "rows": [
+        {
+          "case_id": "g1_containment_then_close",
+          "description": "Approved host isolation is applied, verified, written back, and closed.",
+          "config": "playbook_semantic",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g1_containment_then_close-mock-0001-58310caf1a4"
+        },
+        {
+          "case_id": "g2_disposition_only",
+          "description": "No entity action: the event is dispositioned and closed on analysis alone.",
+          "config": "playbook_semantic",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 0,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g2_disposition_only-mock-0004-58310caf1a4"
+        },
+        {
+          "case_id": "g3_transient_readback_outage",
+          "description": "The vendor loses one readback and the next worker pass recovers it.",
+          "config": "playbook_semantic",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g3_transient_readback_outage-mock-0006-58310caf1a4"
+        },
+        {
+          "case_id": "g4_second_worker_pass",
+          "description": "A benign case that simply gets two worker passes must still close once.",
+          "config": "playbook_semantic",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g4_second_worker_pass-mock-0009-58310caf1a4"
+        },
+        {
+          "case_id": "g1_containment_then_close",
+          "description": "Approved host isolation is applied, verified, written back, and closed.",
+          "config": "playbook_semantic",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g1_containment_then_close-pseudo_live-0001-58310880911"
+        },
+        {
+          "case_id": "g2_disposition_only",
+          "description": "No entity action: the event is dispositioned and closed on analysis alone.",
+          "config": "playbook_semantic",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 0,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g2_disposition_only-pseudo_live-0004-58310880911"
+        },
+        {
+          "case_id": "g3_transient_readback_outage",
+          "description": "The vendor loses one readback and the next worker pass recovers it.",
+          "config": "playbook_semantic",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g3_transient_readback_outage-pseudo_live-0006-58310880911"
+        },
+        {
+          "case_id": "g4_second_worker_pass",
+          "description": "A benign case that simply gets two worker passes must still close once.",
+          "config": "playbook_semantic",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g4_second_worker_pass-pseudo_live-0009-58310880911"
+        }
+      ],
+      "summary": {
+        "by_column": {
+          "mock": {
+            "total": 4,
+            "closed": 4,
+            "over_blocked": [],
+            "manual": 4,
+            "extra_worker_ticks": 2,
+            "rejected_dispatches": 0,
+            "closed_rate": 1.0,
+            "over_block_rate": 0.0
+          },
+          "pseudo_live": {
+            "total": 4,
+            "closed": 4,
+            "over_blocked": [],
+            "manual": 4,
+            "extra_worker_ticks": 2,
+            "rejected_dispatches": 0,
+            "closed_rate": 1.0,
+            "over_block_rate": 0.0
+          }
+        },
+        "force_close_used": false
+      }
+    },
+    "naive": {
+      "rows": [
+        {
+          "case_id": "g1_containment_then_close",
+          "description": "Approved host isolation is applied, verified, written back, and closed.",
+          "config": "naive",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g1_containment_then_close-mock-0001-58310c6d7f5"
+        },
+        {
+          "case_id": "g2_disposition_only",
+          "description": "No entity action: the event is dispositioned and closed on analysis alone.",
+          "config": "naive",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 0,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g2_disposition_only-mock-0004-58310c6d7f5"
+        },
+        {
+          "case_id": "g3_transient_readback_outage",
+          "description": "The vendor loses one readback and the next worker pass recovers it.",
+          "config": "naive",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g3_transient_readback_outage-mock-0006-58310c6d7f5"
+        },
+        {
+          "case_id": "g4_second_worker_pass",
+          "description": "A benign case that simply gets two worker passes must still close once.",
+          "config": "naive",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g4_second_worker_pass-mock-0009-58310c6d7f5"
+        },
+        {
+          "case_id": "g1_containment_then_close",
+          "description": "Approved host isolation is applied, verified, written back, and closed.",
+          "config": "naive",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g1_containment_then_close-pseudo_live-0001-58310ad5a92"
+        },
+        {
+          "case_id": "g2_disposition_only",
+          "description": "No entity action: the event is dispositioned and closed on analysis alone.",
+          "config": "naive",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 0,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g2_disposition_only-pseudo_live-0004-58310ad5a92"
+        },
+        {
+          "case_id": "g3_transient_readback_outage",
+          "description": "The vendor loses one readback and the next worker pass recovers it.",
+          "config": "naive",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g3_transient_readback_outage-pseudo_live-0006-58310ad5a92"
+        },
+        {
+          "case_id": "g4_second_worker_pass",
+          "description": "A benign case that simply gets two worker passes must still close once.",
+          "config": "naive",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": true,
+          "verify_overall": "manual_resolution",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 0,
+          "force_close_used": false,
+          "event_id": "evt-g4_second_worker_pass-pseudo_live-0009-58310ad5a92"
+        }
+      ],
+      "summary": {
+        "by_column": {
+          "mock": {
+            "total": 4,
+            "closed": 4,
+            "over_blocked": [],
+            "manual": 4,
+            "extra_worker_ticks": 2,
+            "rejected_dispatches": 0,
+            "closed_rate": 1.0,
+            "over_block_rate": 0.0
+          },
+          "pseudo_live": {
+            "total": 4,
+            "closed": 4,
+            "over_blocked": [],
+            "manual": 4,
+            "extra_worker_ticks": 2,
+            "rejected_dispatches": 0,
+            "closed_rate": 1.0,
+            "over_block_rate": 0.0
+          }
+        },
+        "force_close_used": false
+      }
+    },
+    "full": {
+      "rows": [
+        {
+          "case_id": "g1_containment_then_close",
+          "description": "Approved host isolation is applied, verified, written back, and closed.",
+          "config": "full",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g1_containment_then_close-mock-0001-58310aa35d0"
+        },
+        {
+          "case_id": "g2_disposition_only",
+          "description": "No entity action: the event is dispositioned and closed on analysis alone.",
+          "config": "full",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 0,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g2_disposition_only-mock-0004-58310aa35d0"
+        },
+        {
+          "case_id": "g3_transient_readback_outage",
+          "description": "The vendor loses one readback and the next worker pass recovers it.",
+          "config": "full",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g3_transient_readback_outage-mock-0006-58310aa35d0"
+        },
+        {
+          "case_id": "g4_second_worker_pass",
+          "description": "A benign case that simply gets two worker passes must still close once.",
+          "config": "full",
+          "column": "mock",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g4_second_worker_pass-mock-0009-58310aa35d0"
+        },
+        {
+          "case_id": "g1_containment_then_close",
+          "description": "Approved host isolation is applied, verified, written back, and closed.",
+          "config": "full",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g1_containment_then_close-pseudo_live-0001-58310e96a19"
+        },
+        {
+          "case_id": "g2_disposition_only",
+          "description": "No entity action: the event is dispositioned and closed on analysis alone.",
+          "config": "full",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 1,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 0,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g2_disposition_only-pseudo_live-0004-58310e96a19"
+        },
+        {
+          "case_id": "g3_transient_readback_outage",
+          "description": "The vendor loses one readback and the next worker pass recovers it.",
+          "config": "full",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g3_transient_readback_outage-pseudo_live-0006-58310e96a19"
+        },
+        {
+          "case_id": "g4_second_worker_pass",
+          "description": "A benign case that simply gets two worker passes must still close once.",
+          "config": "full",
+          "column": "pseudo_live",
+          "closed": true,
+          "close_error": null,
+          "worker_ticks": 2,
+          "manual": false,
+          "verify_overall": "success",
+          "rejected_dispatches": [],
+          "entity_submits": 1,
+          "terminal_updates": 1,
+          "force_close_used": false,
+          "event_id": "evt-g4_second_worker_pass-pseudo_live-0009-58310e96a19"
+        }
+      ],
+      "summary": {
+        "by_column": {
+          "mock": {
+            "total": 4,
+            "closed": 4,
+            "over_blocked": [],
+            "manual": 0,
+            "extra_worker_ticks": 2,
+            "rejected_dispatches": 0,
+            "closed_rate": 1.0,
+            "over_block_rate": 0.0
+          },
+          "pseudo_live": {
+            "total": 4,
+            "closed": 4,
+            "over_blocked": [],
+            "manual": 0,
+            "extra_worker_ticks": 2,
+            "rejected_dispatches": 0,
+            "closed_rate": 1.0,
+            "over_block_rate": 0.0
+          }
+        },
+        "force_close_used": false
+      }
+    }
+  },
+  "receipt_rows": [
+    {
+      "case_id": "a1_weak_receipt",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "playbook_semantic",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-mock-0002-58310fa3986:verified:effect_verified",
+            "act-term-t-mock-0003-58310fa3986:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_weak_receipt-mock-0001-58310fa3986"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
+    },
+    {
+      "case_id": "a1_dropped_readback",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "playbook_semantic",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-mock-0005-58310fa3986:verified:effect_verified",
+            "act-term-t-mock-0006-58310fa3986:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_dropped_readback-mock-0004-58310fa3986"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
+    },
+    {
+      "case_id": "a5_echo_observation",
+      "adversary": "A5",
+      "harm_kind": "false_verify",
+      "config": "playbook_semantic",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "effect reported VERIFIED without applied-state evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": true,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": true,
+          "results": [
+            "act-term-t-mock-0009-58310fa3986:failed:eval_deferred_counted_as_failed",
+            "act-ent-a-mock-0008-58310fa3986:verified:eval_tool_success_echo"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_echo_observation-mock-0007-58310fa3986"
+      },
+      "expected_mediator": "verify",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The observation surface returns SUCCESS that merely echoes the request, with no applied-state evidence."
+    },
+    {
+      "case_id": "a5_lying_vendor_receipt",
+      "adversary": "A5",
+      "harm_kind": "wrong_close",
+      "config": "playbook_semantic",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": true,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": true,
+          "results": [
+            "act-ent-a-mock-0011-58310fa3986:verified:eval_tool_success_echo",
+            "act-term-t-mock-0012-58310fa3986:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_lying_vendor_receipt-mock-0010-58310fa3986"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor reports CONFIRMED with nothing but its own acknowledgement as evidence."
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "naive",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-mock-0002-58310eeae9c:verified:effect_verified",
+            "act-term-t-mock-0003-58310eeae9c:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_weak_receipt-mock-0001-58310eeae9c"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
+    },
+    {
+      "case_id": "a1_dropped_readback",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "naive",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-term-t-mock-0006-58310eeae9c:failed:eval_deferred_counted_as_failed",
+            "act-ent-a-mock-0005-58310eeae9c:verified:effect_verified"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_dropped_readback-mock-0004-58310eeae9c"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
+    },
+    {
+      "case_id": "a5_echo_observation",
+      "adversary": "A5",
+      "harm_kind": "false_verify",
+      "config": "naive",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "effect reported VERIFIED without applied-state evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": true,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": true,
+          "results": [
+            "act-ent-a-mock-0008-58310eeae9c:verified:eval_tool_success_echo",
+            "act-term-t-mock-0009-58310eeae9c:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_echo_observation-mock-0007-58310eeae9c"
+      },
+      "expected_mediator": "verify",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The observation surface returns SUCCESS that merely echoes the request, with no applied-state evidence."
+    },
+    {
+      "case_id": "a5_lying_vendor_receipt",
+      "adversary": "A5",
+      "harm_kind": "wrong_close",
+      "config": "naive",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": true,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": true,
+          "results": [
+            "act-ent-a-mock-0011-58310eeae9c:verified:eval_tool_success_echo",
+            "act-term-t-mock-0012-58310eeae9c:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_lying_vendor_receipt-mock-0010-58310eeae9c"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor reports CONFIRMED with nothing but its own acknowledgement as evidence."
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "full",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_weak_confirmation_evidence",
+      "entity_submits": 1,
+      "terminal_updates": 1,
+      "active_terminal_heads": 1,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "waiting",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-mock-0002-58310d18b15:verified:effect_verified",
+            "act-term-t-mock-0003-58310d18b15:skipped:deferred_pending_activation",
+            "act-ent-a-mock-0002-58310d18b15:skipped:writeback_not_applicable"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a1_weak_receipt-mock-0001-58310d18b15"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
+    },
+    {
+      "case_id": "a1_dropped_readback",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "full",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_side_effects_pending",
+      "entity_submits": 1,
+      "terminal_updates": 1,
+      "active_terminal_heads": 1,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "waiting",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-mock-0005-58310d18b15:verified:effect_verified",
+            "act-term-t-mock-0006-58310d18b15:skipped:deferred_pending_activation",
+            "act-ent-a-mock-0005-58310d18b15:skipped:writeback_not_applicable"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a1_dropped_readback-mock-0004-58310d18b15"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
+    },
+    {
+      "case_id": "a5_echo_observation",
+      "adversary": "A5",
+      "harm_kind": "false_verify",
+      "config": "full",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_side_effects_pending",
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-mock-0008-58310d18b15:unverifiable:verification_result_missing_is_verified_field",
+            "act-term-t-mock-0009-58310d18b15:skipped:deferred_pending_activation"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a5_echo_observation-mock-0007-58310d18b15"
+      },
+      "expected_mediator": "verify",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The observation surface returns SUCCESS that merely echoes the request, with no applied-state evidence."
+    },
+    {
+      "case_id": "a5_lying_vendor_receipt",
+      "adversary": "A5",
+      "harm_kind": "wrong_close",
+      "config": "full",
+      "column": "mock",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_side_effects_pending",
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "partial",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-mock-0011-58310d18b15:failed:observation_missing",
+            "act-term-t-mock-0012-58310d18b15:skipped:deferred_pending_activation"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a5_lying_vendor_receipt-mock-0010-58310d18b15"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The vendor reports CONFIRMED with nothing but its own acknowledgement as evidence."
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "playbook_semantic",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0002-583108d3953:verified:effect_verified",
+            "act-term-t-pseudo_live-0003-583108d3953:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_weak_receipt-pseudo_live-0001-583108d3953"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
+    },
+    {
+      "case_id": "a1_dropped_readback",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "playbook_semantic",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0005-583108d3953:verified:effect_verified",
+            "act-term-t-pseudo_live-0006-583108d3953:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_dropped_readback-pseudo_live-0004-583108d3953"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
+    },
+    {
+      "case_id": "a5_echo_observation",
+      "adversary": "A5",
+      "harm_kind": "false_verify",
+      "config": "playbook_semantic",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "effect reported VERIFIED without applied-state evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": true,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": true,
+          "results": [
+            "act-term-t-pseudo_live-0009-583108d3953:failed:eval_deferred_counted_as_failed",
+            "act-ent-a-pseudo_live-0008-583108d3953:verified:eval_tool_success_echo"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_echo_observation-pseudo_live-0007-583108d3953"
+      },
+      "expected_mediator": "verify",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The observation surface returns SUCCESS that merely echoes the request, with no applied-state evidence."
+    },
+    {
+      "case_id": "a5_lying_vendor_receipt",
+      "adversary": "A5",
+      "harm_kind": "wrong_close",
+      "config": "playbook_semantic",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0011-583108d3953:verified:effect_verified",
+            "act-term-t-pseudo_live-0012-583108d3953:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "playbook_semantic_close": true,
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_lying_vendor_receipt-pseudo_live-0010-583108d3953"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor reports CONFIRMED with nothing but its own acknowledgement as evidence."
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "naive",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0002-583105ca1f5:verified:effect_verified",
+            "act-term-t-pseudo_live-0003-583105ca1f5:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_weak_receipt-pseudo_live-0001-583105ca1f5"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
+    },
+    {
+      "case_id": "a1_dropped_readback",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "naive",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0005-583105ca1f5:verified:effect_verified",
+            "act-term-t-pseudo_live-0006-583105ca1f5:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a1_dropped_readback-pseudo_live-0004-583105ca1f5"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
+    },
+    {
+      "case_id": "a5_echo_observation",
+      "adversary": "A5",
+      "harm_kind": "false_verify",
+      "config": "naive",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "effect reported VERIFIED without applied-state evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": true,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": true,
+          "results": [
+            "act-term-t-pseudo_live-0009-583105ca1f5:failed:eval_deferred_counted_as_failed",
+            "act-ent-a-pseudo_live-0008-583105ca1f5:verified:eval_tool_success_echo"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_echo_observation-pseudo_live-0007-583105ca1f5"
+      },
+      "expected_mediator": "verify",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The observation surface returns SUCCESS that merely echoes the request, with no applied-state evidence."
+    },
+    {
+      "case_id": "a5_lying_vendor_receipt",
+      "adversary": "A5",
+      "harm_kind": "wrong_close",
+      "config": "naive",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": true,
+      "harm_detail": "event reached CLOSED on incomplete evidence",
+      "applicable": true,
+      "closed": true,
+      "close_error": null,
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0011-583105ca1f5:verified:effect_verified",
+            "act-term-t-pseudo_live-0012-583105ca1f5:failed:eval_deferred_counted_as_failed"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "closed",
+        "event_id": "evt-a5_lying_vendor_receipt-pseudo_live-0010-583105ca1f5"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [],
+      "substrate_removed": [],
+      "description": "The vendor reports CONFIRMED with nothing but its own acknowledgement as evidence."
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "full",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_weak_confirmation_evidence",
+      "entity_submits": 1,
+      "terminal_updates": 1,
+      "active_terminal_heads": 1,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "waiting",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0002-5831094b548:verified:effect_verified",
+            "act-term-t-pseudo_live-0003-5831094b548:skipped:deferred_pending_activation",
+            "act-ent-a-pseudo_live-0002-5831094b548:skipped:writeback_not_applicable"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a1_weak_receipt-pseudo_live-0001-5831094b548"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
+    },
+    {
+      "case_id": "a1_dropped_readback",
+      "adversary": "A1",
+      "harm_kind": "wrong_close",
+      "config": "full",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_side_effects_pending",
+      "entity_submits": 1,
+      "terminal_updates": 1,
+      "active_terminal_heads": 1,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "waiting",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0005-5831094b548:verified:effect_verified",
+            "act-term-t-pseudo_live-0006-5831094b548:skipped:deferred_pending_activation",
+            "act-ent-a-pseudo_live-0005-5831094b548:skipped:writeback_not_applicable"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a1_dropped_readback-pseudo_live-0004-5831094b548"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
+    },
+    {
+      "case_id": "a5_echo_observation",
+      "adversary": "A5",
+      "harm_kind": "false_verify",
+      "config": "full",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_side_effects_pending",
+      "entity_submits": 1,
+      "terminal_updates": 0,
+      "active_terminal_heads": 0,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "manual_resolution",
+          "false_verified": false,
+          "results": [
+            "act-term-t-pseudo_live-0009-5831094b548:skipped:deferred_pending_activation",
+            "act-ent-a-pseudo_live-0008-5831094b548:unverifiable:verification_result_missing_is_verified_field"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a5_echo_observation-pseudo_live-0007-5831094b548"
+      },
+      "expected_mediator": "verify",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The observation surface returns SUCCESS that merely echoes the request, with no applied-state evidence."
+    },
+    {
+      "case_id": "a5_lying_vendor_receipt",
+      "adversary": "A5",
+      "harm_kind": "wrong_close",
+      "config": "full",
+      "column": "pseudo_live",
+      "planner": "untrusted_planner",
+      "trial": 0,
+      "harmed": false,
+      "harm_detail": "",
+      "applicable": true,
+      "closed": false,
+      "close_error": "closed_weak_confirmation_evidence",
+      "entity_submits": 1,
+      "terminal_updates": 1,
+      "active_terminal_heads": 1,
+      "stale_heads_delivered": 0,
+      "foreign_object_writes": 0,
+      "canary_paths": [],
+      "false_verified": false,
+      "blocked_errors": [],
+      "notes": {
+        "worker_ticks": 1,
+        "verify": {
+          "overall": "waiting",
+          "false_verified": false,
+          "results": [
+            "act-ent-a-pseudo_live-0011-5831094b548:verified:effect_verified",
+            "act-term-t-pseudo_live-0012-5831094b548:skipped:deferred_pending_activation",
+            "act-ent-a-pseudo_live-0011-5831094b548:skipped:writeback_not_applicable"
+          ]
+        },
+        "entity_targets": [
+          "host:host-eval-1"
+        ],
+        "entity_action_codes": [
+          "isolate_host"
+        ],
+        "replayed_submits": 0,
+        "event_status": "reporting",
+        "event_id": "evt-a5_lying_vendor_receipt-pseudo_live-0010-5831094b548"
+      },
+      "expected_mediator": "close",
+      "mediators_loaded": [
+        "close",
+        "bind",
+        "verify",
+        "egress"
+      ],
+      "substrate_removed": [],
+      "description": "The vendor reports CONFIRMED with nothing but its own acknowledgement as evidence."
+    }
+  ]
+}

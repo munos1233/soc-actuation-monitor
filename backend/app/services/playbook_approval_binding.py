@@ -99,6 +99,7 @@ def build_approval_binding_detail(action: Action) -> dict[str, Any]:
         "plan_revision": action.plan_revision,
         "action_fingerprint": action.action_fingerprint,
         "action_content_hash": recompute_action_content_fingerprint(action),
+        "required_level": action.action_level.value,
         "policy_version": APPROVAL_POLICY_VERSION,
         "policy_source": APPROVAL_POLICY_SOURCE,
         "playbook_binding_hash": compute_playbook_binding_hash(
@@ -132,15 +133,8 @@ def _validate_approval_binding(action: Action, detail: dict[str, Any] | None) ->
     if eval_disable_fingerprint_recheck():
         return
     if detail is None:
-        if action.playbook_ref is None:
-            # Nothing was recorded to compare against, and that is a different
-            # question from drift: whether an L2+ action may be APPROVED at all
-            # without persisted approval evidence is decided by
-            # ``validate_action_status_transition``. This function only detects
-            # content that moved after a decision was recorded.
-            return
         raise ValidationError(
-            "approval binding missing for playbook-pinned action",
+            "approval binding missing; dispatch refuses an empty decision record",
             details={
                 "action_id": action.action_id,
                 "reason": "binding_detail_missing",
@@ -180,6 +174,24 @@ def _validate_approval_binding(action: Action, detail: dict[str, Any] | None) ->
             details={
                 "action_id": action.action_id,
                 "reason": "action_fingerprint_mismatch",
+            },
+        )
+    # The action's required approval level is part of what the human
+    # decided, but it is not one of the eleven fingerprint segments, so a
+    # level rewritten after approval drifts past the content hash. Found
+    # by Phase-1 construction closure (2026-09-17): a validly re-encoded
+    # downgrade with the fingerprint column preserved reached dispatch
+    # unrefused. Present-then-check, like the content hash: approvals
+    # recorded before the field existed carry no level and are exempt.
+    bound_level = detail.get("required_level")
+    if isinstance(bound_level, str) and bound_level and bound_level != action.action_level.value:
+        raise ValidationError(
+            "approval binding stale: required approval level changed",
+            details={
+                "action_id": action.action_id,
+                "bound_required_level": bound_level,
+                "current_action_level": action.action_level.value,
+                "reason": "approval_level_drift",
             },
         )
     if action.playbook_ref is not None:

@@ -51,6 +51,10 @@ async def _lifespan(application: FastAPI) -> AsyncIterator[None]:
     # production and any mock/simulation mode is active.
     settings = get_settings()
     assert_orchestration_mode(settings)
+    logger.info(
+        "actuation write path: process_role=%s planner and actuation logins are distinct",
+        settings.process_role.value,
+    )
 
     try:
         from app.adapters.factory import build_sangfor_live_query_adapters

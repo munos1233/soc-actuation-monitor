@@ -1,0 +1,29 @@
+# Fallback if Gatekeeper cannot install. Same class: CEL over request only.
+# Paper must say ValidatingAdmissionPolicy, not Gatekeeper, when this is used.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: tei-attribute-approvalref
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["tei.lab", "networking.k8s.io"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["networkpolicies"]
+  validations:
+    # CEL note: has() takes field selection only; map-key presence uses `in`
+    # (required by API servers >= 1.30, which reject has(map['key'])).
+    - expression: "object.kind != 'NetworkPolicy' || has(object.spec.approvalRef) || (has(object.metadata.annotations) && 'tei.lab/approval-ref' in object.metadata.annotations)"
+      message: "attribute:missing_approval_ref"
+    - expression: "!has(object.metadata.annotations) || !object.metadata.annotations.exists(k, object.metadata.annotations[k].contains('EVALCANARY'))"
+      message: "attribute:narrative"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: tei-attribute-approvalref
+spec:
+  policyName: tei-attribute-approvalref
+  validationActions: ["Deny"]

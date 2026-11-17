@@ -8,7 +8,7 @@ from typing import Any
 
 from app.core.celery_app import celery_app
 from app.core.redis_client import RedisClient
-from app.db.session import get_session_factory
+from app.db.session import get_actuation_session_factory, get_session_factory
 from app.services.context_service import EventContextStore
 from app.services.degraded_flag_service import create_degraded_flag_service
 from app.services.event_audit_log_service import EventAuditLogService
@@ -17,7 +17,7 @@ from app.services.state_machine_service import StateMachineService
 logger = logging.getLogger(__name__)
 
 REPAIR_STATE_TRANSITION_PROJECTIONS_TASK = "shadowtrace.repair_state_transition_projections"
-EXECUTION_QUEUE = "investigation"
+EXECUTION_QUEUE = "actuation"
 
 
 async def _build_state_machine() -> StateMachineService:
@@ -31,6 +31,7 @@ async def _build_state_machine() -> StateMachineService:
         store,
         audit_log=audit,
         degraded_flags=degraded,
+        write_session_factory=get_actuation_session_factory(),
     )
 
 

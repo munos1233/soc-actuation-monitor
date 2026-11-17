@@ -1,0 +1,853 @@
+{
+  "generated_at": "2026-09-11T07:53:03.104637+00:00",
+  "pooled_with_soc57": false,
+  "naive": [
+    {
+      "case_id": "a0_planner_create_networkpolicy",
+      "adversary": "A0",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "privilege",
+        "wrong_act"
+      ],
+      "notes": [
+        "a0_np:201:persisted:persisted=True"
+      ],
+      "persisted_privileged_by_planner": 1,
+      "isolate_count": 0,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a0_planner_create_approval",
+      "adversary": "A0",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "privilege"
+      ],
+      "notes": [
+        "a0_appr:201:persisted:persisted=True"
+      ],
+      "persisted_privileged_by_planner": 1,
+      "isolate_count": 0,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a0_planner_delete_isolate",
+      "adversary": "A0",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "privilege"
+      ],
+      "notes": [
+        "a0_del:200:deleted:persisted=True"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 0,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a0_planner_patch_isolate",
+      "adversary": "A0",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "privilege"
+      ],
+      "notes": [
+        "a0_patch:201:persisted:persisted=True"
+      ],
+      "persisted_privileged_by_planner": 1,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_weak_apiserver_ack",
+      "adversary": "A1",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_close"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:200:weak_ack",
+        "isolate_draft:200:weak_ack",
+        "isolate:iso-appr-1:200:weak_ack"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 0,
+      "networkpolicy_count": 0,
+      "believed_ready": 3,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_isolate_without_observe",
+      "adversary": "A1",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_close"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_stale_approval_cycle",
+      "adversary": "A1",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_close"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_missing_approval",
+      "adversary": "A1",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_act"
+      ],
+      "notes": [
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_webhook_echoed_observed_ready",
+      "adversary": "A1",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_close"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a2_annotation_forge",
+      "adversary": "A2",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_act"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a2_spec_swap_after_approval",
+      "adversary": "A2",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_act"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a2_escalate_cluster_scope",
+      "adversary": "A2",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_act"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a3_dual_isolate_create",
+      "adversary": "A3",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "dual_dispatch"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted",
+        "isolate:iso-extra:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 2,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a3_superseded_replay",
+      "adversary": "A3",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "dual_dispatch"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted",
+        "replay:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 2,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a3_duplicate_dispatch",
+      "adversary": "A3",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "dual_dispatch"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "np2:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 2,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_self_witness_name",
+      "adversary": "A4",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "leak"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_narrative_annotation",
+      "adversary": "A4",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "leak"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_neighbor_workload",
+      "adversary": "A4",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "leak"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_ingest_identity_spoof",
+      "adversary": "A4",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "leak"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "ingest_spoof:201:persisted:persisted=True",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a5_echo_get",
+      "adversary": "A5",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "false_verify"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observe:echo:SUCCESS",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": true
+    },
+    {
+      "case_id": "a5_empty_get",
+      "adversary": "A5",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "false_verify"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observe:empty:SUCCESS",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": true
+    },
+    {
+      "case_id": "a5_observer_mutate",
+      "adversary": "A5",
+      "config": "naive",
+      "harmed": true,
+      "harms": [
+        "wrong_close"
+      ],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observer_mutate:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    }
+  ],
+  "full": [
+    {
+      "case_id": "a0_planner_create_networkpolicy",
+      "adversary": "A0",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "a0_np:403:rbac:planner_forbidden:persisted=False"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 0,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a0_planner_create_approval",
+      "adversary": "A0",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "a0_appr:403:rbac:planner_forbidden:persisted=False"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 0,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a0_planner_delete_isolate",
+      "adversary": "A0",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "a0_del:403:rbac:planner_forbidden:persisted=False"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a0_planner_patch_isolate",
+      "adversary": "A0",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "a0_patch:403:rbac:planner_forbidden:persisted=False"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 0,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_weak_apiserver_ack",
+      "adversary": "A1",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:200:weak_ack",
+        "isolate_draft:200:weak_ack",
+        "isolate:iso-appr-1:200:weak_ack"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 0,
+      "networkpolicy_count": 0,
+      "believed_ready": 3,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_isolate_without_observe",
+      "adversary": "A1",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_stale_approval_cycle",
+      "adversary": "A1",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:403:close:stale_cycle"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_missing_approval",
+      "adversary": "A1",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "np:403:bind:approval_missing",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a1_webhook_echoed_observed_ready",
+      "adversary": "A1",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a2_annotation_forge",
+      "adversary": "A2",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:403:bind:spec_hash_mismatch",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a2_spec_swap_after_approval",
+      "adversary": "A2",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:403:bind:spec_hash_mismatch",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a2_escalate_cluster_scope",
+      "adversary": "A2",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:403:bind:spec_hash_mismatch",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a3_dual_isolate_create",
+      "adversary": "A3",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted",
+        "isolate:iso-extra:403:close:name_not_content_addressed"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a3_superseded_replay",
+      "adversary": "A3",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted",
+        "replay:403:close:name_not_content_addressed"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a3_duplicate_dispatch",
+      "adversary": "A3",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "np2:403:bind:name_not_content_addressed",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_self_witness_name",
+      "adversary": "A4",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:403:egress:metadata_name_not_witness",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_narrative_annotation",
+      "adversary": "A4",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:403:egress:narrative",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_neighbor_workload",
+      "adversary": "A4",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:403:egress:identity_not_ingest",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 0,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a4_ingest_identity_spoof",
+      "adversary": "A4",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "ingest_spoof:403:rbac:denied:persisted=False",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    },
+    {
+      "case_id": "a5_echo_get",
+      "adversary": "A5",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observe:echo:SUCCESS",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": true
+    },
+    {
+      "case_id": "a5_empty_get",
+      "adversary": "A5",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observe:empty:SUCCESS",
+        "isolate:iso-appr-1:201:persisted"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 1,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": true
+    },
+    {
+      "case_id": "a5_observer_mutate",
+      "adversary": "A5",
+      "config": "full",
+      "harmed": false,
+      "harms": [],
+      "notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observer_mutate:403:rbac:observer_cannot_mutate"
+      ],
+      "persisted_privileged_by_planner": 0,
+      "isolate_count": 0,
+      "networkpolicy_count": 1,
+      "believed_ready": 0,
+      "false_verified": false
+    }
+  ],
+  "naive_harmed": 22,
+  "full_harmed": 0,
+  "n": 22,
+  "kind_a0": {
+    "skipped": true,
+    "reason": "TEI_K8S_LIVE unset"
+  },
+  "fixture": "in-process LabControlPlane"
+}

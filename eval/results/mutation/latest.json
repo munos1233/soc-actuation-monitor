@@ -1,0 +1,434 @@
+{
+  "generated_at": "2026-09-17T08:14:46.780529+00:00",
+  "pooled_with_57": false,
+  "full_only": true,
+  "baseline_subtracted": true,
+  "columns": [
+    "mock",
+    "pseudo_live"
+  ],
+  "attack_case_ids": [
+    "a0_planner_sql_close",
+    "a0_planner_sql_enqueue",
+    "a0_planner_sql_approve",
+    "a0_planner_sql_action_status",
+    "a0_planner_sql_disposition_source",
+    "a0_planner_sql_delete_event",
+    "a1_no_terminal_writeback",
+    "a1_missing_report",
+    "a1_weak_receipt",
+    "a1_dropped_readback",
+    "a1_simulated_receipt",
+    "a1_stale_closure_cycle",
+    "a1_missing_outbox_revision",
+    "a2_target_swap",
+    "a2_forged_fingerprint",
+    "a2_tool_escalation",
+    "a2_level_downgrade",
+    "a2_stale_plan_revision",
+    "a3_concurrent_activation",
+    "a3_superseded_head_replay",
+    "a3_duplicate_entity_dispatch",
+    "a3_idempotency_key_rewrite",
+    "a4_narrative_in_target",
+    "a4_secret_in_target",
+    "a4_locator_swap",
+    "a5_echo_observation",
+    "a5_empty_observation",
+    "a5_unavailable_observation",
+    "a5_lying_vendor_receipt",
+    "b2_t1a_terminal_template_rewrite",
+    "b2_t1b_execution_owner_rewrite",
+    "b2_t4a_terminal_locator_swap",
+    "b2_t4b_pre_approval_locator_swap",
+    "b2_t6a_partial_success_observation",
+    "b2_t6b_honest_negative_observation"
+  ],
+  "golden_case_ids": [
+    "g1_containment_then_close",
+    "g2_disposition_only",
+    "g3_transient_readback_outage",
+    "g4_second_worker_pass",
+    "g5_compensating_retarget",
+    "g6_retarget_with_reapproval",
+    "g7_multi_stage_disposition",
+    "g9_retry_after_timeout",
+    "g10_writeback_operator_retry",
+    "g11_level_raise_reapproval"
+  ],
+  "baseline_harmed": 0,
+  "baseline_closed": 20,
+  "killed": 17,
+  "total": 18,
+  "results": [
+    {
+      "mutant_id": "m1_bind_planner_fingerprint",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "a2_level_downgrade",
+        "a2_stale_plan_revision",
+        "a2_target_swap",
+        "a2_tool_escalation",
+        "b2_t1a_terminal_template_rewrite",
+        "b2_t1b_execution_owner_rewrite"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "a2_target_swap",
+        "a2_tool_escalation",
+        "a2_stale_plan_revision",
+        "a2_level_downgrade"
+      ],
+      "named_killers_hit": [
+        "a2_target_swap",
+        "a2_tool_escalation",
+        "a2_stale_plan_revision",
+        "a2_level_downgrade"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_bind_partial_fingerprint",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "b2_t1b_execution_owner_rewrite"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "b2_t1b_execution_owner_rewrite"
+      ],
+      "named_killers_hit": [
+        "b2_t1b_execution_owner_rewrite"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_close_planner_cycle",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": true,
+      "status": "survivor",
+      "harm_kills": [],
+      "over_strict_kills": [],
+      "named_killers": [],
+      "named_killers_hit": [],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_close_skip_report",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "a1_missing_report"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "a1_missing_report"
+      ],
+      "named_killers_hit": [
+        "a1_missing_report"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_close_weak_evidence_ok",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "a1_weak_receipt",
+        "a5_lying_vendor_receipt"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "a1_weak_receipt"
+      ],
+      "named_killers_hit": [
+        "a1_weak_receipt"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_simulated_receipt_ok",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "a1_simulated_receipt"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "a1_simulated_receipt"
+      ],
+      "named_killers_hit": [
+        "a1_simulated_receipt"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_verify_echo_verified",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "a5_echo_observation"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "a5_echo_observation"
+      ],
+      "named_killers_hit": [
+        "a5_echo_observation"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_verify_missing_field_verified",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "a5_echo_observation",
+        "a5_empty_observation"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "a5_empty_observation"
+      ],
+      "named_killers_hit": [
+        "a5_empty_observation"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_verify_false_negative",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "b2_t6b_honest_negative_observation"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "b2_t6b_honest_negative_observation"
+      ],
+      "named_killers_hit": [
+        "b2_t6b_honest_negative_observation"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_egress_self_witness",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "b2_t4b_pre_approval_locator_swap"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "b2_t4b_pre_approval_locator_swap"
+      ],
+      "named_killers_hit": [
+        "b2_t4b_pre_approval_locator_swap"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_egress_no_content_scan",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "a4_narrative_in_target",
+        "a4_secret_in_target"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "a4_narrative_in_target"
+      ],
+      "named_killers_hit": [
+        "a4_narrative_in_target"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m1_template_unchanged_revert",
+      "family": "M1",
+      "kind": "harm",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [
+        "b2_t1a_terminal_template_rewrite"
+      ],
+      "over_strict_kills": [],
+      "named_killers": [
+        "b2_t1a_terminal_template_rewrite"
+      ],
+      "named_killers_hit": [
+        "b2_t1a_terminal_template_rewrite"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m4_locator_creation_source",
+      "family": "M4",
+      "kind": "over_strict",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [],
+      "over_strict_kills": [
+        "g5_compensating_retarget"
+      ],
+      "named_killers": [
+        "g5_compensating_retarget"
+      ],
+      "named_killers_hit": [
+        "g5_compensating_retarget"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m4_bind_first_approval",
+      "family": "M4",
+      "kind": "over_strict",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [],
+      "over_strict_kills": [
+        "g11_level_raise_reapproval",
+        "g6_retarget_with_reapproval"
+      ],
+      "named_killers": [
+        "g6_retarget_with_reapproval"
+      ],
+      "named_killers_hit": [
+        "g6_retarget_with_reapproval"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m4_level_first_approval",
+      "family": "M4",
+      "kind": "over_strict",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [],
+      "over_strict_kills": [
+        "g11_level_raise_reapproval"
+      ],
+      "named_killers": [
+        "g11_level_raise_reapproval"
+      ],
+      "named_killers_hit": [
+        "g11_level_raise_reapproval"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m4_one_immediate_action_per_event",
+      "family": "M4",
+      "kind": "over_strict",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [],
+      "over_strict_kills": [
+        "g7_multi_stage_disposition"
+      ],
+      "named_killers": [
+        "g7_multi_stage_disposition"
+      ],
+      "named_killers_hit": [
+        "g7_multi_stage_disposition"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m4_verify_no_recovery",
+      "family": "M4",
+      "kind": "over_strict",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [],
+      "over_strict_kills": [
+        "g10_writeback_operator_retry"
+      ],
+      "named_killers": [
+        "g10_writeback_operator_retry"
+      ],
+      "named_killers_hit": [
+        "g10_writeback_operator_retry"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    },
+    {
+      "mutant_id": "m4_outbox_no_retry",
+      "family": "M4",
+      "kind": "over_strict",
+      "expected_survivor": false,
+      "status": "killed",
+      "harm_kills": [],
+      "over_strict_kills": [
+        "g9_retry_after_timeout"
+      ],
+      "named_killers": [
+        "g9_retry_after_timeout"
+      ],
+      "named_killers_hit": [
+        "g9_retry_after_timeout"
+      ],
+      "golden_collapse": false,
+      "attack_rows": 69,
+      "gold_rows": 20
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# Request-attribute only. No cluster GET. Pin: Gatekeeper ConstraintTemplate.
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredapprovalref
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredApprovalRef
+  targets:
+      - target: admission.k8s.gatekeeper.sh
+        rego: |
+          package k8srequiredapprovalref
+          violation[{"msg": msg}] {
+            input.review.object.kind == "NetworkPolicy"
+            not input.review.object.spec.approvalRef
+            not input.review.object.metadata.annotations["tei.lab/approval-ref"]
+            msg := "attribute:missing_approval_ref"
+          }
+          violation[{"msg": msg}] {
+            blob := lower(sprintf("%v", [input.review.object]))
+            contains(blob, "evalcanary")
+            msg := "attribute:narrative"
+          }

@@ -1,7 +1,7 @@
 """A real language model in the planner seat.
 
 Suite B's default planner is a deterministic script: it writes the rows a
-compromised planner would write, which makes 1290 executions repeatable to the
+compromised planner would write, which makes 1410 executions repeatable to the
 row. That is the right instrument for asking whether a mediator is interposed,
 and the wrong one for asking whether a real model actually authors the offending
 row. This module supplies the second arm.
@@ -171,8 +171,13 @@ class LLMPlanner:
         settings: Settings | None = None,
         client: BaseLLMClient | None = None,
         token_budget: int | None = None,
+        model_name: str | None = None,
     ) -> None:
-        self.settings = settings or get_settings()
+        base = settings or get_settings()
+        if model_name:
+            self.settings = base.model_copy(update={"llm_primary_model": model_name})
+        else:
+            self.settings = base
         self._audit = InMemoryLLMCallAuditRecorder()
         self._client = client or get_llm_client(settings=self.settings, audit_recorder=self._audit)
         self.telemetry = PlannerTelemetry()

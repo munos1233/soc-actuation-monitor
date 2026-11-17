@@ -1,7 +1,9 @@
 # Applied by `make up WORKER=1` (and demo). Pins API TASK_MODE to celery so
 # compose interpolation cannot silently fall back to background when a worker
 # container is running (llm-audit recreate, raw `docker compose up backend`).
+# The API is the planner process: it must not hold the writer DSN.
 services:
   backend:
     environment:
       TASK_MODE: celery
+      PROCESS_ROLE: planner

@@ -24,7 +24,11 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool
 
-from app.core.config import get_settings
+from app.core.config import ProcessRole, get_settings
+
+
+class ActuationLoginForbidden(RuntimeError):
+    """Raised when PROCESS_ROLE=planner asks for the writer factory."""
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +38,43 @@ _provider: SessionProvider | None = None
 
 
 class SessionProvider:
-    """Owns one async engine + session factory for the current OS process."""
+    """Owns the owner engine plus optional planner / actuation factories."""
 
-    __slots__ = ("_database_url", "_engine", "_factory", "_pool")
+    __slots__ = (
+        "_actuation_factory",
+        "_actuation_url",
+        "_database_url",
+        "_engine",
+        "_factory",
+        "_forbid_actuation",
+        "_planner_factory",
+        "_planner_url",
+        "_pool",
+        "_process_role",
+        "_side_engines",
+    )
 
-    def __init__(self, database_url: str, *, pool: PoolPolicy = "pooled") -> None:
+    def __init__(
+        self,
+        database_url: str,
+        *,
+        pool: PoolPolicy = "pooled",
+        planner_url: str | None = None,
+        actuation_url: str | None = None,
+        process_role: ProcessRole | str = ProcessRole.MONOLITH,
+    ) -> None:
+        role = ProcessRole(process_role)
+        self._process_role = role
+        self._forbid_actuation = role is ProcessRole.PLANNER
         self._database_url = database_url
+        self._planner_url = planner_url
+        self._actuation_url = None if self._forbid_actuation else actuation_url
         self._pool = pool
         self._engine: AsyncEngine | None = None
         self._factory: async_sessionmaker[AsyncSession] | None = None
+        self._planner_factory: async_sessionmaker[AsyncSession] | None = None
+        self._actuation_factory: async_sessionmaker[AsyncSession] | None = None
+        self._side_engines: list[AsyncEngine] = []
 
     @property
     def database_url(self) -> str:
@@ -78,6 +110,34 @@ class SessionProvider:
             )
         return self._factory
 
+    def _side_factory(self, url: str | None) -> async_sessionmaker[AsyncSession]:
+        if not url or url == self._database_url:
+            return self.session_factory()
+        kwargs: dict[str, object] = {"pool_pre_ping": True}
+        if self._pool == "nullpool":
+            kwargs["poolclass"] = NullPool
+        engine = create_async_engine(url, **kwargs)
+        self._side_engines.append(engine)
+        return async_sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
+
+    def planner_session_factory(self) -> async_sessionmaker[AsyncSession]:
+        if self._planner_factory is None:
+            self._planner_factory = self._side_factory(self._planner_url)
+        return self._planner_factory
+
+    @property
+    def process_role(self) -> ProcessRole:
+        return self._process_role
+
+    def actuation_session_factory(self) -> async_sessionmaker[AsyncSession]:
+        if self._forbid_actuation:
+            raise ActuationLoginForbidden(
+                "PROCESS_ROLE=planner forbids constructing the actuation writer factory"
+            )
+        if self._actuation_factory is None:
+            self._actuation_factory = self._side_factory(self._actuation_url)
+        return self._actuation_factory
+
     async def ping_postgres(self) -> bool:
         """Return True when ``SELECT 1`` succeeds via the process-local engine."""
         try:
@@ -91,8 +151,13 @@ class SessionProvider:
         if self._engine is not None:
             await self._engine.dispose()
             logger.debug("SessionProvider engine disposed (pool=%s)", self._pool)
+        for engine in self._side_engines:
+            await engine.dispose()
         self._engine = None
         self._factory = None
+        self._planner_factory = None
+        self._actuation_factory = None
+        self._side_engines = []
 
 
 async def ping_postgres_url(
@@ -137,12 +202,22 @@ def _dispose_provider_sync(provider: SessionProvider) -> None:
         )
 
 
+def _provider_from_settings(*, pool: PoolPolicy) -> SessionProvider:
+    settings = get_settings()
+    return SessionProvider(
+        settings.database_url,
+        pool=pool,
+        planner_url=settings.resolved_planner_database_url(),
+        actuation_url=settings.resolved_actuation_database_url(),
+        process_role=settings.process_role,
+    )
+
+
 def get_session_provider(*, pool: PoolPolicy = "pooled") -> SessionProvider:
     """Return the process-local provider, creating a pooled one on first use."""
     global _provider
     if _provider is None:
-        settings = get_settings()
-        _provider = SessionProvider(settings.database_url, pool=pool)
+        _provider = _provider_from_settings(pool=pool)
     elif _provider.pool_policy != pool:
         logger.warning(
             "get_session_provider(pool=%r) ignored: provider already initialized "
@@ -158,8 +233,7 @@ def init_worker_session_provider() -> SessionProvider:
     global _provider
     if _provider is not None:
         _dispose_provider_sync(_provider)
-    settings = get_settings()
-    _provider = SessionProvider(settings.database_url, pool="nullpool")
+    _provider = _provider_from_settings(pool="nullpool")
     return _provider
 
 

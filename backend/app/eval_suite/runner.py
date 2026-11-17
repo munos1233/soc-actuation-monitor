@@ -17,7 +17,9 @@ from app.eval_suite.cases import ALL_CASES
 from app.eval_suite.chain import CaseOutcome, Injection, run_case
 from app.eval_suite.configs import (
     ALL_CONFIGS,
+    INTERACTION_CONFIGS,
     LEAVE_ONE_OUT_CONFIGS,
+    MEDIATORS,
     SINGLE_GATE_CONFIGS,
     SUBSTRATE,
     SUBSTRATE_CONFIGS,
@@ -27,7 +29,11 @@ from app.eval_suite.configs import (
     harness_context,
 )
 from app.eval_suite.planner import LLMPlanner
-from app.eval_suite.policy_engine import ExternalPolicyEngine, PolicyEngineOutboundGuard
+from app.eval_suite.policy_engine import (
+    ExternalPolicyEngine,
+    PolicyEngineOutboundGuard,
+    SignedAttributeEngine,
+)
 from app.eval_suite.substrate import substrate_context
 from app.eval_suite.world import eval_world
 
@@ -66,14 +72,25 @@ async def run_matrix(
             for planner in planners:
                 started = time.monotonic()
                 reps = max(1, trials) if planner is PlannerModel.LLM_PLANNER else 1
-                arm_policy = policy if config.external_policy else None
+                arm_policy = None
+                if config.external_policy:
+                    if config.signed_attribute:
+                        arm_policy = SignedAttributeEngine(
+                            url=policy.url if policy is not None else None
+                        )
+                    else:
+                        arm_policy = policy
                 guard_factory = (
                     (lambda inner, engine=arm_policy: PolicyEngineOutboundGuard(inner, engine))
                     if arm_policy is not None
                     else None
                 )
                 with harness_context(config, column):
-                    async with eval_world(column, outbound_guard_factory=guard_factory) as world:
+                    async with eval_world(
+                        column,
+                        outbound_guard_factory=guard_factory,
+                        role_separation=config.role_separation,
+                    ) as world:
                         async with substrate_context(world, config):
                             for trial in range(reps):
                                 for case in scoped:
@@ -86,6 +103,7 @@ async def run_matrix(
                                             llm_planner=llm_planner,
                                             policy=arm_policy,
                                             trial=trial,
+                                            playbook_semantic=config.playbook_semantic,
                                         )
                                     except Exception as exc:  # noqa: BLE001
                                         # One case must not throw away an arm. The
@@ -219,6 +237,33 @@ def leave_one_out_table(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
             {
                 "config": config.name,
                 "removed": removed,
+                "harmed": harmed,
+                "total": total,
+                "marginal_harm": harmed - full_harm,
+            }
+        )
+    return table
+
+
+def interaction_table(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """close+verify and bind+egress: the pairs the body says can mask each other."""
+    full_harm, full_total = harm_rate(r for r in rows if r["config"] == "full")
+    table = [
+        {
+            "config": "full",
+            "loaded": list(MEDIATORS),
+            "harmed": full_harm,
+            "total": full_total,
+        }
+    ]
+    for config in INTERACTION_CONFIGS:
+        harmed, total = harm_rate(r for r in rows if r["config"] == config.name)
+        if total == 0:
+            continue
+        table.append(
+            {
+                "config": config.name,
+                "loaded": list(config.loaded()),
                 "harmed": harmed,
                 "total": total,
                 "marginal_harm": harmed - full_harm,
@@ -365,8 +410,18 @@ def render_pareto_markdown(table: Sequence[dict[str, Any]]) -> str:
 
 def render_markdown(rows: Sequence[dict[str, Any]]) -> str:
     """Ablation table: harm count per configuration per adversary, per column."""
-    configs = [c.name for c in (*SINGLE_GATE_CONFIGS, *LEAVE_ONE_OUT_CONFIGS, *SUBSTRATE_CONFIGS)]
+    configs = [
+        c.name
+        for c in (
+            *SINGLE_GATE_CONFIGS,
+            *LEAVE_ONE_OUT_CONFIGS,
+            *INTERACTION_CONFIGS,
+            *SUBSTRATE_CONFIGS,
+        )
+    ]
     present = [name for name in configs if any(r["config"] == name for r in rows)]
+    extras = sorted({str(r["config"]) for r in rows if r["config"] not in configs})
+    present.extend(extras)
     adversaries = sorted({r["adversary"] for r in rows})
     lines: list[str] = []
     for column in sorted({r["column"] for r in rows}):
@@ -416,6 +471,7 @@ def render_markdown(rows: Sequence[dict[str, Any]]) -> str:
 __all__ = [
     "applicable",
     "harm_rate",
+    "interaction_table",
     "leave_one_out_table",
     "pareto_table",
     "planner_table",

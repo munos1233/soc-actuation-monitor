@@ -91,7 +91,14 @@ async def run_gold(
     exactly that reason — a policy that refuses harm by refusing everything would
     look perfect in Suite B alone.
     """
-    arm_policy = policy if config.external_policy else None
+    from app.eval_suite.policy_engine import SignedAttributeEngine
+
+    arm_policy = None
+    if config.external_policy:
+        if config.signed_attribute:
+            arm_policy = SignedAttributeEngine(url=policy.url if policy is not None else None)
+        else:
+            arm_policy = policy if policy is not None else None
     guard_factory = (
         (lambda inner, engine=arm_policy: PolicyEngineOutboundGuard(inner, engine))
         if arm_policy is not None
@@ -100,7 +107,11 @@ async def run_gold(
     rows: list[dict[str, Any]] = []
     for column in columns:
         with harness_context(config, column):
-            async with eval_world(column, outbound_guard_factory=guard_factory) as world:
+            async with eval_world(
+                column,
+                outbound_guard_factory=guard_factory,
+                role_separation=config.role_separation,
+            ) as world:
                 for case in cases:
                     outcome = await run_case(
                         world,
@@ -108,6 +119,7 @@ async def run_gold(
                         config_name=config.name,
                         planner=planner,
                         policy=arm_policy,
+                        playbook_semantic=config.playbook_semantic,
                     )
                     verify = outcome.notes.get("verify") or {}
                     rows.append(

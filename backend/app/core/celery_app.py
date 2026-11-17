@@ -117,13 +117,13 @@ def _build_beat_schedule(*, task_mode: TaskMode | None = None) -> dict[str, dict
         schedule["shadowtrace-reconcile-stale-executions"] = {
             "task": "shadowtrace.reconcile_stale_executions",
             "schedule": float(settings.action_execution_reconcile_interval_s),
-            "options": {"queue": "investigation"},
+            "options": {"queue": "actuation"},
         }
         # ISSUE-285: bounded repair of committed-but-degraded context projections.
         schedule["shadowtrace-repair-state-transition-projections"] = {
             "task": "shadowtrace.repair_state_transition_projections",
             "schedule": float(settings.action_execution_reconcile_interval_s),
-            "options": {"queue": "investigation"},
+            "options": {"queue": "actuation"},
         }
     return schedule
 
@@ -142,8 +142,12 @@ celery_app.conf.update(
         "shadowtrace.reconcile_graph_resume_intents": {"queue": "investigation"},
         "shadowtrace.behavior_observation.retry_pending": {"queue": "ingestion"},
         "shadowtrace.detection_governance.expire_active_approvals": {"queue": "investigation"},
-        "shadowtrace.reconcile_stale_executions": {"queue": "investigation"},
-        "shadowtrace.repair_state_transition_projections": {"queue": "investigation"},
+        "shadowtrace.reconcile_stale_executions": {"queue": "actuation"},
+        "shadowtrace.repair_state_transition_projections": {"queue": "actuation"},
+        "actuation.transition": {"queue": "actuation"},
+        "actuation.force_close": {"queue": "actuation"},
+        "actuation.disposition_call": {"queue": "actuation"},
+        "actuation.state_call": {"queue": "actuation"},
         "shadowtrace.refine_storyline": {"queue": "investigation"},
     },
     task_acks_late=True,
@@ -164,6 +168,7 @@ celery_app.conf.update(
         "app.tasks.detection_governance_tasks",
         "app.tasks.action_execution_tasks",
         "app.tasks.state_projection_tasks",
+        "app.tasks.actuation_tasks",
         "app.tasks.storyline_tasks",
     ),
 )

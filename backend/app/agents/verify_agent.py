@@ -295,6 +295,32 @@ class _EventDispositionServiceProtocol(Protocol):
 # --------------------------------------------------------------------------- #
 
 
+def classify_verification_observation(
+    data_dict: dict[str, Any],
+    *,
+    action: Action,
+) -> tuple[EffectStatus, str]:
+    """Map an observation payload to an effect status.
+
+    Extracted so construction-closure mutants can weaken one predicate
+    without rewriting the rest of the verify agent. The naive split
+    (``eval_disable_verify_phase_split``) still short-circuits before this.
+    """
+    if "is_verified" not in data_dict:
+        return EffectStatus.UNVERIFIABLE, "verification_result_missing_is_verified_field"
+    if data_dict["is_verified"]:
+        observed_target = data_dict.get("target")
+        expected_target = action.target
+        if (
+            observed_target
+            and expected_target
+            and str(observed_target) != str(expected_target)
+        ):
+            return EffectStatus.UNVERIFIABLE, "verification_target_mismatch"
+        return EffectStatus.VERIFIED, "effect_verified"
+    return EffectStatus.FAILED, str(data_dict.get("detail") or "effect_not_observed")
+
+
 class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
     """Two-phase verification of response actions and disposition writebacks."""
 
@@ -538,7 +564,11 @@ class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
                         )
                     )
                     failed_action_ids.add(action.action_id)
-                    need_replan = True
+                    # Scoring artifact only: the deferred row is not an
+                    # entity-effect failure. Raising need_replan here skipped
+                    # the phase-1 persist EDS reads, so terminal activation
+                    # (the bind site for template / locator rewrite) never
+                    # ran under naive and those attacks could not produce a 1.
                     continue
                 results.append(
                     _make_skipped_result(
@@ -824,19 +854,10 @@ class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
                         if data_dict.get("is_verified")
                         else "eval_tool_success_echo"
                     )
-                elif "is_verified" not in data_dict:
-                    # Provider returned SUCCESS but didn't include the
-                    # is_verified key — the observation is inconclusive,
-                    # not failed.  Treating it as FAILED would trigger
-                    # a spurious re-plan that wastes agent budget.
-                    effect_status = EffectStatus.UNVERIFIABLE
-                    detail = "verification_result_missing_is_verified_field"
-                elif data_dict["is_verified"]:
-                    effect_status = EffectStatus.VERIFIED
-                    detail = "effect_verified"
                 else:
-                    effect_status = EffectStatus.FAILED
-                    detail = data_dict.get("detail", "effect_not_observed")
+                    effect_status, detail = classify_verification_observation(
+                        data_dict, action=action
+                    )
                 await self._finalize_verification_action(
                     verification_action,
                     target_status=ActionStatus.SUCCESS,
@@ -2071,15 +2092,29 @@ class VerifyAgent(BaseAgent[VerifyAgentInput, VerificationResult]):
         phase1_failed: set[str],
     ) -> None:
         """Persist phase-1-only verification so EDS can pass after_effect_resolution_ready."""
+        # Deferred placeholders are not entity-effect facts. The naive verify
+        # switch marks them FAILED for scoring; leaving that row in the
+        # interim result makes the terminal resolver treat it as an applied
+        # containment failure and skip activation — which is the bind site
+        # for a rewritten template or locator.
+        entity_only = [
+            item
+            for item in phase1_results
+            if item.detail != "eval_deferred_counted_as_failed"
+        ]
         overall_status = (
             VerificationOverallStatus.WAITING
-            if has_immediate_effect_pending(None, results=phase1_results)
+            if has_immediate_effect_pending(None, results=entity_only)
             else VerificationOverallStatus.SUCCESS
         )
         interim = VerificationResult(
-            results=phase1_results,
+            results=entity_only,
             overall_status=overall_status,
-            failed_actions=list(phase1_failed),
+            failed_actions=[
+                action_id
+                for action_id in phase1_failed
+                if any(item.action_id == action_id for item in entity_only)
+            ],
             verification_phase=VerificationPhase.EFFECT,
             need_action_replan=False,
             need_writeback_recovery=False,

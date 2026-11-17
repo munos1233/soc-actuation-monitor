@@ -13,6 +13,7 @@
 %% them is what an invariant is. Give it its own environment and counter, so the
 %% invariant numbers the evaluation refers to stay stable.
 \newtheorem{invariant}{Invariant}
+\newtheorem{lemma}{Lemma}
 
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit,calc}
@@ -25,17 +26,13 @@
   starr/.style={-{Latex[length=4pt]}, thick},
 }
 
-%% Working title. No product name, no "reference monitor": the mediators run in
-%% the planner's own process, so the Anderson tamper-proofness claim is not ours
-%% to make. See Section~\ref{sec:tcb}.
-\title{Evidence-Gated Actuation: Fail-Closed Ticket Closure and Dispatch under an Untrusted Planner}
+\title[Attribute Admission Is Incomplete]{Attribute Admission Is Incomplete for Transactional Evidence}
 
 %% Double-blind: leave authors empty for review.
 \author{Anonymous Author(s)}
 \affiliation{%
   \institution{Anonymous Institution}
   \country{}}
-\email{anonymous@example.com}
 
 \renewcommand{\shortauthors}{Anonymous}
 
@@ -57,38 +54,43 @@
 \ccsdesc[500]{Security and privacy~Systems security}
 \ccsdesc[300]{Security and privacy~Access control}
 
-\keywords{security operations, actuation integrity, fail-closed mediation,
-ticket closure, fault injection}
+\keywords{complete mediation, admission control, integrity, actuation,
+ticket closure, fail-closed mediation}
 
 \begin{document}
 
 \begin{abstract}
-Security-operations automation now isolates hosts, submits vendor actions, and
-closes tickets. Once a planner---a playbook compiler or a language model---can
-drive those steps, a wrong conclusion is no longer a reporting error but a
-change to the outside world and to the record that says the incident is over.
-We take the planner to be untrusted at the data plane: it authors proposals,
-sees tool and vendor replies, and may write any plan content, but it does not
-execute code inside the mediators and cannot write status columns directly.
-Under that model we build four mediators on the actuation path---an evidence
-predicate for ticket closure, a content-addressed approval recheck at dispatch
-time, a split between observing an effect and performing one, and an allowlist
-on everything leaving for the vendor---and evaluate them by injecting at the
-system boundary and driving the production service chain against a real
-database and a vendor stub.
-With every mediator unloaded, 33 of 43 injections produce their harm; with all
-four loaded, one does, and it is a case the mock vendor path is declared too weak
-to decide. Removing one mediator and keeping the other three restores the harm
-that mediator was there to prevent, and the per-case attribution also shows where
-two mediators overlap and where a removed mediator masks another's failure by
-aborting the workflow earlier. Duplicate dispatch is mediated below that layer, by
-mechanisms a deployment cannot switch off; rather than add switches we weaken the
-substrate in the harness, and find that neither the database constraint nor the
-application-level supersede is individually necessary---two conflicting writeback
-heads appear only once both are gone. Building the suite this way exposed two fail-open
-paths that a predicate-level test could not see: an approval fingerprint compared
-against a label the planner writes, and an outbound guard that took the
-dispatched command's own locator as its witness of object identity.
+An actuation write---closing a ticket, dispatching a vendor command, or
+mutating a cluster---is mediated only when the last write is a privilege the
+proposer cannot issue, the predicate is rebuilt in the same transaction or
+admission review from facts the proposer cannot author, and observation cannot
+produce an effect. We call that property transactional evidence integrity
+({TEI}). The binding constraint is authorship rather than freshness: an
+approval that is current, correctly signed, and proposer-written still
+fails; so does a record whose state never changed.
+Attribute-shaped admission ({OPA}, Gatekeeper, {IAM} conditions)
+sees request attributes and is therefore {TEI}-incomplete on close and
+bind: the same four decision points evaluated by an external policy engine
+leave a 16/45 residual, the cases that need a fact inside the write.
+We instantiate {TEI} on two write paths. On {SOC} tickets, four evidence
+predicates plus a {PostgreSQL} role split take 49/57 boundary injections
+to 0/57 (pseudo-live 0/29); a planner login that issues the privileged
+statements is refused ({SQLSTATE} 42501; 0/12 versus 12/12 as owner).
+{HMAC} over the same request attributes leaves the same 16/45 residual as
+an {OPA} sidecar: authenticity of that document is not a store join.
+On an author-controlled kind cluster, eleven {CVE}- and
+literature-mapped cases are scored from objects that persist after naive
+{RBAC}, request-attribute admission, and a {TEI} webhook that re-{GET}s
+Approval and ingest identity. Java {TLC} finds no counterexample on a
+finite full slice (10800 distinct states);
+\texttt{AttributeOnly} and \texttt{TEIPair} produce the close, bind, and
+view-close counterexamples. Building the suite as boundary injection
+exposed two fail-open paths a predicate-level test could not see: an
+approval fingerprint compared against a planner-written label, and an
+outbound guard that took the command's own locator as its object-identity
+witness. Recent stateful-governance, evidence-before-effect, and
+approval-binding systems address staleness, durability, and payload binding
+respectively; none constrains who may author the fact the predicate reads.
 \end{abstract}
 
 \maketitle
@@ -105,81 +107,91 @@ incident. A hallucinated summary that reaches a human analyst is a bad
 document. The same summary that reaches the closure step is an incident that
 the organization now believes is handled.
 
-The pressure to automate that last step is not hypothetical. Bridges
+That last step is already being automated. Bridges
 et~al.~\cite{bridges2023testing} ran the first hands-on study of commercial
 SOAR tools in use: 24 participants, six products, more than 200 hours of
 controlled investigations. The tools improved efficiency and reduced context
-switching, and they also reduced ticket accuracy and completeness. Automation
-that makes the analyst faster at writing a ticket that is wrong is not a
+switching, and they also reduced ticket accuracy and completeness. Producing a wrong ticket faster is not a
 quality improvement; once that ticket is allowed to close itself, it is an
 integrity failure. Islam, Babar and Nepal's survey of security
 orchestration~\cite{islam2019orchestration} already noted that playbook
-semantics are treated as ground truth. An untrusted planner---a language model,
-or a playbook compiler fed on retrieved context---makes that assumption
-indefensible: the component that proposes the step is the component that would
-also certify it.
+semantics are treated as ground truth. An untrusted planner---a playbook
+compiler fed on retrieved context, or any other proposer that authors the
+step---makes that assumption indefensible: the component that proposes the
+step is the component that would also certify it.
 
-Two bodies of practice sit on either side of this gap. Work on language models
-in the SOC evaluates the quality of analysis: triage accuracy, root-cause
-agreement, alert reduction. Work on SOAR platforms automates the actuation but
-treats playbook semantics as true: if the playbook says the containment step ran
-and the ticket may close, it closes. Neither supplies the thing an untrusted
-planner makes necessary, which is a decision about closure and dispatch that is
-computed from evidence the planner did not author.
+Public incident retrospectives point at the same properties. In the 2017
+{Amazon S3} disruption, an authorized engineer following a playbook
+removed far more capacity than intended~\cite{aws2017s3}: the executed
+write drifted from the intended content. In the 2017 {GitLab.com} outage,
+an engineer intending to wipe a replica ran the removal on the
+primary~\cite{gitlab2017db}: the intended object and the executed object
+differed. {Amazon} attributed a December 2025 {Cost Explorer} disruption
+in one region to a misconfigured production role and
+afterwards required peer review for production
+access~\cite{amazon2026kiro}.
 
-This paper takes the narrow version of that problem. We do not defend the model
-against prompt injection, and we do not claim a protection domain: our
-mediators are Python functions in the same process as the planner, so we make no
-tamper-proofness claim and do not call the result a reference monitor
-(Section~\ref{sec:tcb} states what is left in the trusted computing base). What
-we claim is that four specific decisions on the actuation path can be made
-independent of planner output, and that this is worth doing because the
-alternative fails in ways an operator cannot see. Figure~\ref{fig:arch} places
-those four decisions on the production write path.
+Two bodies of practice sit on either side of this gap. Work on automated
+triage evaluates the quality of analysis. Work on SOAR platforms automates
+the actuation but treats playbook semantics as true: if the playbook says
+the containment step ran and the ticket may close, it closes. Neither
+supplies a decision about closure and dispatch computed from evidence the
+planner did not author.
+
+This paper names that decision a property, transactional evidence integrity
+(TEI),\footnote{The phrase ``evidence-based access control'' is already taken:
+Khantal et al.~\cite{khantal2008evidence} use it for access control as message
+filtering, where a service accumulates and trades evidence about other services
+in a reputation-like ecosystem. That is a different object---evidence
+\emph{about a principal}, gathered over time---from ours, which is evidence
+\emph{about an effect}, read inside the write that depends on it. We use
+``evidence'' throughout in the second sense.} and instantiates it on two
+write paths. A proposer that holds only the planner principal cannot issue
+the last write; the predicate on that write is rebuilt from non-proposer
+state in the same transaction or admission review. Host root and a stolen
+actuation login are outside the model
+(Section~\ref{sec:tcb}). Figure~\ref{fig:arch} places the SOC construction
+on the production write path; Figure~\ref{fig:threat} states what the
+adversary may author and what it may not.
 
 \paragraph{Contributions.}
 \begin{itemize}
-  \item \textbf{C1 (four mediated decisions).} We state actuation integrity as
-  four properties, one per mediator, each with an adversary, an error code, and
-  a harm it prevents: closure requires converged evidence
-  (\S\ref{sec:design-close}); a dispatch must match the content that was
-  approved (\S\ref{sec:design-bind}); observing an effect must not be able to
-  produce one (\S\ref{sec:design-verify}); analysis content must not leave for
-  the vendor (\S\ref{sec:design-egress}). Field-level writer authority, the
-  single-execution-owner rule, and the terminal-head commit protocol are
-  implementation mechanisms that support these four; we describe them but do not
-  claim them as properties, because a deployment cannot switch them off
-  (\S\ref{sec:impl-nonswitch}). We ablate them anyway, by weakening the substrate
-  in the harness rather than by adding a switch (\S\ref{sec:eval-substrate}).
-  \item \textbf{C2 (the mediators and the write path).} We give the four checks,
-  the error codes they raise, and a path argument from an untrusted proposal to
-  each external effect: which module is the sole writer, and what remains
-  trusted (\S\ref{sec:argument}).
-  \item \textbf{C3 (boundary-injection evaluation).} We inject at the system
-  boundary---planner-authored rows, vendor receipts, vendor answers to
-  verification queries, repeated dispatch---and drive the production service
-  chain against PostgreSQL and a vendor stub, scoring harm from database and
-  vendor-side facts rather than from a mediator's return value. We report a
-  leave-one-out ablation, a substrate ablation for the mechanisms that have no
-  switch, a golden-path suite under the identical configuration with over-block
-  accounting, a planner-free baseline, a real language-model planner arm with
-  Wilson intervals, an external policy-engine comparator at the same four
-  points, a multi-process contention probe, and per-mediator overhead
-  (\S\ref{sec:eval}).
-  \item \textbf{C4 (invariants with a checkable model).} We state four
-  invariants over persistent state, each paired with the code that maintains it
-  and the ablation under which it fails, and we exhaustively enumerate the
-  terminal-head protocol so that ``the index is load-bearing'' is a shortest
-  counterexample, not a sequential-harness artefact (\S\ref{sec:inv}).
+  \item \textbf{C1 (Lemma~\ref{thm:attr}).} No function of the
+  request-visible projection $\mathrm{AttrView}$ implements TEI-(ii).
+  Clark--Wilson's {IVP} assumes a store view; filling that slot with
+  $\pi\in\Pi$ ({OPA}, Gatekeeper, {HMAC} attributes, attached copies)
+  cannot decide close or bind (\S\ref{sec:tei}). The argument is
+  informational, not temporal: an atomic decision over the request
+  projection still lacks the fact, so atomicity alone does not repair it.
+  Figure~\ref{fig:attrview} is that split. The {SOC} measurements are the
+  {OPA} residual 16/45 and the {HMAC} \texttt{signed\_attribute} arm
+  (same 16 cases); the kind attribute residual is a second measurement.
+  \item \textbf{C2 (SOC construction).} Four evidence predicates plus a
+  database privilege on tickets: closure, content-addressed bind, observe/act
+  split, outbound allowlist (\S\ref{sec:design}, \S\ref{sec:argument}).
+  Binding re-derives the approved target, level, and scope from the store
+  rather than comparing a payload digest, so a valid approval cannot be
+  carried to a different object.
+  \item \textbf{C3 (boundary injection).} Harm is scored from stored and
+  vendor-side facts on an author-constructed suite, not from a mediator
+  return value. The method exposed two fail-open paths a predicate-level
+  test could not see (\S\ref{sec:eval-found}). Five language-model planner
+  arms check that the proposer can be a model.
+  \item \textbf{C4 (checkable specification).} A {TLA+} module of {TEI}.
+  Java {TLC} finds no counterexample on a finite full slice (10800
+  distinct states); attribute-only and view-pair configurations produce
+  the close, bind, and view-close counterexamples. Shortest spec traces
+  replay on both chains (\S\ref{sec:inv}).
+  \item \textbf{C5 (kind instance).} The same obligations on an
+  author-controlled kind cluster: Gatekeeper over the request object
+  versus a {TEI} webhook that re-{GET}s Approval and ingest identity
+  (\S\ref{sec:eval-k8s}). Eleven {CVE}- and literature-mapped cases;
+  stock {API} and \texttt{tei.lab} rows tabulated separately.
+  \item \textbf{C6 (portability).} The same four obligations on
+  {Temporal} update handlers over durable workflow state. Seven mapped
+  attacks: naive 7/7, request-attribute 6/7, {TEI} $0/7$; the golden
+  closes under every arm (\S\ref{sec:eval-temporal}).
 \end{itemize}
-
-\paragraph{Non-claims.}
-We do not claim a protection domain, a new cryptographic primitive, a retrieval
-or multi-agent contribution, or a defense against jailbreaking. We do not treat
-administrator \texttt{force\_close} as a closure. We do not treat a mock
-adapter's acknowledgement as live vendor confirmation. We do not claim harm was
-prevented in cases where the harm was not reachable in the first place; the
-suite reports those separately (\S\ref{sec:eval-falsify}).
 
 \section{System and Threat Model}
 \label{sec:threat}
@@ -232,23 +244,14 @@ or into \texttt{CLOSED} is labelled with the mediator that sits on it.
 computing base of \S\ref{sec:tcb}; white boxes are not. The four mediators sit
 on claim, phase split, enqueue, and the \texttt{CLOSED} transition. The outbox
 worker is the sole caller of the vendor adapter.}
+\Description{A left-to-right flowchart: vendor ingest, event row, planner proposal, approval record, then claim with binding recheck, entity execute, phase-1 observe, phase-2 activate, outbound guard, outbox worker, vendor adapter, and a closure gate into CLOSED. Shaded boxes are trusted; white boxes are not.}
 \label{fig:arch}
 \end{figure}
 
-The external world consists of entity containment at the vendor, the terminal
-disposition on the vendor's object, and the closure record on our side. Those
-three are not interchangeable. A host can be isolated while the ticket stays
-open; the ticket can close while the vendor object is untouched; a writeback can
-reach the vendor for the wrong object. The mediators exist because a planner
-that is allowed to declare any one of the three from the others will eventually
-do so.
-
-What the planner is allowed to write is plan content: tool names, targets,
-parameters, a fingerprint \emph{label}, a playbook reference. What it is not
-allowed to write is status columns, approval records, outbox delivery state, or
-the event's disposition source---the operator-selected locator the outbound
-guard uses as its witness of object identity. That split is the data-plane
-assumption, and every injection in the evaluation respects it.
+The mediators exist because a planner that is allowed to declare any one
+of those three from the others will eventually do so. It may write plan content;
+it may not write status, approvals, outbox delivery state, or the
+disposition source.
 
 \subsection{Adversary}
 \label{sec:threat-adv}
@@ -260,8 +263,8 @@ adapters return, including receipts that claim success, receipts that are
 simulated, receipts with only an acknowledgement, and answers to verification
 queries that echo the request. It may cause dispatch to be retried and may
 revise a plan after a human decision was recorded. When the planner is a
-language model, the same adversary also writes upstream free text---a
-compromised evidence or triage stage---that lands in the prompt; that is how
+language model, the same adversary also writes upstream free text (a
+compromised evidence or triage stage) that lands in the prompt; that is how
 the A4 cases in \S\ref{sec:eval-planner} are mounted, and it is the only
 injection that does not go through a row the harness writes itself. Indirect
 prompt injection~\cite{greshake2023notwhat,zhan2024injecagent} is in scope as
@@ -269,75 +272,346 @@ a way of authoring that row, and out of scope as a property of the model.
 
 It is not a code-execution adversary. It does not run inside the mediators, it
 does not set environment variables in the serving process, and it does not write
-status columns or approval records directly---moving an action into
+status columns or approval records directly; moving an action into
 \texttt{APPROVED} is a status transition, not plan content. Administrator
 \texttt{force\_close} is a declared bypass, out of the model, and never counted
-as a closure. We state these exclusions because they are what makes the
-evaluation interpretable, not because they are comfortable.
+as a closure.
+Figure~\ref{fig:threat} summarizes that split.
 
-The model is closer to Clark and Wilson's well-formed
-transaction~\cite{clark1987comparison} than to a confidentiality lattice, and
-closer to Hardy's confused deputy~\cite{hardy1988confused} than to a
-sandbox-escape story. The planner is asked to act on the organisation's
-authority with input it cannot vouch for. The mediators are the integrity
-verification procedures that certify the resulting state rather than the
-program that proposed it. They are not a reference monitor in Anderson's
-sense~\cite{anderson1972computer}: they share an address space with the
-proposer, so tamper-proofness is out of scope, and we say so in
-\S\ref{sec:tcb} before claiming anything else.
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=6.5mm and 11mm,
+  font=\scriptsize,
+]
+  \node[stuntrust, text width=3.55cm, align=left] (can) {%
+    \textbf{Adversary may}\\[2pt]
+    write plan content\\
+    supply receipts and echoes\\
+    retry dispatch; revise a plan\\
+    \phantom{retry }after approval\\
+    inject upstream free text};
+  \node[sttrust, text width=3.55cm, align=left, right=of can] (cannot) {%
+    \textbf{Adversary may not}\\[2pt]
+    write status columns\\
+    write approval records\\
+    write outbox delivery state\\
+    overwrite disposition source\\
+    execute inside a mediator};
+  \node[stbox, fill=black!4, text width=8.05cm, align=left,
+        below=7mm of can.south west, anchor=north west] (harms) {%
+    \textbf{Scored harms}\\[2pt]
+    A0 planner-credential {SQL} $\rightarrow$ role split\quad
+    A1 unearned closure $\rightarrow$ closure gate\\
+    A2 post-approval drift $\rightarrow$ binding recheck\quad
+    A4 analysis egress $\rightarrow$ outbound guard\\
+    A5 unearned verification $\rightarrow$ phase split\\
+    A3 dual dispatch $\rightarrow$ head protocol (no switch; substrate ablation)};
+  \draw[starr, dashed] (can.east) -- (cannot.west);
+\end{tikzpicture}
+\caption{Threat model. White is the data plane the adversary occupies; shaded
+is what the mediators and the database decide from. The dashed edge is the
+injection surface: planner-authored rows, vendor-authored receipts, and, when
+the planner is a language model, free text in the decision summary. The
+adversary tries to write the shaded columns in A0, and {PostgreSQL} refuses
+the planner login. A3 has no switchable mediator;
+\S\ref{sec:eval-substrate} weakens the substrate instead.}
+\Description{Two columns. The left, unshaded column lists what the adversary may do: write plan content, supply receipts and echoes, retry or revise after approval, inject upstream free text. The right, shaded column lists what it may not: write status columns, approval records, outbox delivery state, the disposition source, or execute inside a mediator. Below, five scored harms map onto four mediators and a head protocol.}
+\label{fig:threat}
+\end{figure}
+
+The model is a well-formed transaction~\cite{clark1987comparison} and a
+confused deputy~\cite{hardy1988confused}, not a sandbox escape. The
+mediators certify resulting state provided they read the store; they
+are not Anderson's reference monitor~\cite{anderson1972computer}
+(\S\ref{sec:tcb}). The planner login cannot write the shaded columns.
+The outbound guard's witness is the operator-selected disposition
+source~\cite{lampson1974protection}, not a locator the command carries.
 
 \subsection{Adversary classes and harms}
 
-\begin{center}
+Table~\ref{tab:adversaries} is the suite's vocabulary. Each class has one scored
+harm and one mediator (or, for A0, a database role; for A3, a protocol below the
+switchable layer). The evaluation injects at the boundary in
+Figure~\ref{fig:threat} and scores the harm column from stored and vendor-side
+facts, never from a mediator return value.
+
+\begin{table}[t]
+\centering
 \small
-\begin{tabular}{llll}
+\caption{Adversary classes. A0 is mediated by the planner / actuation
+{PostgreSQL} roles, not by a switchable gate. A3 is mediated below the
+switchable layer; we ablate those mechanisms by weakening the substrate
+(\S\ref{sec:eval-substrate}).}
+\label{tab:adversaries}
+\begin{tabular}{@{}llll@{}}
 \hline
 Id & Class & Harm scored & Mediator \\
 \hline
+A0 & Planner-credential {SQL} & wrong-close / dual-dispatch & Role split \\
 A1 & Unearned closure & wrong-close & Closure gate \\
 A2 & Post-approval drift & wrong-act & Binding recheck \\
-A3 & Dual dispatch & dual-dispatch & Commit protocol$^\dagger$ \\
+A3 & Dual dispatch & dual-dispatch & Commit protocol \\
 A4 & Analysis egress & leak & Outbound guard \\
 A5 & Unearned verification & false-verify & Phase split \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
-\noindent$^\dagger$A3 is mediated below the switchable layer, by a database
-constraint, an in-transaction supersede, a delivery-time re-read and a
-compare-and-set. Rather than manufacture switches for those, we ablate them by
-weakening the substrate in the harness (\S\ref{sec:eval-substrate}).
+\section{Transactional Evidence Integrity}
+\label{sec:tei}
+
+\begin{definition}[TEI]
+\label{def:tei}
+An actuation write (ticket close, vendor dispatch, or out-of-cluster
+mutate) is mediated if and only if (i)~the last write is a privilege the
+proposer's login cannot issue; (ii)~the predicate is rebuilt in the same
+transaction or admission review from durable facts the proposer cannot
+author (rebuilt outbox cycle, recomputed fingerprint, ingest-owned
+locator, already-persisted approval, observe re-read of isolate status);
+and (iii)~an observation path has no mutate client.
+\end{definition}
+
+The four SOC mediators are a \emph{construction} of TEI on tickets, not
+the property. Table~\ref{tab:tei-map} is the literal object mapping onto
+a second write path. Request-body self-reports (a planner-written
+fingerprint column, \texttt{metadata.name}, a webhook-echoed
+condition) are not witnesses. Attribute-shaped admission can refuse a
+malformed request and cannot refuse a well-formed request whose
+justification is a receipt, an approval, or an observation that must be
+re-derived inside the write.
+
+Lemma~\ref{thm:attr} is an interface fact about request-view functions,
+not a new integrity axiom. Filling Clark--Wilson's {IVP} slot with a
+function of the request-visible projection cannot decide close: the same
+serialized document can pair with two store states that disagree on
+$\mathrm{CloseOK}$.
+
+\begin{lemma}[Request-view functions cannot implement TEI-(ii)]
+\label{thm:attr}
+Let $\mathrm{AttrView}$ be the request-visible projection
+\[
+\langle\mathrm{callerCycle},\,\mathrm{plannerFp},\,\mathrm{signedOk},\,
+\mathrm{attachedApprovalCopy},\,\mathrm{reportedReceipt}\rangle,
+\]
+including {HMAC}-style integrity of that document and a caller-attached
+approval copy. Let $\Pi$ be the set of functions
+$\mathrm{AttrView}\to\{\mathrm{allow},\mathrm{deny}\}$---not the set of
+all {Rego} programs. Let $\mathrm{CloseOK}$ hold iff the rebuilt store
+cycle equals the caller cycle. There exist reachable states $s,s'$ with
+$\mathrm{AttrView}(s)=\mathrm{AttrView}(s')$ and
+$\mathrm{CloseOK}(s)\neq\mathrm{CloseOK}(s')$.
+Hence no $\pi\in\Pi$ implements $\mathrm{CloseOK}$, and therefore no
+$\pi\in\Pi$ implements TEI-(ii).
+\end{lemma}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=6.5mm and 11mm,
+  font=\scriptsize,
+]
+  \node[stuntrust, text width=3.55cm, align=left] (attr) {%
+    \textbf{$\mathrm{AttrView}$ --- $\pi\in\Pi$}\\[2pt]
+    caller cycle, planner fingerprint\\
+    {HMAC} / attached approval copy\\
+    reported receipt\\[2pt]
+    {OPA}, Gatekeeper, {HMAC}\\
+    $\to$ allow or deny};
+  \node[sttrust, text width=3.55cm, align=left, right=of attr] (join) {%
+    \textbf{TEI-(ii) --- store join}\\[2pt]
+    rebuilt cycle, recomputed fp\\
+    ingest locator, persisted approval\\
+    observe re-read\\[2pt]
+    same transaction / review\\
+    $\to$ $\mathrm{CloseOK}$ / $\mathrm{BindOK}$};
+  \node[stbox, fill=black!4, text width=8.05cm, align=left,
+        below=7mm of attr.south west, anchor=north west] (ce) {%
+    \textbf{Lemma~\ref{thm:attr} {CE} shape}\\[2pt]
+    $\exists\,s,s'$ with $\mathrm{AttrView}(s)=\mathrm{AttrView}(s')$
+    and $\mathrm{CloseOK}(s)\neq\mathrm{CloseOK}(s')$
+    ({TLC} \texttt{TEIPair}). HMAC authenticates the left document
+    and stays in $\Pi$.};
+  \draw[starr, dashed] (attr.east) -- (join.west);
+\end{tikzpicture}
+\caption{Request-view functions versus a store join. White is what a
+sidecar is handed; shaded is rebuilt from durable facts the proposer
+cannot author. The dashed edge is the interface Lemma~\ref{thm:attr}
+separates: the same serialized document can pair with two store states
+that disagree on closure. The {SOC} 16/45 residual
+(\S\ref{sec:eval-comparator}) is a measurement of the left column.}
+\Description{Two columns. The left, unshaded column is AttrView: the caller-serialized request document (cycle, planner fingerprint, HMAC or attached approval copy, reported receipt) evaluated by OPA, Gatekeeper, or HMAC to allow or deny. The right, shaded column is TEI-(ii): rebuilt cycle, recomputed fingerprint, ingest locator, persisted approval, and an observe re-read, joined in the same transaction or admission review to decide CloseOK and BindOK. Below, the lemma counterexample: there exist states s and s-prime with equal AttrView but unequal CloseOK, matching TLC TEIPair. HMAC authenticates the left document and remains in Pi.}
+\label{fig:attrview}
+\end{figure}
+
+\emph{In $\Pi$:} {OPA} / Gatekeeper / {CEL} over the admission request
+object; {HMAC} \texttt{signed\_attribute}; a policy that also looks at an
+attached approval copy carried on the request.
+\emph{Not in $\Pi$:} a sidecar or webhook \texttt{GET} of an approval row;
+a {SQL} join against cycle / approval / outbox; an observe re-read of
+isolate status; recomputing the fingerprint from durable approval content
+in the same transaction. Those reads are {TEI}, not counterexamples of
+the lemma.
+
+The twin-spec \texttt{TEIPair} checks
+$(\mathrm{AttrView}(A)=\mathrm{AttrView}(B))\Rightarrow(\mathrm{CloseOK}(A)=\mathrm{CloseOK}(B))$.
+Java {TLC} violates it on \texttt{HonestAdvance} versus
+\texttt{PlannerStaleCycle} (\S\ref{sec:inv}).
+\texttt{AttributeOnly} is one $\pi\in\Pi$: close and bind test only view
+self-consistency, and {TLC} finds
+\texttt{PlannerStaleCycle}$\to$\texttt{CloseAccepted} and
+\texttt{PlannerForgeFingerprint}\allowbreak$\to$\allowbreak\texttt{DispatchAccepted}.
+\texttt{InvEgress} still holds, matching the {OPA} sidecar's A4 coverage.
+The {SOC} 16/45 residual (\S\ref{sec:eval-comparator}) and the kind
+attribute residual (\S\ref{sec:eval-k8s}) are two measurements of $\Pi$
+on write paths. {HMAC} over the same documents
+(\texttt{signed\_attribute}) stays in $\Pi$: the signature authenticates
+the proposer's report.
+
+Clark and Wilson's {IVP} is assumed to read consistent data items.
+Filling that slot with $\pi\in\Pi$ is the incompleteness above.
+TEI-(ii) is the requirement that the {IVP} read the store in the same
+transaction or admission review. The four {SOC} predicates and the kind
+webhook are constructions of that interface
+(Table~\ref{tab:cw-ivp}).
+
+Let $S_{\mathrm{close}}=\{\mathrm{rebuiltCycle}\}$,
+$S_{\mathrm{bind}}=\{\mathrm{recomputedFp}\}$,
+$S_{\mathrm{egress}}=\{\mathrm{eventSource}\}$, and
+$S_{\mathrm{verify}}=\{\mathrm{observedIsolate}\}$.
+A review implements $\mathrm{CloseOK}$ iff it reads $S_{\mathrm{close}}$
+in the same transaction or admission review; bind, egress, and verify
+each have the same shape. That is interface completeness for this $\mathrm{CloseOK}$.
+\texttt{AttributeOnly} does not read $S$ ({CE}s above).
+\texttt{tei-reads-s.cfg} does (no {CE} on the slice).
+
+\begin{table}[t]
+\centering
+\small
+\caption{Integrity-verification interface. Lemma~\ref{thm:attr} is about
+which view the {IVP} is given.}
+\label{tab:cw-ivp}
+\begin{tabular}{@{}lll@{}}
+\hline
+Interface & {IVP} reads & Close / bind \\
+\hline
+Clark--Wilson {IVP} & {CDI} (store view) & assumed \\
+Attribute admission $\Pi$ & $\mathrm{AttrView}$ ({OPA}, Gatekeeper, {HMAC}) & incomplete (Lem.~\ref{thm:attr}) \\
+{TEI} & store view in the same transaction / review & construction \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{TEI obligations on the two instances. The Kubernetes column is
+an author-controlled lab cluster, not a production or cloud-vendor
+plane.}
+\label{tab:tei-map}
+\begin{tabular}{@{}lll@{}}
+\hline
+Obligation & SOC tickets & Kubernetes lab \\
+\hline
+close & \texttt{CLOSED} + rebuilt cycle & isolate in etcd; ready from observe \\
+bind & 11-segment fingerprint vs approval & Approval CR hash vs \texttt{NetworkPolicy} spec \\
+verify & observe / act split & observer SA is GET-only \\
+egress & allowlist + ingest locator & allowlist; ingest identity, not \texttt{metadata.name} \\
+A0 & planner {SQL} 42501 & planner SA $403$; writer SA $201$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:taxonomy} is a literature-anchored classification, not the
+search order. The protocol in the artifact
+(\texttt{eval/taxonomy/}\allowbreak\texttt{sampling.md}) lists fixed queries and an
+include/exclude rubric. Already-cited papers in that protocol are
+related-work anchors, not retrieval hits. Instantiated items are
+mapped onto our object model; they are not reproductions on the original
+product. Mappable items land on T1--T8; a new class would have
+been T9 with an object and a harm predicate. This slice did not force a
+T9 definition, which is not saturation of an open-world distribution.
+
+\begin{table}[t]
+\centering
+\scriptsize
+\caption{Literature-anchored TEI classes. SOC $n$ counts distinct handwritten
+case identifiers whose primary anchor is the class; a composition may occupy
+two cells, and the two analysis-egress compositions are covered by the
+outbound guard rather than a T-row. Those identifiers run over two vendor
+columns (one live-only case) to give the 57 executions. Kind $n$ is the mapped
+instantiable slice. Anchors classify; they do not prove completeness.}
+\label{tab:taxonomy}
+\begin{tabular}{@{}lllll@{}}
+\hline
+ID & Class & SOC $n$ & kind $n$ & Anchor \\
+\hline
+T1 & Confused deputy & 1 & 1 & Hardy 1988 \\
+T2 & IVP failure & 5 & 0 & Clark--Wilson \\
+T3 & TOCTOU approval & 4 & 3 & Bishop 1996 \\
+T4 & Self-witness identity & 1 & 3 & Saltzer--Schroeder \\
+T5 & Weak receipt & 4 & 1 & Clark--Wilson IVP \\
+T6 & Observe-as-act & 2 & 1 & Anderson 1972 \\
+T7 & Dual dispatch & 4 & 0 & outbox / UID \\
+T8 & Privileged login & 6 & 2 & GRANT / RBAC \\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Trusted Computing Base}
 \label{sec:tcb}
 
-We state the boundary before the design, because the honest version of it
-constrains what the rest of the paper may claim.
+This section fixes the boundary; Figure~\ref{fig:threat} is the
+adversary's view of the same line.
 
 \emph{Outside} the boundary: planner output and prompts, retrieved context,
 tool return values and executor echo, report bodies and decision traces,
 orchestrator checkpoint self-reports, vendor-facing UI copy, and any receipt
-field the vendor stub or a real vendor supplies.
+field the vendor stub or a real vendor supplies. None of these is an input to a
+mediator in the sense that a mediator believes it. Receipts are classified;
+prompts are not read; a fingerprint \emph{label} the planner wrote is treated as
+untrusted input and recomputed.
 
-\emph{Inside}: the four mediators; the outbox worker, which is the only writer
-of vendor-facing commands; the database constraints on terminal heads and
-action claiming; the approval record; and the migration that installs those
-constraints.
+\emph{Inside}: the four mediators; the outbox worker; the actuation database
+role, which is the only login that may write \texttt{CLOSED} or insert an
+outbox row; the {PostgreSQL} {GRANT} that makes that restriction a privilege
+rather than a function convention; the database constraints on terminal heads
+and action claiming; the approval record, whose fingerprint is recomputed from
+content rather than copied from a planner-written column; and the migration that
+installs those constraints and roles. Operationally the default is two {OS} processes
+(\S\ref{sec:impl-deploy}): planner has no actuation {DSN}; close and
+enqueue run as \texttt{PROCESS\_ROLE=actuation}. Redis is a cache, not
+actuation truth.
 
-\emph{Trusted but not mediated}: the process boundary itself. The mediators are
-functions the planner's process can call, not a separate protection domain; an
-adversary with code execution in that process is outside our model. The
-evaluation configuration switches described in \S\ref{sec:impl-switches} exist
-only so the suite can ablate a mediator; they are not part of the production
-boundary and do not appear in Figure~\ref{fig:tcb}'s production path. A
-deployment that reads them from a mutable environment has a weaker boundary than
-one that compiles them out, and we do not claim the stronger version.
+\emph{Trusted but not mediated}: the host and the actuation credentials. The
+mediators are still functions a process can call, not a separate protection
+domain. An adversary who can execute code as root, or who steals the actuation
+(or owner) login, is outside our model: the mediators share an address
+space with the proposer and are not Anderson's reference
+monitor. The role split changes the planner: a process that
+holds only the planner login cannot write the two privileged columns,
+even with raw {SQL}, and A0 measures that as a database fact.
+In Rushby's terms~\cite{rushby1981design}, if the actuation role is the sole writer
+of \texttt{CLOSED} and of the outbox, a compromised planner login cannot
+change the world. Evaluation switches
+(\S\ref{sec:impl-switches}) are not on the production path.
+
+\emph{Trusted and not ours to mediate.} The adapter's faithfulness in reporting
+what the vendor said, which is why a receipt is classified rather than believed;
+and the operator's selection of the event's disposition source, the outbound
+guard's witness for object identity. A lying vendor that the
+adapter reports honestly is in scope (the pseudo-live column); a compromised
+adapter that invents a \texttt{CONFIRMED} readback is not.
 
 \section{Design}
 \label{sec:design}
 
-Each mediator is presented the same way: the attack it answers, the check, the
-error code, and what the evaluation observes when it is removed.
+Each mediator is described by the attack it answers, the check, the error
+code, and what the evaluation observes when it is removed.
+
+They are four functions rather than one sidecar policy because the facts
+live in tables the caller holds (Lemma~\ref{thm:attr};
+\S\ref{sec:eval-comparator}). We describe them one site at a time.
 
 \subsection{Closure requires converged evidence}
 \label{sec:design-close}
@@ -354,7 +628,7 @@ disposition policy is denied rather than defaulted. When the policy requires
 writeback, closure additionally requires a report, gate-applicable side
 effects converged, a terminal writeback bound to the current plan revision and
 closure cycle, approved and actual terminal dispositions that agree, a
-\texttt{CONFIRMED} receipt, and---on a non-mock disposition path---confirmation
+\texttt{CONFIRMED} receipt, and, on a non-mock disposition path, confirmation
 evidence in $\{\texttt{readback\_verified}, \texttt{manual\_confirmed}\}$ that
 is not simulated. The representative codes are
 \texttt{closed\_requires\_report}, \texttt{closed\_side\_effects\_pending},
@@ -364,15 +638,13 @@ is not simulated. The representative codes are
 The last conjunct requires the terminal writeback \emph{row}, not its delivery
 and not a vendor receipt. It cannot require the receipt, because closure is the
 transition that makes the head deliverable; requiring the receipt would be a
-cycle. Invariant~\ref{inv:close} states this bound explicitly. What rules out a
-permanent local/remote divergence is the outbox, not the gate: the head is
+cycle. Invariant~\ref{inv:close} states this bound explicitly. The outbox,
+not the gate, rules out a permanent local/remote divergence: the head is
 durable, the worker retries, and a head that cannot be delivered lands in the
 dead-letter state where it is visible.
 
-\emph{What the evaluation observes.} Unloading this mediator restores A1. The
-leave-one-out of \S\ref{sec:eval} is $+14$ harms, the largest single-mediator
-margin, which is the expected shape: most of the suite is trying to close a
-ticket on incomplete evidence.
+\emph{What the evaluation observes.} Unloading this mediator restores A1
+($+17$ leave-one-out).
 
 \subsection{Dispatch must match what was approved}
 \label{sec:design-bind}
@@ -392,20 +664,56 @@ delivery refuses a command whose action has since been revoked or superseded.
 Comparing the action's \emph{stored} fingerprint column against the approval's
 copy of the same column is not a binding, because the planner writes that
 column; this is the first of the two fail-open paths the boundary evaluation
-exposed (\S\ref{sec:eval-found}). Codes: \texttt{action\_content\_drift},
-\texttt{plan\_revision\_mismatch}, \texttt{playbook\_binding\_mismatch}.
+exposed (\S\ref{sec:eval-found}). Figure~\ref{fig:bind-example} gives one
+A2 instance. Codes: \texttt{action\_content\_drift},
+\texttt{plan\_revision\_mismatch}, \texttt{playbook\_binding\_mismatch},
+\texttt{approval\_level\_drift}.
 
 The fingerprint is a content-addressed commitment in Merkle's
 sense~\cite{merkle1980protocols}: the approval binds to a digest of what will
-be dispatched, not to a workflow-step identifier. SOAR platforms typically bind
-approval to a step in a workflow instance~\cite{xsoar-manual-tasks}; an
-untrusted planner that can rewrite the step's payload after the fact makes that
-the wrong object to sign.
+be dispatched, not to a workflow-step identifier. SOAR platforms bind approval to a
+workflow step~\cite{xsoar-manual-tasks}; a planner that can rewrite the
+step's payload after approval makes that the wrong object to sign.
 
 \emph{What the evaluation observes.} Unloading this mediator restores A2. It
 also restores one A4 case, the locator swap, because the disposition source
 locator is one of the eleven segments, so moving it after approval is content
 drift as well as a foreign-object write.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=2.6mm and 4.5mm,
+  font=\scriptsize,
+]
+  \node[sttrust, text width=4.35cm, align=left] (appr) {%
+    \textbf{approval A-9, in the store}\\[1pt]
+    approved target = H-8\\
+    $\phi=\mathrm{SHA256}(\ldots,\text{H-8},\ldots)$};
+  \node[stuntrust, text width=4.35cm, align=left, right=of appr] (act) {%
+    \textbf{action at claim, planner-written}\\[1pt]
+    dispatched target = H-7\\
+    stored $\phi$ label $=\phi$(A-9)};
+  \node[stuntrust, text width=4.35cm, align=left, below=of appr] (naive) {%
+    \textbf{stored-column comparison}\\
+    label $=$ approval $\phi$ $\Rightarrow$ \textbf{allow}:\\
+    H-7 is dispatched (the A2 harm)};
+  \node[sttrust, text width=4.35cm, align=left, below=of act] (tei) {%
+    \textbf{TEI bind, in the claim transaction}\\
+    recompute $\phi(\mathrm{action})\neq$ approval $\phi$;\\
+    approved H-8 $\neq$ dispatched H-7 $\Rightarrow$ \textbf{deny}};
+  \draw[starr] (appr) -- (naive);
+  \draw[starr] (act) -- (naive);
+  \draw[starr] (appr) -- (tei);
+  \draw[starr] (act) -- (tei);
+\end{tikzpicture}
+\caption{One A2 instance. Approval and action carry the same fingerprint
+label, so a stored-column comparison accepts the swap. Recomputing the
+fingerprint inside the claim transaction rejects it: approved H-8,
+dispatched H-7.}
+\Description{Four boxes. Top left, a shaded approval record A-9 in the store with approved target H-8 and a fingerprint computed over H-8. Top right, a white planner-written action with dispatched target H-7 and a stored fingerprint label copied from A-9. Bottom left, the stored-column comparison allows the swap, so H-7 is dispatched. Bottom right, TEI bind recomputes the fingerprint inside the claim transaction, finds it differs from the approval fingerprint and that H-8 differs from H-7, and denies.}
+\label{fig:bind-example}
+\end{figure}
 
 \subsection{Observing an effect must not produce one}
 \label{sec:design-verify}
@@ -423,13 +731,11 @@ The split is the prepare/commit distinction~\cite{gray1978notes} applied to a
 participant that is not trusted to report its own state: ``prepared'' is a
 claim to be verified, not a protocol message to be believed.
 
-\emph{What the evaluation observes.} Unloading this mediator restores A5. It
-also \emph{hides} the one case that harms under \emph{full}, because without the
-split a deferred verification counts as a failure, the action never becomes
-closable, and the weak-receipt closure never happens. A mediator can mask
-another's failure by aborting the workflow earlier; that is why we report cells
-rather than a single aggregate. The overhead in \S\ref{sec:eval-overhead} is
-almost entirely this split's extra round trip.
+\emph{What the evaluation observes.} Unloading this mediator restores A5.
+Without the split, a deferred verification used to abort earlier and hide
+the weak-receipt residual (\S\ref{sec:eval-falsify}). The evaluation reports cells rather than a single
+aggregate. Overheads in \S\ref{sec:eval-overhead} are almost entirely
+this split.
 
 \subsection{Analysis content must not leave}
 \label{sec:design-egress}
@@ -456,10 +762,7 @@ second mistake, because compensation commands legitimately name a different
 object than the one that created the event. The operator-selected disposition
 source is the one that is allowed to identify the object.
 
-\emph{What the evaluation observes.} Unloading this mediator restores A4. Three
-of four switchable mediators decide in tens of microseconds
-(\S\ref{sec:eval-overhead}); this is one of them. The cost of the check is not
-why a deployment would leave it off.
+\emph{What the evaluation observes.} Unloading this mediator restores A4.
 
 \section{Implementation}
 \label{sec:impl}
@@ -470,7 +773,7 @@ drains the outbox. The four mediators are ordinary functions on that path, not
 a sidecar. The outbox is the transactional-outbox pattern: a command is inserted
 in the same database transaction as the state change that justifies it, and a
 worker later delivers it, so a crash between ``we decided to write back'' and
-``the vendor heard us'' cannot drop the writeback on the floor. Lineage on
+``the vendor heard us'' cannot lose the writeback. Lineage on
 terminal heads is a saga~\cite{garciamolina1987sagas} rather than a distributed
 transaction: each new head retires the previous one, compensation is itself an
 outbox command, and there is no two-phase commit with the vendor.
@@ -518,33 +821,29 @@ import. It constructs the same service graph the worker constructs, substitutes
 a recording vendor adapter and an optional lying observation surface, and scores
 from database and vendor-side facts. Substrate weakening---dropping the partial
 unique index, substituting a lock-free claim, a no-op supersede, an
-always-true delivery assertion---is confined to that package. A reviewer who
-wants to know whether production can be talked into the naive claim can grep
-for it: the string is not there.
+always-true delivery assertion---is confined to that package. A reviewer can check whether production can be coerced into the naive claim
+by grepping for it: the string is not there.
 
 \subsection{What a deployment actually runs}
 \label{sec:impl-deploy}
 
-A production process starts with the four mediators loaded, the partial unique
-index installed by migration, and no environment variable that can unload
-either. The outbox worker is the only process that calls the vendor adapter.
-Human approval is a recorded decision with a recomputed fingerprint, not a
-button that flips a boolean. \texttt{force\_close} exists, is role-checked,
-marks the event \texttt{external\_unsynced}, and is excluded from every closure
-count we report. That is the system the evaluation is about, and it is the
-system a reader could deploy; the switches and the substrate weakening are
+A production deployment is two {OS} processes. The planner process has
+no actuation {DSN}; the actuation worker is the only process that
+closes, enqueues, or \texttt{force\_close}s. Missing the role {DSN}
+refuses startup. \texttt{actuation\_writer} may \texttt{SELECT} broadly
+and write only the privileged path. The outbox worker is the sole
+adapter caller. The four names are
+\texttt{validate\_closed\_gate}, claim-time bind, the verification
+agent's refusal to activate from phase-1, and
+\texttt{OutboundDispositionGuard}. Switches and substrate weakening are
 measurement apparatus.
 
 \section{Invariants}
 \label{sec:inv}
 
-The argument in \S\ref{sec:argument} walks the write path in prose. This section
-says what the path is supposed to guarantee. Each invariant is a predicate over
-persistent state, so a reader can check it with a query instead of believing a
-paragraph; each is paired with the code that maintains it and with the ablation
-arm under which it is observed to fail. The pairing is the point. An invariant
-with no ablation is a wish, and an ablation with no invariant is a table of
-numbers.
+The argument in \S\ref{sec:argument} walks the write path. Each
+invariant is a predicate over persistent state, paired with the code
+that maintains it and the ablation under which it fails.
 
 \begin{definition}[Actuation state]
 \label{def:state}
@@ -561,20 +860,27 @@ effect} is one completed call to the vendor adapter's submit entry point.
 \begin{invariant}[Complete mediation of egress]
 \label{inv:mediate}
 Every external effect carrying command $\kappa$ is preceded, in the same
-transaction, by an outbound-guard decision that admitted a payload whose
-SHA-256 equals the SHA-256 stored on $\kappa$'s outbox row.
+transaction that enqueues $\kappa$, by an outbound-guard decision that
+admits $\kappa$ (field allowlist, schema, and trusted object locator),
+and the outbox row for $\kappa$ stores the SHA-256 of the serialized
+payload written in that transaction. Delivery re-validates the
+reconstructed command under the same guard before submit.
 \end{invariant}
 
 \noindent\emph{Mechanism.} The adapter's submit entry point has one caller, in
-the outbox worker's delivery routine; the guard runs both when a command is
+the outbox worker's delivery routine; the guard runs when a command is
 enqueued and again inside the delivery transaction, and the payload digest is
-written at enqueue and not recomputed, so the object that was checked is the
-object that is sent. \emph{Evidence.} This is a structural claim and the
+written at enqueue from the serialized command that enters the outbox row.
+\emph{Evidence.} This is a structural claim and the
 ablation cannot test it directly: unloading the guard removes the check, it does
-not add a second call site. What the ablation shows is the contrapositive of the
+not add a second call site. The ablation shows the contrapositive of the
 guard's usefulness --- with it unloaded, A4 leaks at the rate reported in
 \S\ref{sec:eval}; with it loaded, at zero. The single-call-site half rests on
-inspection, and we say so rather than dress it as a measurement.
+inspection, and rests on that rather than on the ablation count.
+A co-verification gate review (codenames G1/G2) flagged that an earlier
+wording of this invariant over-claimed digest equality as a return value of
+the guard; the wording above matches the implemented mechanism and does not
+change the loaded gate.
 
 \begin{invariant}[Approval binding]
 \label{inv:bind}
@@ -627,8 +933,8 @@ agrees'', and an event can be \texttt{CLOSED} locally while its writeback is
 still in the queue. What rules out a permanent divergence is not the gate but
 the outbox: the head is durable, the worker retries, and a head that cannot be
 delivered lands in the dead-letter state where it is visible rather than
-silently dropped. We state this because a reader who assumed the stronger
-version would over-read every A1 row in the paper.
+silently dropped. {A1} rows therefore do not claim that \texttt{CLOSED}
+implies the vendor already agrees.
 
 Two properties follow from the invariants above together with the claim
 protocol, and both are directly observable, which is why the evaluation scores
@@ -650,31 +956,10 @@ head of its slot.
 \subsection{Model checking the head invariants}
 \label{sec:inv-model}
 
-The substrate ablation and the multi-process probe both answer ``did this
-happen''. Neither can answer ``could this happen'', because both sample
-interleavings: the ablation drives cases sequentially, and four processes over
-five rounds explore whatever the scheduler gave them. The head protocol is small
-enough to settle the second question by enumeration, so we do that.
-
-We model claim, enqueue and delivery as a transition system and explore the
-reachable state space breadth-first, which makes the first counterexample found
-for each invariant a shortest one. The model is written against the awkward parts
-of the real protocol rather than around them: the enqueue holds a row lock on the
-prior active head while it inserts, so two enqueues that both see a prior head
-are serialized and two that both see \emph{none} are not; a waiter on that lock
-does not rescan when it is granted, because PostgreSQL rechecks the locked row
-against the predicate and drops it if it no longer matches instead of
-re-executing the query; the supersede and the insert are one transaction, so a
-unique violation rolls the supersede back with it; the delivery transaction holds
-a row lock on its own head across the adapter call; and a head carrying a lineage
-pointer is refused unconditionally, which is not one of the four switchable
-mechanisms.
-
-Two scenarios matter, and the sequential suite conflates them. Under
-\emph{shared action}, $K$ workers race to execute one approved action. Under
-\emph{distinct actions}, each worker holds its own approved action for the same
-slot --- an amended plan revision, or a second closure attempt --- so every claim
-legitimately succeeds.
+The sequential suite samples interleavings; the head protocol is small
+enough to enumerate. Claim, enqueue, and delivery are explored BFS
+against the real lock and unique-violation shapes. Two scenarios:
+\emph{shared action} and \emph{distinct actions}.
 
 \begin{table}
 \centering
@@ -727,8 +1012,7 @@ compare-and-set admits one enqueuer, so the state space is 225 states wide and
 identical whether the index is there or not. Under the distinct-actions race the
 compare-and-set decides nothing, because both claims are legitimate, and the
 index becomes the only thing between two approved terminal actions and two live
-writebacks. A reviewer inclined to call one of these mechanisms belt-and-braces
-should read the two halves of the table as the answer.
+writebacks.
 
 Third --- and this is the finding we did not expect --- dropping the unique index
 \emph{alone} violates Invariant~\ref{inv:head} in six steps:
@@ -754,28 +1038,66 @@ because the delivery-time assertion re-reads and finds a \emph{newer} active
 head rather than a superseded own head, and the lineage check it would otherwise
 trip is a check on a pointer that the supersede never had cause to write.
 
-\paragraph{What the model does not cover.} It models claim, enqueue and delivery
-of terminal heads. It does not model the post-execution status transitions, nor
-the delivery-time approval recheck that sits below them. That omission is
-visible in the results: the model says losing the claim compare-and-set
-duplicates the external effect, whereas the multi-process probe found it
-\emph{loses} the effect instead (\S\ref{sec:eval-concurrency}), because two
-conflicting status writes leave the action row in a state the pre-delivery
-approval fence refuses. Both are true of their own subject. The model bounds what
-the head layer guarantees on its own; the probe shows a mechanism below it
-catching the damage the head layer let through. We report the disagreement rather
-than tuning the model until it agrees, because the disagreement is the more
-useful fact: it locates a second fence, and it is a reminder that a model check
-of a subsystem is a statement about that subsystem.
+The write-path obligations themselves are specified in TLA+
+(\texttt{eval/model/TEI.tla}): the same action names and variables as the
+Python engine that emits TLC traces, so there is one transition relation,
+not three. Table~\ref{tab:tlc} is the finite slice---roles, four TEI
+switches, head uniqueness, claim-CAS. Full has no counterexample on that
+slice (10800 distinct states, ten times the previous two-cycle slice;
+Java {TLC} on \texttt{tei.cfg} agrees with
+the engine). Extra fingerprint and locator letters are
+$\mathrm{BindOK}$/egress twins of the two-letter slice (the store
+fingerprint and ingest source stay fixed).
+Each ablation has a shortest CE of 1--3 actions; those traces
+are the seeds replayed on both chains. Claim-CAS is a \emph{status-layer}
+lemma: a second claim is a lost effect, not a second active head.
+\texttt{minus CAS} now violates $\mathrm{InvCAS}$
+(\texttt{DispatchAccepted}$\to$\texttt{SecondClaim}; 15120 states)
+(\S\ref{sec:inv}).
+HeadUnique is the head layer. The earlier apparent disagreement with the
+multi-process probe was a layer mix-up; both sentences are true
+(\S\ref{sec:eval-concurrency}). The Python BFS of the head protocol
+(Table~\ref{tab:model}) remains the interleaving check of enqueue and
+delivery; it is not the source of the write-path seeds.
 
-The checker is one standard-library Python file, runs in 40\,s, and fails its own
-exit code if the deployed configuration ever violates an invariant, so the claim
-in Table~\ref{tab:model} is a test rather than a footnote.
+\begin{table}[t]
+\centering
+\small
+\caption{TEI.tla on the finite slice, checked by Java {TLC} and the
+artifact engine of the same \texttt{Next} (10800 distinct states under
+full; the two checkers agree).
+``--'' holds; other cells are the length
+of the shortest spec-trace counterexample. \texttt{minus CAS} violates
+$\mathrm{InvCAS}$. \texttt{tei-reads-s.cfg} is the dual of
+attribute-only. \texttt{TEIPair} is not this
+table: {TLC} violates $\mathrm{InvViewClose}$ on \texttt{HonestAdvance}
+versus \texttt{PlannerStaleCycle}.}
+\label{tab:tlc}
+\begin{tabular}{@{}lcccccccc@{}}
+\hline
+mechanisms & close & bind & egress & role & verify & head & k8s-close & cas \\
+\hline
+full & -- & -- & -- & -- & -- & -- & -- & -- \\
+minus close & 2 & -- & -- & -- & -- & -- & 1 & -- \\
+minus bind & -- & 2 & -- & -- & -- & -- & -- & -- \\
+minus egress & -- & -- & 3 & -- & -- & -- & -- & -- \\
+minus role & -- & -- & -- & 1 & -- & -- & -- & -- \\
+minus verify & -- & -- & -- & -- & 1 & -- & 1 & -- \\
+minus head & -- & -- & -- & -- & -- & 2 & -- & -- \\
+minus CAS & -- & -- & -- & -- & -- & -- & -- & 2 \\
+attribute-only & 2 & 2 & -- & -- & -- & -- & -- & -- \\
+\hline
+\end{tabular}
+\end{table}
+
+The head-protocol checker remains one standard-library file and 40\,s; it
+fails its exit code if the deployed head configuration ever violates an
+invariant. TEI.tla is the write-path specification.
 
 \section{Security Argument}
 \label{sec:argument}
 
-The argument is a path argument, not a proof: for each external effect we
+The argument is a path argument: for each external effect we
 enumerate the edges from an untrusted proposal to that effect and name the sole
 writer of the last one. Figure~\ref{fig:tcb} is the same argument as a picture,
 and it contains no evaluation switch.
@@ -800,60 +1122,46 @@ report body, prompts, \par decision traces
   & \textbf{outbound guard}: allowlist \par + event-selected locator
     $\Rightarrow$ outbox row \\[4pt]
   & &
-  \textbf{outbox worker}: active-head \par assertion $\Rightarrow$
-  \emph{vendor} (sole writer) \\[4pt]
+  \textbf{outbox worker} as \texttt{actuation\_writer}: \par
+    active-head assertion $\Rightarrow$
+  \emph{vendor} \\[4pt]
 narrative claims that \par the incident is handled
   & $\rightarrow$
-  & \textbf{closure gate}: converged \par evidence $\Rightarrow$
+  & \textbf{closure gate} as \texttt{actuation\_writer}: \par
+    converged evidence $\Rightarrow$
     \texttt{CLOSED} \\
 \hline
 \end{tabular}
 \caption{Production write path. Every edge into the vendor or into
-\texttt{CLOSED} passes a mediator; the database constraints on terminal heads
-and action claiming sit under the outbox worker. Administrator
+\texttt{CLOSED} is a statement issued as the actuation database role; the
+planner login cannot issue those statements. Administrator
 \texttt{force\_close} is the one declared bypass and marks the event
 externally unsynchronized.}
+\Description{A two-column mapping from untrusted inputs on the left---plan content, receipts, report bodies, narrative claims---to mediated writes on the right. The last edge into the vendor and into CLOSED is issued as the actuation database role.}
 \label{fig:tcb}
 \end{figure}
 
 \paragraph{Reaching the vendor.}
-Vendor state changes only through a disposition command, and every command in
-the system is submitted at a single call site inside the outbox worker's
-delivery routine. Commands enter the outbox only through the enqueue routine,
-which is where the outbound guard runs, and delivery re-asserts that the head it
-is about to send is still the active one for this (event, closure cycle). The
-command's content is built from an action row that has already been claimed, and
-claiming is a single conditional status update under a row lock that also runs
-the binding recheck. So the edges are: proposal $\rightarrow$ approved action
-row $\rightarrow$ claim (binding) $\rightarrow$ command $\rightarrow$ enqueue
-(guard) $\rightarrow$ delivery (active head) $\rightarrow$ vendor. A planner that
-wants a different effect at the vendor has to get past the claim or the enqueue,
-because there is no other caller of the adapter.
+Every command is submitted at one call site in the outbox worker.
+Enqueue runs the outbound guard; delivery re-asserts the active head.
+Claim is a conditional status update under a row lock that also binds.
+The edges are proposal $\rightarrow$ claim (binding) $\rightarrow$
+enqueue (guard) $\rightarrow$ delivery $\rightarrow$ vendor. A planner
+login cannot insert the outbox row.
 
 \paragraph{Reaching \texttt{CLOSED}}
-Two routines in the codebase write \texttt{CLOSED} to an event: the state
-machine's ordinary transition, which validates the edge through the closure
-gate against a context rebuilt from the database rather than from the caller's
-argument, and administrator \texttt{force\_close}, which is role-checked, sets
-\texttt{external\_unsynced}, and is excluded from the threat model and from
-every closure count we report. A third routine can write \texttt{FAILED} on a
-soft time limit and cannot write \texttt{CLOSED}. Orchestrator checkpoints,
-report generation, and the rollback service do not write event status at all;
-they call the state machine, or they write action status, or they enqueue
-compensation through the same outbox.
+{\sloppy
+Ordinary close and \texttt{force\_close} both issue as the actuation
+role. Planner \texttt{UPDATE ... status='closed'} is {SQLSTATE} 42501
+(A0). Checkpoints and reports do not write event status.\par}
 
 \paragraph{Reaching ``verified''.}
-The verification phase can write an effect status and cannot activate a terminal
-writeback; activation is a separate call that requires the phase-1 outcome to
-permit it. A tool result therefore cannot become the cause of its own writeback.
+Phase~1 writes an effect status and cannot activate a terminal
+writeback.
 
 \paragraph{Residual trust.}
-The process boundary (\S\ref{sec:tcb}); the database, including the migration
-that installs the partial unique index on terminal heads; the adapter's
-faithfulness in reporting what the vendor said, which is why a receipt is
-classified rather than believed; and the operator's selection of the event's
-disposition source, which is the witness the outbound guard uses for object
-identity. We do not claim any of these away.
+Host, actuation credentials, database, adapter faithfulness, and the
+operator-selected disposition source (\S\ref{sec:tcb}).
 
 \section{Evaluation}
 \label{sec:eval}
@@ -865,11 +1173,10 @@ vendor stub supplies receipts and answers verification queries, dispatch goes
 through the outbox worker, and verification runs the real verification agent.
 Harm is scored from database and vendor-side facts---did the event reach
 \texttt{CLOSED}, did the vendor record a submission for an unapproved target,
-did an effect get marked verified---never from a mediator's return value. We
-deliberately do not present a table of gate-function outputs: a table in which
-each row is ``the check we disabled did not fire'' measures the switch, not the
-system. Predicate-level checks are kept as an appendix
-(\S\ref{app:component}). Figure~\ref{fig:eval} is the same method as a picture:
+did an effect get marked verified---never from a mediator's return value.
+A table of gate-function outputs would measure the switch, not the
+system; predicate-level checks are therefore an appendix
+(\S\ref{app:pred}). Figure~\ref{fig:eval} is the same method as a picture:
 the injection writes to the same tables a planner or vendor could write to, the
 production chain runs, and scoring reads facts the mediators do not get to
 narrate.
@@ -888,149 +1195,185 @@ narrate.
 \end{tikzpicture}
 \caption{Evaluation method. Harm is a property of stored and vendor-side
 state after the chain runs, not a property of a mediator return value.}
+\Description{Three boxes in a row: injection of planner rows, receipts, and observation answers; the production chain over PostgreSQL, the outbox, and four mediators; scoring from stored facts such as CLOSED, vendor submit, and verified.}
 \label{fig:eval}
 \end{figure}
 
-Two properties of that chain need stating precisely, because both are places
-where a reader could credit us with more than we did. First, the service code is
-unmodified in every arm, but the process runs with
-\texttt{EVAL\_HARNESS\_MODE} set, which is what permits the gate switches to be
-honoured at all (\S\ref{sec:impl-switches}), and the substrate arms of
-\S\ref{sec:eval-substrate} additionally weaken the evaluation database and
-substitute the naive shape of four code-level mechanisms. That weakening lives
-entirely in the harness; production code neither contains it nor imports it.
-Second, the planner is adversarial but not a language model. It is a
-deterministic script that writes the rows a compromised or confused planner
-would write, which is what makes 1290 executions repeatable to the row. The
-claim under test is whether the mediators are interposed on the actuation path,
-and that claim does not depend on how the offending row was authored---but it
-does leave open whether a real model produces the same rows, which
-\S\ref{sec:eval-planner} addresses directly.
+Two properties of that chain. First, service code is unmodified, but
+\texttt{EVAL\_HARNESS\_MODE} permits gate switches
+(\S\ref{sec:impl-switches}); substrate arms live only in the harness.
+Second, the scripted planner writes the rows a compromised proposer would
+write. Whether a model authors those rows is
+\S\ref{sec:eval-planner}.
 
 \paragraph{Setup.}
-Suite~B is 21 injections in the mock column and 22 in the pseudo-live column
-(one case, a vendor receipt flagged \emph{simulated}, exists only where a live
-path is claimed), grouped as five adversaries: A1 closes on evidence that has
-not converged, A2 moves approved content before dispatch, A3 tries for two
-external effects on one entity, A4 puts analysis text or a foreign object
-locator in a vendor field, A5 tries to make an observation count as an effect.
-Each case runs under fifteen configurations---\emph{naive} with all four
-switchable mediators unloaded, four single-mediator configurations, \emph{full},
-four leave-one-out configurations, and five substrate arms that weaken a
-mechanism no deployment can switch off (\S\ref{sec:eval-substrate})---in two
-vendor columns and against two planners, for $43 \times 15 \times 2 = 1290$ case
-executions plus a golden-path suite; the 43 already ranges over both vendor
-columns, and the factor of two is the planner (untrusted versus a fixed
-playbook). The language-model arm of \S\ref{sec:eval-planner} is additional:
-21 mock-column cases, two configurations, five trials. The two
-vendor columns are never merged: \emph{mock} uses a mock connector whose
-receipts are marked simulated and whose writeback is disabled, and
-\emph{pseudo-live} uses the HTTP adapter against a stub that may lie about the
-applied state and may return a receipt with no confirmation fields. Everything
-runs against PostgreSQL~16 on an instance isolated from development, and the
-harness records every row it scored.
+Suite~B is 28 mock and 29 pseudo-live injections (one simulated-receipt
+case exists only on a claimed live path), six adversaries, seventeen
+configurations $\times$ two planners
+($57 \times 17 \times 2 = 1938$ executions plus golden-path). Columns
+are never merged. Language-model arms
+(\S\ref{sec:eval-planner}) are additional. PostgreSQL~16, isolated
+instance.
 
 \begin{table}[t]
 \centering
 \small
-\caption{Suite B: cases in which the harm occurred, by adversary. Rows are
-configurations; \emph{naive} has all four switchable mediators unloaded.
-$-$ marks an adversary with no applicable case in that arm.}
+\caption{Suite B: cases in which the harm occurred, by adversary. Rates are
+case-set proportions. Repeat-run noise ($N=20$, harm variance 0 on this
+deterministic slice) is in the artifact.
+Rows are configurations; \emph{naive} unloads the four switchable mediators and the
+role split. A0 is Table~\ref{tab:a0} and is included in the pooled totals of
+Table~\ref{tab:loo}. $-$ marks an adversary with no applicable case in that arm.}
 \label{tab:suiteb}
 \begin{tabular}{@{}lcccccc@{}}
 \hline
-\multicolumn{7}{@{}l}{\emph{mock column} (21 cases)}\\
+\multicolumn{7}{@{}l}{\emph{mock column} (22 A1--A5 cases)}\\
 configuration & A1 & A2 & A3 & A4 & A5 & total\\
 \hline
-naive             & 5/5 & 4/5 & 0/4 & 3/3 & 4/4 & 16/21\\
-close\_only       & 0/5 & 4/5 & 0/4 & 3/3 & 2/4 & 9/21\\
-bind\_only        & 5/5 & 0/5 & 0/4 & 2/3 & 4/4 & 11/21\\
-verify\_only      & 5/5 & 4/5 & 0/4 & 3/3 & 2/4 & 14/21\\
-egress\_only      & 5/5 & 4/5 & 0/4 & 0/3 & 4/4 & 13/21\\
-full              & 1/5 & 0/5 & 0/4 & 0/3 & 0/4 & \textbf{1/21}\\
-full$-$close      & 5/5 & 0/5 & 0/4 & 0/3 & 2/4 & 7/21\\
-full$-$bind       & 1/5 & 4/5 & 0/4 & 0/3 & 0/4 & 5/21\\
-full$-$verify     & 0/5 & 0/5 & 0/4 & 0/3 & 2/4 & 2/21\\
-full$-$egress     & 1/5 & 0/5 & 0/4 & 2/3 & 0/4 & 3/21\\
-\hline
-\multicolumn{7}{@{}l}{\emph{pseudo-live column} (22 cases)}\\
-configuration & A1 & A2 & A3 & A4 & A5 & total\\
-\hline
-naive             & 6/6 & 4/5 & 0/4 & 3/3 & 4/4 & 17/22\\
-close\_only       & 0/6 & 4/5 & 0/4 & 3/3 & 2/4 & 9/22\\
+naive             & 6/6 & 5/5 & 0/4 & 3/3 & 4/4 & 18/22\\
+close\_only       & 0/6 & 5/5 & 0/4 & 3/3 & 2/4 & 10/22\\
 bind\_only        & 6/6 & 0/5 & 0/4 & 2/3 & 4/4 & 12/22\\
-verify\_only      & 6/6 & 4/5 & 0/4 & 3/3 & 2/4 & 15/22\\
-egress\_only      & 6/6 & 4/5 & 0/4 & 0/3 & 4/4 & 14/22\\
+verify\_only      & 6/6 & 5/5 & 0/4 & 3/3 & 2/4 & 16/22\\
+egress\_only      & 6/6 & 5/5 & 0/4 & 0/3 & 4/4 & 15/22\\
 full              & 0/6 & 0/5 & 0/4 & 0/3 & 0/4 & \textbf{0/22}\\
 full$-$close      & 6/6 & 0/5 & 0/4 & 0/3 & 2/4 & 8/22\\
-full$-$bind       & 0/6 & 4/5 & 0/4 & 0/3 & 0/4 & 4/22\\
+full$-$bind       & 0/6 & 5/5 & 0/4 & 0/3 & 0/4 & 5/22\\
 full$-$verify     & 0/6 & 0/5 & 0/4 & 0/3 & 2/4 & 2/22\\
 full$-$egress     & 0/6 & 0/5 & 0/4 & 2/3 & 0/4 & 2/22\\
+\hline
+\multicolumn{7}{@{}l}{\emph{pseudo-live column} (23 A1--A5 cases)}\\
+configuration & A1 & A2 & A3 & A4 & A5 & total\\
+\hline
+naive             & 7/7 & 5/5 & 0/4 & 3/3 & 4/4 & 19/23\\
+close\_only       & 0/7 & 5/5 & 0/4 & 3/3 & 2/4 & 10/23\\
+bind\_only        & 7/7 & 0/5 & 0/4 & 2/3 & 4/4 & 13/23\\
+verify\_only      & 7/7 & 5/5 & 0/4 & 3/3 & 2/4 & 17/23\\
+egress\_only      & 7/7 & 5/5 & 0/4 & 0/3 & 4/4 & 16/23\\
+full              & 0/7 & 0/5 & 0/4 & 0/3 & 0/4 & \textbf{0/23}\\
+full$-$close      & 7/7 & 0/5 & 0/4 & 0/3 & 2/4 & 9/23\\
+full$-$bind       & 0/7 & 5/5 & 0/4 & 0/3 & 0/4 & 5/23\\
+full$-$verify     & 0/7 & 0/5 & 0/4 & 0/3 & 2/4 & 2/23\\
+full$-$egress     & 0/7 & 0/5 & 0/4 & 2/3 & 0/4 & 2/23\\
 \hline
 \end{tabular}
 \end{table}
 
 \paragraph{Result.}
-Table~\ref{tab:suiteb} gives the harm counts. With every switchable mediator
-unloaded, 33 of the 43 cases produce their harm: tickets close while the
+The 57 are author-constructed boundary injections, not an open threat
+distribution. Table~\ref{tab:suiteb} gives the A1--A5 harm counts. Adding the twelve A0 cells
+of Table~\ref{tab:a0} produces the pooled total: with the four switchable
+mediators and the role split unloaded, 49 of the 57 cases produce their harm;
+under \emph{full}, none remain, and the
+pseudo-live column is 0/29. {A3} is 0/4 under \emph{naive} because the
+substrate, not the four gates, stands on that path
+(Table~\ref{tab:suiteb-decomp}). Tickets close while the
 terminal writeback is still pending or the confirmation is simulated, the vendor
 records a submission for a host the approver never saw, report prose and a
 credential-shaped string reach vendor fields, and effects are marked verified
-from an echo of the request. Under \emph{full}, one case remains
-(\S\ref{sec:eval-falsify}). The single-mediator rows attribute the difference:
+from an echo of the request. The mock-path ACK that used to close without
+strong confirmation is now refused (\S\ref{sec:eval-falsify}).
+
+\begin{table}[t]
+\centering
+\small
+\caption{A0: planner-credential {SQL}. Harm is whether the statement committed.
+The {SQLSTATE} is a database fact, not a mediator return value. \emph{naive}
+uses the owner login; \emph{full} uses the planner login.}
+\label{tab:a0}
+\begin{tabular}{@{}lcccc@{}}
+\hline
+case & naive mock & full mock & naive p-live & full p-live \\
+\hline
+\texttt{close} & 1/1 & 0/1 & 1/1 & 0/1 \\
+\texttt{enqueue} & 1/1 & 0/1 & 1/1 & 0/1 \\
+\texttt{approve} & 1/1 & 0/1 & 1/1 & 0/1 \\
+\texttt{action\_status} & 1/1 & 0/1 & 1/1 & 0/1 \\
+\texttt{disposition\_source} & 1/1 & 0/1 & 1/1 & 0/1 \\
+\texttt{delete\_event} & 1/1 & 0/1 & 1/1 & 0/1 \\
+\hline
+pooled & 6/6 & 0/6 & 6/6 & 0/6 \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:suiteb-decomp} decomposes the naive 49: twelve A0 cells,
+thirty-seven A1--A5 cells, and A3 at $0/4$ per column under \emph{naive}
+because dual dispatch is a substrate property
+(\S\ref{sec:eval-substrate}).
+
+\begin{table}[t]
+\centering
+\small
+\caption{Composition of the naive 49/57. Held-out and kind tables are
+reported separately.}
+\label{tab:suiteb-decomp}
+\begin{tabular}{@{}lcc@{}}
+\hline
+slice & naive harm & note \\
+\hline
+A0 privileged login & 12/12 & owner {SQL} commits; planner {SQL} 42501 \\
+A1--A5, both columns & 37/45 & includes A3 at $0/4$ \\
+A3 dual dispatch & 0/8 & substrate; counted in the 45 \\
+\hline
+pooled Suite B & 49/57 & abstract / Table~\ref{tab:loo} \\
+\hline
+\end{tabular}
+\end{table}
+
+The single-mediator rows attribute the difference:
 \emph{close\_only} removes A1 and half of A5 and nothing else,
 \emph{egress\_only} removes A4 and nothing else, and \emph{bind\_only} removes
 A2 and \emph{also} one A4 case---the locator swap---because the disposition
 source locator is one of the eleven fingerprint segments, so moving it after
 approval is content drift as well as a foreign-object write. That overlap is
 defence in depth rather than a measurement artifact, and it is the reason we
-report per-case attribution instead of only totals.
+report per-case attribution instead of only totals. The complete 17-configuration
+grid, including the two interaction pairs and the five substrate arms omitted here so the two questions stay
+apart, is in the anonymous artifact (\texttt{appendix-b-grids.md}); the
+body keeps the leave-one-out and the non-empty 2-gate masks.
 
 \paragraph{Leave-one-out.}
 Removing one mediator from \emph{full} and keeping the other three raises harm
-from 1/43 to 15/43 for closure ($+14$), 9/43 for the binding recheck ($+8$),
-5/43 for the outbound guard ($+4$), and 4/43 for the phase split ($+3$). The
-ablation is not monotone, and the non-monotonicity is informative: unloading the
-phase split also \emph{hides} the one case that harms under \emph{full}, because
-without the split a deferred verification counts as a failure, the action never
-becomes closable, and the weak-receipt closure never happens. A mediator can
-therefore mask another's failure by failing the workflow earlier, which is an
-argument for reporting each cell rather than a single aggregate.
+from 0/57 to 17/57 for closure ($+17$), 10/57 for the binding recheck ($+10$),
+4/57 for the outbound guard ($+4$), and 4/57 for the phase split ($+4$). A0
+stays at 0 whenever the role split is on, so those marginals are the same
+numbers as on the A1--A5 subset. The two interaction pairs sit at
+16/57 (\texttt{close\_and\_verify}) and 21/57 (\texttt{bind\_and\_egress}):
+each pair restores the classes those two mediators cover and leaves the
+other two open. The four 2-gate cells the frozen 17-config matrix omitted
+were run live on the production chain ($4\times 57=228$ executions;
+\texttt{LATTICE\_CONFIGS} stay out of \texttt{ALL\_CONFIGS}). Projection
+from the single-gate rows under monotonicity still matches the two frozen
+pairs (mock \texttt{close+bind} 4/22, \texttt{close+egress} 7/22,
+\texttt{bind+verify} 10/22, \texttt{verify+egress} 13/22). The live
+$4\times 57$ run matched that projection on every adversary cell after
+the A2 level-fix. None of these cells is pooled into 49/57. The falsification suite caught a non-monotone configuration
+(\S\ref{sec:eval-falsify}); that hole is closed.
 
 \begin{table}
 \centering
 \small
 \caption{Leave-one-out: harm with one mediator removed from \emph{full},
-pooled across both vendor columns. Marginal is the increase over 1/43.}
+pooled across both vendor columns, including A0. Marginal is the increase over 0/57.}
 \label{tab:loo}
 \begin{tabular}{@{}lccc@{}}
 \hline
 configuration & removed & harm & marginal \\
 \hline
-full            & ---    & 1/43  & --- \\
-full$-$close    & close  & 15/43 & $+14$ \\
-full$-$bind     & bind   & 9/43  & $+8$ \\
-full$-$egress   & egress & 5/43  & $+4$ \\
-full$-$verify   & verify & 4/43  & $+3$ \\
+full            & ---    & 0/57  & --- \\
+full$-$close    & close  & 17/57 & $+17$ \\
+full$-$bind     & bind   & 10/57 & $+10$ \\
+full$-$egress   & egress & 4/57  & $+4$ \\
+full$-$verify   & verify & 4/57  & $+4$ \\
 \hline
 \end{tabular}
 \end{table}
 
 \paragraph{Golden path.}
-Suite~A runs four end-to-end incidents that should complete, under the identical
-\emph{full} configuration, and scores closure from the event's status column
-rather than from a report field. All 4 reach \texttt{CLOSED} in both vendor
-columns with 0 over-blocked, and administrator \texttt{force\_close} is never
-called, so no closure in the table is a bypass. Against the same four cases with
-every mediator unloaded, closure is also 4/4---the mediators cost no
-closures---but the naive arm needs 4 manual resolutions where \emph{full} needs
-0, because the evidence the closure gate demands is produced by the same
-writeback the guard admits. Both arms take the same 2 extra worker passes per
-column, so the deferred-verification round trip is a property of the writeback
-protocol and not a cost the mediators impose; on this suite the only measurable
-usability difference runs in the mediators' favour. What this paragraph does
-\emph{not} measure is per-request latency, which \S\ref{sec:eval-overhead}
-reports separately.
+Suite~A: four incidents that should complete. Both arms close 4/4 in
+both columns, 0 over-block, 0 \texttt{force\_close}, same extra worker
+passes. The mediators add no over-block here; latency is reported in
+\S\ref{sec:eval-overhead}.
 
 \begin{table}
 \centering
@@ -1044,134 +1387,299 @@ arm & column & closed & over-blocked & manual & extra worker passes \\
 \hline
 full  & mock         & 4/4 & 0 & 0 & 2 \\
 full  & pseudo-live  & 4/4 & 0 & 0 & 2 \\
-naive & mock         & 4/4 & 0 & 4 & 2 \\
-naive & pseudo-live  & 4/4 & 0 & 4 & 2 \\
+naive & mock         & 4/4 & 0 & 0 & 2 \\
+naive & pseudo-live  & 4/4 & 0 & 0 & 2 \\
+\hline
+\end{tabular}
+\end{table}
+
+The four rows of Table~\ref{tab:gold} are a frozen substrate
+(\texttt{g1}--\texttt{g4}, 2026-09-10). Overhead, backlog, and scale stay on
+that substrate and are never remeasured into the extension.
+Table~\ref{tab:gold-ext} adds six legitimate flows the frozen four do not
+cover---compensation, re-approval, two-host containment, submit retry,
+operator writeback recovery, and level escalation---and scores the
+over-blocking direction of the same \emph{full} configuration.
+\texttt{force\_close} is forbidden here as there. The six are reported
+separately from Table~\ref{tab:gold} and from the 57.
+
+\begin{table}
+\centering
+\small
+\caption{Suite A extension: six golden-path incidents
+(\texttt{g5}--\texttt{g11}; \texttt{g8} is unused) that should close.
+Reported separately from Table~\ref{tab:gold} and from overhead, backlog,
+and scale.}
+\label{tab:gold-ext}
+\begin{tabular}{@{}llcccc@{}}
+\hline
+arm & column & closed & over-blocked & manual & extra worker passes \\
+\hline
+full  & mock         & 6/6 & 0 & 0 & 9 \\
+full  & pseudo-live  & 6/6 & 0 & 0 & 9 \\
+naive & mock         & 6/6 & 0 & 0 & 9 \\
+naive & pseudo-live  & 6/6 & 0 & 0 & 9 \\
+\hline
+\end{tabular}
+\end{table}
+
+Two of the six pair with an attack case by one fact the proposer cannot
+author (Table~\ref{tab:gold-pair}). Two more share a family with an attack
+but are not one-fact twins; two are unpaired coverage of two-host
+containment and operator writeback recovery. The pairing is reported
+separately from the 57.
+
+\begin{table}
+\centering
+\small
+\caption{Suite A pairing. A pair is claimed only when the two flows share
+one actuation shape and differ by one fact the proposer cannot author.
+Reported separately from Table~\ref{tab:gold} and from the 57.}
+\label{tab:gold-pair}
+\begin{tabular}{@{}p{0.28\linewidth}p{0.28\linewidth}p{0.38\linewidth}@{}}
+\hline
+golden & nearest attack & pairing \\
+\hline
+\texttt{g6\_retarget\_with\_reapproval} &
+  \texttt{a2\_target\_swap} &
+  holds with a caveat: cycle-1 approval of the rewritten target \\
+\texttt{g11\_level\_raise\_reapproval} &
+  \texttt{a2\_level\_downgrade} &
+  holds with a caveat: cycle-1 approval of the rewritten level
+  (raise vs.\ downgrade) \\
+\texttt{g5\_compensating\_retarget} &
+  \texttt{a4\_locator\_swap} &
+  related object-identity shape, not a one-fact twin \\
+\texttt{g9\_retry\_after\_timeout} &
+  \texttt{a3\_duplicate\_entity\_dispatch} &
+  both concern exactly-once delivery, not a one-fact twin \\
+\texttt{g7\_multi\_stage\_disposition} &
+  --- &
+  unpaired: two approved immediate isolates \\
+\texttt{g10\_writeback\_operator\_retry} &
+  --- &
+  unpaired: operator retry after a one-shot UNKNOWN confirm \\
 \hline
 \end{tabular}
 \end{table}
 
 \paragraph{Baseline: a fixed playbook.}
 Replaying the suite against a planner that emits a fixed, pre-approved plan and
-never revises it leaves 20 of the 43 cases inapplicable by construction: a plan
-that cannot move its own content cannot commit approval drift, cannot rewrite an
-idempotency key, and cannot swap a locator. We exclude those cells rather than
-scoring them as successes. On the 23 that remain, the harm profile is the same
-shape as the untrusted-planner arm (17/23 naive, 1/23 full), which says the
-mediators are not doing work that a disciplined playbook already does: the harms
-that survive a fixed playbook are the evidence-and-observation ones, and those
-are exactly what the closure gate and the phase split cover.
+never revises it leaves 22 of the 57 cases inapplicable by construction. On
+the 35 that remain the profile is the same shape (29/35 naive, 0/35 full);
+the full grid is in the artifact with Appendix~B. A0 still applies.
 
-\begin{table}
+\subsection{Kubernetes instance}
+\label{sec:eval-k8s}
+
+Tables~\ref{tab:k8s-real} and~\ref{tab:k8s-mapped} are the kind instance:
+eleven mapped attack cases plus two golden applies, three arms, kind.
+Stock {API} and \texttt{tei.lab} rows are not merged. Held-out {SOC}
+rows are retags, not a new alphabet. Three sample classes are not
+instantiable. \emph{kind\_naive} turns planner {RBAC} off;
+\emph{kind\_attribute} is Gatekeeper (or {VAP}) over
+\texttt{request.object}; \emph{kind\_tei} re-{GET}s Approval, re-hashes,
+refuses request-reported isolate readiness, and checks ingest identity.
+Harm is \texttt{kubectl get} after apply. Reported separately from the 57.
+The offline fixture 22/22 is a {CI} check without a cluster. Gatekeeper
+v3.17.1; an install failure fails the run.
+
+The golden rows answer the question the attack rows cannot: is the webhook
+a deny-all in costume? A legitimate \texttt{networking.k8s.io} apply
+(seeded Approval, matching annotations, ingest identity) and a legitimate
+\texttt{tei.lab} Isolate persist under all three arms. The first golden
+caught a construction over-block in which
+\texttt{kubectl}'s \texttt{last-applied-\allowbreak configuration} annotation was
+counted as an extra envelope field, so every legitimate \texttt{kubectl
+apply} of a NetworkPolicy was denied before any evidence predicate could
+run. The allowlist now exempts that documented client-bookkeeping key (its
+value remains inside the narrative scan, so the exemption opens no
+smuggling channel), and the re-frozen tables are unchanged on all 33
+attack cells. Before the fix, the seven NetworkPolicy attack rows were
+also denied at the annotation check---correct outcomes, wrong reason---so
+the operative denial reasons in the re-frozen run are the intended
+predicates.
+
+One hosted replication bounds the ``lab cluster'' caveat. The same
+thirteen-case slice, three arms, and scoring ran once on a hosted two-node
+{Alibaba Cloud} {ACK} cluster (v1.36-aliyun, cn-hangzhou). There the
+attribute baseline is a \texttt{ValidatingAdmissionPolicy} of the same
+request-attribute class (Gatekeeper's images were unreachable) and the
+{TEI} webhook runs as an in-cluster Service, re-{GET}ing through its own
+service account instead of a workstation. The two attribute policies
+correspond rule by rule---a table in the artifact lines up the Rego and
+{CEL} clauses, whose one difference is the narrative scan's scope,
+exercised by no corpus case---so the attribute column measures the
+class, not a vendor's implementation. The two worker nodes enter no harm
+definition: every row scores from control-plane persisted state.
+All 39 cells match the kind
+freeze: naive $11/11$, attribute $9/11$ with the same two residual
+cases, {TEI} $0/11$, and both golden applies persist
+(\texttt{hosted\_ack\_2node} rows in the artifact).
+One cloud, one small cluster, one run: this bounds the
+kind caveat; it does not remove it.
+
+\begin{table}[t]
 \centering
 \small
-\caption{Dead-playbook baseline: cases that do not require planner drift.
-20 of 43 are inapplicable by construction and are excluded, not scored as
-successes. Pooled 17/23 naive, 1/23 full.}
-\label{tab:dead}
-\begin{tabular}{@{}lcccccc@{}}
+\caption{Kind stock-{API} subset ($n=8$ attack):
+\texttt{networking.k8s.io/NetworkPolicy},
+\texttt{ownerReferences}, \texttt{ClusterRole}.
+Mapped, not reproduced. Reported separately from Suite~B and from
+Table~\ref{tab:k8s-mapped}. Attribute $6/8$ is a measurement of $\Pi$.
+The golden row is a legitimate apply (seeded Approval, matching
+annotations, ingest identity) that must persist under every arm.
+Mapping fidelity (K1/K2): five of eleven kind attack rows are
+path-scored rather than mechanism-scored
+(\texttt{eval/results/k8s-kind/cve-scoring/}); see
+\S\ref{sec:eval-coverify}.}
+\label{tab:k8s-real}
+\begin{tabular}{@{}lccc@{}}
 \hline
-\multicolumn{7}{@{}l}{\emph{mock} (11 applicable)}\\
-configuration & A1 & A2 & A3 & A4 & A5 & total\\
+arm & policy input & harmed \\
 \hline
-naive & 4/4 & --- & 0/3 & --- & 4/4 & 8/11\\
-full  & 1/4 & --- & 0/3 & --- & 0/4 & 1/11\\
+\texttt{kind\_naive} & none & 8/8 \\
+\texttt{kind\_attribute} & request object & 6/8 \\
+\texttt{kind\_tei} & re-{GET} + ingest + {RBAC} & \textbf{0/8} \\
 \hline
-\multicolumn{7}{@{}l}{\emph{pseudo-live} (12 applicable)}\\
-configuration & A1 & A2 & A3 & A4 & A5 & total\\
-\hline
-naive & 5/5 & --- & 0/3 & --- & 4/4 & 9/12\\
-full  & 0/5 & --- & 0/3 & --- & 0/4 & 0/12\\
+golden: legit apply & must persist & \textbf{persists} \\
 \hline
 \end{tabular}
 \end{table}
 
-\subsection{A real language model in the planner seat}
-\label{sec:eval-planner}
-
-The scripted planner answers whether the mediators sit on the path. It does not
-answer whether a real model authors the offending row. That is a different
-question, and the one a reviewer who has seen prompt-injection numbers will ask.
-We put a language model in the planner seat through the production prompt
-builder and the production response schema, so what is under test is the
-deployed contract rather than a prompt written for the paper.
-
-Three consequences of that choice are worth stating before any rate. The
-production prompt already forbids the model from authoring the deferred terminal
-disposition action, so the harness continues to append that action itself,
-exactly as production does: the model never gets to author closure, and A1 is
-therefore out of scope for this arm. Injection reaches the planner the way it
-reaches a real one, through upstream free text a compromised evidence or triage
-stage produced, which lands in the prompt via the decision summary; nobody
-hands the model an instruction out of band. The two A4 cases that smuggle
-narrative or a credential into a vendor field are rewritten this way; the other
-adversaries still apply as post-approval mutations, because a live planner can
-drift whether or not a language model wrote the original row.
-
-The provider has no seed and no temperature-zero guarantee, so one execution is
-a Bernoulli sample. We repeat every case $N=5$ times and report a Wilson score
-interval rather than a point, because the counts are small and cluster at 0 and
-1, where a normal-approximation interval leaves the unit interval. Provider
-refusals are dropped from the denominator and counted separately, so a model
-that will not answer cannot be scored as a prevented harm. The same two
-configurations as the headline table, \emph{naive} and \emph{full}, run against
-the mock column; the scripted planner is the paired control so that a difference
-between arms is attributable to who authored the row.
-
-Table~\ref{tab:planner} reports the rates. A token budget caps the arm so a
-runaway provider cannot silently dominate the cost of the paper.
-
-\begin{table}
+\begin{table}[t]
 \centering
 \small
-\caption{Planner arms, mock column, $N=5$ trials on the language-model rows.
-Wilson is the 95\% score interval on the harm rate. ``Lost'' is executions the
-provider did not answer, excluded from the denominator.}
-\label{tab:planner}
-\begin{tabular}{@{}llccc@{}}
+\caption{Still-mapped \texttt{tei.lab} subset ($m=3$ attack: self-witness
+identity, fail-open isolate, validate-mutates). Not merged into
+Table~\ref{tab:k8s-real}. Combined with that table the attribute residual
+is $9/11$. The golden row is a legitimate Isolate (Approval present, no
+readiness claim) that must persist under every arm.
+Self-witness and validate-mutates are among the path-scored fidelity
+rows (\S\ref{sec:eval-coverify}).}
+\label{tab:k8s-mapped}
+\begin{tabular}{@{}lccc@{}}
 \hline
-planner & configuration & harm & 95\% Wilson & lost \\
+arm & policy input & harmed \\
 \hline
-scripted (untrusted) & naive & --- & --- & 0 \\
-scripted (untrusted) & full  & --- & --- & 0 \\
-language model       & naive & --- & --- & --- \\
-language model       & full  & --- & --- & --- \\
+\texttt{kind\_naive} & none & 3/3 \\
+\texttt{kind\_attribute} & request object & 3/3 \\
+\texttt{kind\_tei} & re-{GET} + ingest + {RBAC} & \textbf{0/3} \\
+\hline
+golden: legit isolate & must persist & \textbf{persists} \\
 \hline
 \end{tabular}
 \end{table}
+
+\subsection{Portability: a third engine's write path}
+\label{sec:eval-temporal}
+
+Both instances above run on our code. A reviewer can ask whether the four
+obligations are portable to a third-party engine at all, so we ported
+them to {Temporal}~\cite{temporal2025engine}: a case is a workflow, the
+planner's proposals arrive as \emph{update handlers}---the engine's write
+path---and dispatch and read-back are activities whose results the engine
+records. The predicates are evaluated inside the handler, transactionally
+with the state change, over durable workflow state: the approval recorded
+by the analyst seat and the activity results the planner cannot author.
+That is the placement Lemma~\ref{thm:attr} is about---and its
+attribute-arm column below is that lemma observed on a third engine. Three
+arms again:
+\texttt{temporal\_naive} (handlers trust the request),
+\texttt{temporal\_attribute} (a request-attribute policy over the update
+payload, the Gatekeeper class), and \texttt{temporal\_tei} (every
+predicate rebuilt from state). Seven attack cases are ports of the
+Suite~B adversary classes---not new harm classes, not {CVE}-anchored---plus
+one golden closure.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Temporal portability instance: seven mapped attack cases plus
+one golden closure, single run on the single-binary Temporal dev server
+(v1.32). Reported separately from the 57, the kind 11, and the frozen
+tables. The
+attribute arm catches the malformed request and nothing else, the same
+shape as Table~\ref{tab:k8s-real}.}
+\label{tab:temporal}
+\begin{tabular}{@{}lcc@{}}
+\hline
+arm & harmed (n=7) & golden closure \\
+\hline
+\texttt{temporal\_naive} & 7/7 & closes \\
+\texttt{temporal\_attribute} & 6/7 & closes \\
+\texttt{temporal\_tei} & \textbf{0/7} & closes \\
+\hline
+\end{tabular}
+\end{table}
+
+The refusal reasons map one-to-one onto the SOC gate reasons:
+\texttt{no\_dispatch\_record}, \texttt{weak\_confirmation\_evidence},
+\texttt{content\_drift}, \texttt{egress\_allowlist},
+\texttt{no\_readback\_record}, \texttt{already\_dispatched} (the
+one-effect claim is taken transactionally in the handler, before any
+activity runs). The golden case closes under all three arms with the full
+evidence chain. Scope: single-binary Temporal dev server with in-memory
+persistence; the analyst seat's update is a declared boundary the planner
+cannot call (a Temporal \texttt{Authorizer} would enforce it on a
+self-hosted frontend---surveyed, not installable on
+\texttt{WorkflowEnvironment.start\_local}; see
+\texttt{eval/temporal/authorizer-note.md}); workflow code is in the {TCB}, as the
+mediators are.
+
+\subsection{Spec-driven search}
+\label{sec:eval-search}
+
+Search letters are TLA+ actions, not \texttt{Injection} fields. The
+mapping list in the artifact (window 2015-01-01 to
+2026-09-11, fixed queries, include/exclude rubric; 21 included, 5
+excluded, none truncated) is a literature map, not an external threat
+corpus.
+Already-cited papers are related-work anchors. Held-out
+{SOC} cases (reported separately from the 57) are 14/14 naive and 0/14 full;
+they reuse implemented \texttt{Injection} knobs under literature or {CVE}
+labels and are mapped instantiations, not reproductions on the original
+product. Kind cases are
+Tables~\ref{tab:k8s-real} and~\ref{tab:k8s-mapped}. Shortest
+spec-trace {CEs} replay on both chains: no full-configuration bypass. A
+coverage search over the implemented {SOC} knobs is seeded by those traces
+(the full 960-point implemented-knob space, 2026-09-16; six coverage
+cells; no bypass and no new harm class under \emph{full}). An adaptive
+adversary that starts from a refused close and mutates one
+planner-writable column at a time exhausts its seven mutators without a
+bypass under \emph{full}; the budget of 24 is a cap never reached, and
+each mutation's recorded refusal reason is in the artifact. That is the
+claim on this mapped slice $\times$ the finite {TLA+} slice, not
+exhaustiveness of an open threat space.
+Repeat-run $N=20$ wall-clock noise is in the artifact;
+deterministic injection does not buy a variance claim in the body.
 
 \subsection{Substrate ablation: the layer with no switch}
 \label{sec:eval-substrate}
 
-The four gates say nothing about dual dispatch, and an ablation that can only
-unload gates therefore reports A3 as zero everywhere, which is not a result. The
-mechanisms that do mediate it (\S\ref{sec:impl-nonswitch}) have no setting, and we
-are unwilling to add one. So the harness weakens the substrate instead: it drops
-the partial unique index in the evaluation database, and it substitutes the naive
-shape of each code-level mechanism---an outbox that appends a new head without
-retiring the old one, a claim that re-reads without the lock and without the
-status compare-and-set. Production code is unchanged. These rows answer a
-different question from the gate ablation, and we keep the tables apart for that
-reason: not ``was the gate loaded'' but ``would a plausible naive implementation of
-this step have let the harm through''.
+The four gates say nothing about dual dispatch. The harness weakens the
+substrate instead (\S\ref{sec:impl-nonswitch}): drops the unique index
+and substitutes naive shapes of supersede, claim, and delivery
+re-read. Production code is unchanged.
 
 \begin{table}[t]
 \centering
 \small
 \caption{Substrate ablation, untrusted-planner arm. All four gates are loaded in
 every row; what changes is a mechanism no deployment can switch off. A3 counts
-are per column (4 cases each); the total is over all 43 cases, whose 1/43 floor
-is the residual A1 case of \S\ref{sec:eval-falsify}.}
+are per column (4 cases each); the total is over all 57 cases. A0 is 0 in every row
+because the role split stays on.}
 \label{tab:substrate}
 \begin{tabular}{@{}lcccc@{}}
 \hline
 weakened & A3 mock & A3 p-live & total & $\Delta$\\
 \hline
---- (\emph{full})                  & 0/4 & 0/4 & 1/43 & ---\\
-index                              & 0/4 & 0/4 & 1/43 & $+0$\\
-supersede                          & 0/4 & 0/4 & 1/43 & $+0$\\
-index $+$ supersede                & 2/4 & 2/4 & 5/43 & $+4$\\
-\quad $+$ delivery re-read         & 2/4 & 2/4 & 5/43 & $+4$\\
-claim compare-and-set              & 1/4 & 1/4 & 3/43 & $+2$\\
+--- (\emph{full})                  & 0/4 & 0/4 & 0/57 & ---\\
+index                              & 0/4 & 0/4 & 0/57 & $+0$\\
+supersede                          & 0/4 & 0/4 & 0/57 & $+0$\\
+index $+$ supersede                & 2/4 & 2/4 & 4/57 & $+4$\\
+\quad $+$ delivery re-read         & 2/4 & 2/4 & 4/57 & $+4$\\
+claim compare-and-set              & 1/4 & 1/4 & 2/57 & $+2$\\
 \hline
 \end{tabular}
 \end{table}
@@ -1180,12 +1688,12 @@ Table~\ref{tab:substrate} shows that the head mechanisms are layered, and that
 neither of the top two is individually necessary. Dropping the index alone
 changes nothing, because the supersede has already retired the losing head, so no
 second row ever claims to be current. Weakening the supersede alone changes
-nothing either, because the index refuses the second insert---the harness records
+nothing either, because the index refuses the second insert; the harness records
 the resulting integrity error per case, so the reader can see which layer acted.
 Only with both gone do two rows both claim to be the active terminal head for one
-closure cycle, in 2 of 4 A3 cases in each column. This is what defence in depth
-looks like when it is measured rather than asserted: a table of single-mechanism
-removals would have reported that no mechanism matters.
+closure cycle, in 2 of 4 A3 cases in each column. A table of
+single-mechanism removals would have reported that neither mechanism
+matters.
 
 The delivery-time re-read adds no further harmed case, and the difference it makes
 is in kind rather than count. In the arm above it the losing head is dead-lettered
@@ -1206,27 +1714,19 @@ deduplicate is relying on the untrusted component.
 \subsection{What the mediators cost}
 \label{sec:eval-overhead}
 
-A fail-closed control is only adoptable if it is affordable, and until this point
-the only number behind that claim was the golden path's worker passes. So we
-instrumented each mediator with a timer that wraps it including the path where its
-switch is off---so the unmediated arm reports the cost of asking whether the
-mediator is loaded, not zero---and counted SQL statements with a cursor hook on the
-evaluation engine, which counts statements actually issued rather than statements
-we believe the mediators are responsible for.
-
-The measurement runs on Suite A rather than Suite B, and the reason is worth stating
-because we got it wrong first. On adversarial cases the mediated arm refuses early
-and therefore issues \emph{fewer} statements than the unmediated one: measured that
-way the mediators are a 19\% speedup, which is true and tells the reader nothing.
-On the golden path both arms run the same case to the same successful close, so the
-difference is the cost of mediating and nothing else.
+Each mediator is timed including the switch-off path; {SQL} is counted from
+issued statements. Suite~A, not Suite~B: adversarial cases refuse early
+and make the mediators look like a speedup.
 
 \begin{table}[t]
 \centering
 \small
 \caption{Golden path, 8 repeats of 4 cases across both columns, mock column shown.
 Per-mediator figures are wall time for one decision. The unmediated column is the
-switch check, which is why it is small rather than zero.}
+switch check, which is why it is small rather than zero.
+Golden substrate g1--g4, frozen 2026-09-10; overhead, backlog, and scale are
+not remeasured on \texttt{g5}--\texttt{g11} (Table~\ref{tab:gold-ext} reports
+nine extra worker passes across those six cases).}
 \label{tab:overhead}
 \begin{tabular}{@{}lrrr@{}}
 \hline
@@ -1266,59 +1766,83 @@ outbound guard             & 0.01 (0.02) & 0.09 (0.12) & $+0.08$\\
 \end{tikzpicture}
 \caption{Added p50 latency of each mediator (full minus naive) on the golden
 path. Three checks are a line on this scale; the phase split is the round trip.}
+\Description{A bar chart of added p50 latency in milliseconds. Close, bind, and egress bars are vanishingly small. The verify bar is about 117 milliseconds. An end-to-end bar is about 151 milliseconds.}
 \label{fig:overhead}
 \end{figure}
 
-Table~\ref{tab:overhead} says something we did not expect to be so lopsided. Three
-of the four mediators are free at any scale a SOC operates at: the closure gate,
-the approval-binding recheck and the outbound guard each decide in under
-$100\,\mu$s, because each is a predicate over rows the caller has already loaded
-for its own reasons. The approval binding in particular is often assumed expensive
-because it hashes eleven fields; hashing eleven short strings is not expensive, and
-the fingerprint comparison adds no query the dispatch was not already making.
+Table~\ref{tab:overhead}: three mediators decide in under $100\,\mu$s
+over rows already loaded; hashing eleven short strings is not
+expensive. The entire cost is the verification split ($+117$\,ms of
+$+151$\,ms): looking is a round trip. The 51 extra SQL statements
+include the outbound guard running more often because the terminal
+writeback actually happens. Worker passes stay 1.50.
 
-The entire cost is the verification phase split, at $+117$\,ms per decision, which
-accounts for essentially all of the $+151$\,ms end-to-end difference. That is not
-computation. It is the deferred terminal activation and the receipt read that the
-split exists to force: refusing to treat the tool's own reply as the effect means
-someone has to go and look, and looking is a round trip. The 51 extra SQL
-statements are the same fact counted differently, and they include the outbound
-guard running more often in the mediated arm (112 envelopes against 48) because
-the terminal writeback actually happens there.
+\begin{table}[t]
+\centering
+\small
+\caption{Vendor-latency sensitivity on the golden path (8 repeats of 4 cases,
+mock column, one session). An artificial delay is injected into the vendor
+stub's confirmation read-back endpoint. Only the verification phase split
+absorbs it, with slope $\approx 1.0$; the unmediated arm never waits for the
+read and is flat. The other three mediators are flat too (under $0.25$\,ms at
+every level, not shown).}
+\label{tab:vendor-latency}
+\begin{tabular}{@{}rrrrr@{}}
+\hline
+ & \multicolumn{2}{c}{verify split p50 (ms)} & \multicolumn{2}{c}{end-to-end p50 (ms)}\\
+injected delay (ms) & \emph{naive} & \emph{full} & \emph{naive} & \emph{full}\\
+\hline
+0    & 43 & 179   & 3583 & 3721\\
+100  & 50 & 318   & 3730 & 3948\\
+500  & 37 & 732   & 3137 & 3186\\
+1000 & 37 & 1244  & 2467 & 3436\\
+5000 & 38 & 5256  & 2320 & 7458\\
+\hline
+\end{tabular}
+\end{table}
 
-Worker passes are identical at 1.50 in both arms, which retires a claim an earlier
-draft of this paper made. The deferred-verification round trip is a property of the
-writeback protocol, not a cost the mediators impose: an unmediated system that
-still wants a terminal writeback pays it too.
+Table~\ref{tab:vendor-latency} injects delay into the confirmation
+read-back. The phase split absorbs it (slope $\approx 1.0$); the other
+three mediators and the unmediated arm are flat. Subtracting the delay
+from the mediated end-to-end p50 lands in the unmediated band; every
+case still closes at 5000\,ms. Excess of 39--77\,ms is partly
+\texttt{g} transient-outage paying the delay twice. Absolute wall times
+sit above Table~\ref{tab:overhead} because this scan ran against a
+fuller database; the slope is the finding. Planner latency
+(\S\ref{sec:eval-planner}) composes additively.
 
-A tenth of a second on a path whose other steps involve a language model and a
-vendor API is not a number we expect anyone to object to. We report it rather than
-asserting it because the shape matters: a reader deciding which of these four to
-adopt should know that three are nearly free and one buys its guarantee with a
-round trip.
+Three checks are nearly free; the fourth needs a round trip for its
+guarantee.
+
+Fail-closed cost under load is stuck tickets, not the $151$\,ms verify hop.
+A gold-only scale of 120 events under \emph{full} still closes all 120
+(wall p50 $3641$\,ms, p95 $5279$\,ms, p99 $6235$\,ms) with mean {READY}
+depth $0$; that number lives in the artifact (golden substrate g1--g4,
+frozen 2026-09-10; not remeasured on \texttt{g5}--\texttt{g11}). The measurement that belongs
+with the sentence is a mixed arrival process: 120 events, thirty percent
+refuse seeds, a deterministic {Poisson} clock. Both arms close all 80
+golden events. The 40 refuse seeds are harmed under \emph{naive} (40/40
+closed and wrong) and stuck under \emph{full} (40/40 open, 0 harmed), with
+stuck-ticket age p50 $56.8$ and p95 $109.1$ on that clock. {READY} outbox
+depth stays 0: these refusals never become undelivered commands. The
+tickets pile up as incidents a human has to look at, which is the liveness
+cost of the safety result.
+
+A stuck ticket costs a lookup: the forty refusals carry three codes
+(\texttt{closed\_side\_effects\_pending} 17,
+\texttt{closed\_weak\_confirmation\_evidence} 12,
+\texttt{closed\_requires\_report} 11). Naive flags all 120 arrivals as
+needing a human, forty of them closed wrong; full flags the
+forty typed stuck tickets and no others. At an assumed $t_h{=}5$ minutes that is
+$40\,t_h$ analyst time; $t_h$ is an assumption, not a measurement.
 
 \subsection{Real contention: several processes, one row}
 \label{sec:eval-concurrency}
 
-Every A3 row above is contention the harness constructs inside one process: two
-dispatch attempts in sequence, two enqueues in sequence. That is enough to show
-whether a mechanism refuses the second attempt and it is not enough to show the
-mechanism is why nothing bad happens under load, because a sequential harness
-never produces the interleaving the mechanism was written for. The outbox worker
-in particular is built for concurrency---a lease, a per-worker identity, a
-\texttt{SKIP LOCKED} claim---and none of that is exercised by a runner that never
-runs two of them.
-
-So we ran four separate OS processes, each with its own event loop, its own
-connections and its own service instances, sharing nothing but PostgreSQL and
-Redis, and had them race on the same row at four points: all four calling
-\texttt{execute\_action} on one approved action; all four doing that with the
-idempotency key rewritten per worker first; all four running the outbox worker
-over one queued writeback; and all four enqueueing a terminal head for the same
-event and closure cycle. Five rounds each, on a freshly seeded event per round.
-Because each process has its own vendor stub, effects are counted in Redis rather
-than in memory: a set of idempotency keys per action, so a delivery retry of one
-key stays distinguishable from a second dispatch.
+A3 rows above are sequential. Four OS processes race on the same row at
+four points: \texttt{execute\_action}; that with a rewritten
+idempotency key; outbox delivery; terminal-head enqueue. Five rounds,
+fresh event per round. Effects counted in Redis by idempotency key.
 
 \begin{table}[t]
 \centering
@@ -1349,15 +1873,15 @@ $-$head uniq.\ & dispatch        & 0/5 & 1 & ---\\
 \end{tabular}
 \end{table}
 
-The \emph{full} configuration produces exactly one effect at every contention
-point in every round, which is the result we were looking for: three of the four
+The \emph{full} configuration produces one effect at every contention
+point in every round: three of the four
 dispatch racers are refused at the claim with an invalid status transition, and
 three of the four delivery racers find nothing to lease. The head race is the one
 place where all four workers succeed and the outcome is still one head, because
 each enqueue supersedes the one before it inside its own transaction.
 
-Two things in Table~\ref{tab:concurrency} we did not expect, and both are more
-interesting than the row we were aiming at.
+Two outcomes in Table~\ref{tab:concurrency} were not the ones we set out to
+measure.
 
 The first is that removing the claim compare-and-set does not produce a duplicate
 effect under real contention. It produces \emph{no} effect. Two of the four
@@ -1376,12 +1900,13 @@ produce two effects when the claims are serialised.
 The second is that the head race under weakened uniqueness produces four active
 terminal heads in every round, and still only one external effect. The four heads
 carry the same planner-written idempotency key, so the vendor collapses them. That
-is precisely the dependency \S\ref{sec:eval-substrate} warns about stated in the
-strongest possible form: with the index and the supersede both gone, the record
-says four different things about how this incident was resolved, and the only
-reason the outside world sees one of them is that the vendor chose to honour a key
-the untrusted planner wrote. A system that treats that as its duplicate-suppression
+is the dependency \S\ref{sec:eval-substrate} warns about, in its strongest
+form: with index and supersede gone, the record says four different things
+about how this incident was resolved, and the outside world sees one only
+because the vendor honoured a key the untrusted planner wrote. A system that treats that as its duplicate-suppression
 mechanism has delegated an integrity property to the component it does not trust.
+Observation alone cannot suppress duplicates without a bound on in-flight
+time; the guarantee has to come from the contract~\cite{li2026exactlyonce}.
 
 \subsection{Comparator: an external policy engine at the same four points}
 \label{sec:eval-comparator}
@@ -1396,54 +1921,65 @@ points---before dispatch, after observation, before closure, and on every outbou
 envelope---honouring a deny by not proceeding. The policy is
 \S\ref{app:rego} verbatim.
 
-We made the comparison as favourable to the comparator as we could, because a
-comparator that loses to a straw man proves nothing. OPA is the real binary rather
-than a re-implementation of our own rules. It is consulted synchronously on every
-decision, with no cache and no fail-open on timeout, which is better than a
-sidecar deployment usually manages. Its egress rule allowlists the actual
-writeback envelope schema, field by field, rather than a guess at it. And it is
-handed the two facts that a naive framing would have withheld: the trusted source
-locator, which the caller passes to the in-system guard and therefore can pass to
-a sidecar, and the verification result's own detail code, which is what tells a
-reader that the evidence behind a claimed effect was the request's success echo
-rather than an independent readback. Withholding either would have made the
-comparator lose for a reason that has nothing to do with where mediation sits.
+We made the comparison as favourable to the comparator as we could; a
+comparator that loses to a straw man proves nothing. OPA is the real binary,
+consulted synchronously on every decision with no cache and no fail-open on
+timeout. Its egress rule allowlists the actual writeback envelope schema field
+by field. It is also handed the two facts a naive framing would have withheld:
+the trusted source locator, which the caller can pass to a sidecar as it does to
+the in-system guard, and the verification result's detail code, which records
+that the evidence behind a claimed effect was the request's success echo rather
+than an independent readback. Withholding either would have made the comparator
+lose for a reason unrelated to where mediation sits.
 
-What the comparator does not get is a transaction on the caller's database, and no
-sidecar has one. Every fact in its decision document is a value the caller
+The comparator has no transaction on the caller's database, and no
+sidecar has one (Figure~\ref{fig:attrview}). Every fact in its decision document is a value the caller
 serialised and sent. That single difference accounts for the result.
 
 \begin{table}[t]
 \centering
 \small
 \caption{Benign closure against harm, untrusted-planner arm. Suite A is the
-golden path (4 cases $\times$ 2 columns); Suite B is the 43 injections. Wilson
-95\% intervals on the harm rate. No arm over-blocks, so the harm column is the
-only axis on which they differ.}
+golden path (4 cases $\times$ 2 columns); Suite B here is the 45 A1--A5
+injections. A0 is Table~\ref{tab:a0} and is omitted (the role split stays
+on). The harness markdown for this arm reports 16/57 because it keeps {A0}
+in the denominator; the residual count is the same 16. Those 16 cells are
+the \texttt{needs\_store\_join} cells in \texttt{eval/taxonomy/store\_join.json};
+the other 29 A1--A5 cells are \texttt{request\_closed} (including {A4}
+already decided on the request and {A3} substrate zeros). Rates are
+case-set proportions; score intervals live in the artifact. No arm
+over-blocks, so the harm column is the only axis on which they differ.}
 \label{tab:pareto}
 \begin{tabular}{@{}lccc@{}}
 \hline
 arm & Suite A closed & Suite B harm & 95\% CI\\
 \hline
-\emph{naive}          & 8/8 & 33/43 (0.77) & [0.62, 0.87]\\
-\emph{external\_opa}  & 8/8 & 14/43 (0.33) & [0.20, 0.47]\\
-\emph{full}           & 8/8 & \phantom{0}1/43 (0.02) & [0.00, 0.12]\\
+\emph{naive}          & 8/8 & 37/45 (0.82) & [0.69, 0.91]\\
+\emph{external\_opa}  & 8/8 & 16/45 (0.36) & [0.23, 0.50]\\
+\emph{signed\_attribute} & 8/8 & 16/45 (0.36) & [0.23, 0.50]\\
+\emph{full}           & 8/8 & \phantom{0}0/45 (0.00) & [0.00, 0.08]\\
 \hline
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:pareto} is the result, and the first thing to say about it is that
-the comparator works. It stops 19 of the 33 harms the unmediated arm suffers, and
-it costs nothing: all eight benign closures still close, with no over-block. A
-reader who takes only one number from this paper should take that one, because it
-says an OPA sidecar is a real control and not a foil.
+Table~\ref{tab:pareto} is the result. The comparator stops 21 of the 37
+harms the unmediated arm suffers and costs nothing: all eight benign
+closures still close, with no over-block.
+This freeze is {OPA} v1.20.2 on the same {A2} level-fix substrate as the
+49/57 freeze: \texttt{a2\_level\_downgrade} is now reachable under
+\emph{naive} and is one of the cells the sidecar kills; the residual remains
+the 16 \texttt{needs\_store\_join} cells of Figure~\ref{fig:attrview}.
+The \texttt{signed\_attribute} arm HMACs the same documents and evaluates
+the same policy: the residual is the same 16 cases. Authenticated request
+attributes are still Lemma~\ref{thm:attr}'s premise.
 
-The second thing to say is which 14 survive, because they are not a scattering.
+The 16 that survive are not a scattering.
 They fall into two groups, and both are the same failure. The A2 content-drift
 cases---a target rewritten after approval, a fingerprint forged to match, a tool
 escalated---survive because the sidecar is shown an action row that is internally
 consistent. It can check that the row's plan revision matches the revision the
-caller reports for the event, and it does; two A2 cases die there. It cannot check
+caller reports, and that the requested action level is one the policy allows;
+those two A2 cases die there. It cannot check
 the row against the approval that was actually recorded, because that comparison
 needs a read of a table the sidecar cannot see, in the same transaction as the
 dispatch. A caller that rewrites the row and reports the rewrite is believed. The
@@ -1453,63 +1989,29 @@ current closure cycle, and whether a receipt's confirmation is strong enough for
 the declared vendor mode, are properties of rows the sidecar is told about rather
 than rows it reads.
 
-This is the boundary the arm exists to locate, and we state it as a finding rather
-than as a limitation of our setup: the decisions on this path are transactional,
-and a mediator that cannot join the transaction can only police the
-self-consistency of what it is handed. Section~\ref{sec:tcb} says the mediators
-are not tamper-proof in Anderson's sense, and that remains true; what
-Table~\ref{tab:pareto} adds is that moving them out of the process to gain
-tamper-proofness costs a third of the harm coverage, and the trade is not obviously
-worth making. The honest reading is that the two are complementary. A sidecar is
-the better place for rules about what a tool may ever do; the transaction is the
-only place for rules about whether this dispatch matches this approval.
+This is the boundary the arm exists to locate: the decisions on this path
+are transactional, and a mediator that cannot join the transaction can
+only police the self-consistency of what it is handed. A sidecar is the
+better place for rules about what a tool may ever do; the transaction is
+the only place for rules about whether this dispatch matches this approval.
 
-\subsection{Coverage against agent-security benchmarks}
+\subsection{Relation to agent-security benchmarks}
 \label{sec:eval-coverage}
 
-Our suite is not a substitute for the public agent-security benchmarks, and
-Table~\ref{tab:coverage} is meant to make the division of labour legible rather
-than to claim breadth. AgentDojo~\cite{debenedetti2024agentdojo},
-InjecAgent~\cite{zhan2024injecagent}, and the Agent Security
-Bench~\cite{zhang2024asb} all measure whether a model can be induced to propose a
-harmful call. That is the question upstream of ours: we assume the answer is yes
-and ask what happens next. The consequence is that the injection-shaped classes
-overlap and the record-integrity classes do not overlap at all.
-
-\begin{table}[t]
-\centering
-\small
-\caption{Which adversary classes the public benchmarks reach. \checkmark{}
-means the benchmark contains cases of that shape; --- means it does not, in most
-rows because the benchmark has no persistent record to corrupt and no vendor
-transaction to duplicate.}
-\label{tab:coverage}
-\begin{tabular}{@{}lcccc@{}}
-\hline
-class & AgentDojo & InjecAgent & ASB & ours\\
-\hline
-A1 closure evidence   & ---          & ---          & ---          & \checkmark\\
-A2 approval binding   & ---          & ---          & \checkmark   & \checkmark\\
-A3 dual dispatch      & ---          & ---          & ---          & \checkmark\\
-A4 egress             & \checkmark   & \checkmark   & \checkmark   & \checkmark\\
-A5 false verification & \checkmark   & ---          & ---          & \checkmark\\
-\hline
-\end{tabular}
-\end{table}
-
-Only A4 is well covered elsewhere, and there our contribution is narrower than
-theirs: they ask whether the model leaks, we ask whether the envelope leaves.
-A5 partially overlaps AgentDojo's notion of a task the model claims to have
-completed. A1 and A3 have no counterpart we could find, and we think the reason is
-structural: a benchmark that runs an agent against a simulated tool surface has no
-ticket to close and no outbox to double-write, so those harms have nowhere to
-happen. That is an argument for both kinds of suite, not for ours over theirs.
+Whether a proposer can be induced to emit a harmful call is upstream of
+TEI; \S\ref{sec:rw} places AgentDojo, InjecAgent, and ASB against the
+grid in Table~\ref{tab:taxonomy}. Those benchmarks overlap A4 and part of
+A5 and have no ticket, privileged login, or outbox.
 
 \subsection{Harm not reachable under the naive configuration}
 \label{sec:eval-falsify}
 
-Three groups of cells are zero for reasons other than the four mediators, and
+Four groups of cells are zero for reasons other than the four mediators, and
 reading them as evidence for the mediators would be wrong.
+
+A0 is zero under every configuration that keeps the role split, including
+\emph{full} and every leave-one-out and substrate arm. Those zeros are a
+{PostgreSQL} privilege result (Table~\ref{tab:a0}), not a gate result.
 
 All four A3 cases are zero in every configuration of the \emph{gate} ablation,
 including \emph{naive}, and reading that as four mediated attacks would be wrong:
@@ -1528,18 +2030,18 @@ approved terminal actions before any head exists, which is the state in which th
 index and the supersede are the only things standing there. A zero is only
 evidence when the case can produce a one, and for two runs these could not.
 
-One A2 case, an approval-level downgrade, is blocked under \emph{naive} by the
-level-validation check on the approval record, which is likewise not switchable.
-Its zero is honest but it is not attributable to the binding recheck.
-
-One case is unmediated under \emph{full}: a mock-column closure on a receipt
-that carries no confirmation fields. This is the mock column's declared
-semantics---a simulated receipt is not confirmation, and the closure gate's
-evidence requirement is enforced against non-mock paths, where the same case
-(\texttt{a1\_simulated\_receipt}) is rejected with
-\texttt{closed\_simulated\_receipt\_rejected}. We report it as a reachable harm
-rather than filtering it, because ``the mock path is weaker'' is a property of
-the deployment we are describing, not a scoring rule.
+One A2 case, an approval-level downgrade, used to sit at zero under
+\emph{naive} as well as under \emph{full}. That zero was an instrument
+bug, not a non-switchable check: the injection wrote an invalid
+uppercase \texttt{L1}, which the action enum rejects in both arms, so
+the cell could not produce a one. The case now writes a valid
+\texttt{l1} and leaves the planner-written fingerprint column
+untouched---level is not one of the eleven content segments, so a
+column comparison sees no change. Under \emph{naive} the vendor records
+a submit; under \emph{full} the bind gate refuses with
+\texttt{approval\_level\_drift}. The cell is therefore a missing bind
+conjunct that the instrument had been hiding, not a naive zero
+of a non-switchable check.
 
 \subsection{Fail-open paths the method exposed}
 \label{sec:eval-found}
@@ -1547,14 +2049,24 @@ the deployment we are describing, not a scoring rule.
 Building the suite as boundary injection rather than predicate testing found two
 production fail-open paths that predicate-level tests passed cleanly.
 
-First, the approval-binding recheck compared the action's current fingerprint
-against a stored fingerprint \emph{label} the planner writes, so a planner that
-mutated a target and recomputed the label went through unflagged. The
-fingerprint is now recomputed from the eleven content segments and compared
-against the value recorded when the approval decision was made
-(\texttt{action\_content\_drift}); the label is treated as untrusted input. A
-unit test of the predicate could not see this, because it supplied the stored
-value itself.
+The first is a walkthrough of A2, because it is the case that turned a method
+choice into a production defect. The scripted planner writes an approved
+\texttt{isolate\_host} action against \texttt{host-eval-1}, the human decision
+is recorded, and then the planner rewrites the target to a host the approver
+never saw and writes a matching value into the action's own fingerprint
+\emph{column}. The old recheck compared that column to itself: the label the
+planner had just authored. Dispatch succeeded, the vendor recorded a submission
+for the attacker-chosen host, and the scorer marked wrong-act. The error the
+modern path raises is \texttt{action\_content\_drift}: the eleven content
+segments of Appendix~\ref{app:fp} are hashed at claim time and compared to the
+hash stored on the approval record when the decision was made. The planner-written
+column is not one of those segments. A unit test of the predicate could not see
+the old hole, because the test supplied the stored value itself. The case that
+found it is \texttt{a2\_forged\_fingerprint}; the same walkthrough with only the
+target rewritten and the label left stale is \texttt{a2\_target\_swap}, which
+the old code also failed to catch once the planner refreshed the label. Both
+are zero under \emph{full} and five-of-five under \emph{naive} in
+Table~\ref{tab:suiteb}.
 
 Second, the outbound guard checked that a command's target belonged to the
 event by comparing the command's own \texttt{source\_locator} against
@@ -1565,201 +2077,474 @@ event's \emph{creation} source records only the ingesting product and tenant, so
 using it as the locator rejected legitimate compensation commands. Both fixes
 are in the production path, not in the harness.
 
+A third hole was a declared mock-path residual: an ACK without
+\texttt{readback\_verified} or \texttt{manual\_confirmed} still reached
+\texttt{CLOSED} when the disposition mode was mock. Leaving that cell as
+$1/47$ would have left a mock-only residual on the freeze. The closure predicate now demands
+the same strong confirmation on mock as on a live contract
+(\texttt{closed\_weak\_confirmation\_evidence}); the freeze is 0/57. Mock may
+still stamp \texttt{simulated=True}. The historical case remains in the suite as
+\texttt{a1\_weak\_receipt} and is scored as prevented under \emph{full}.
+
+Building the remaining Suite~A cases and the six B2 injections did not
+add a third numbered fail-open. Missing conjuncts on gates the 57
+already named---bind level, terminal bind, delivery witness,
+observation-target agreement, same-turn \texttt{UNKNOWN} pause---and
+\texttt{g9} liveness (retry of the same outbox row after a proven
+pre-egress failure, not a second \texttt{execute\_action}) are recorded
+in \S\ref{sec:eval-falsify} and Table~\ref{tab:b2}. Numbered holes remain
+the two this section opened with.
+
+\subsection{Remaining boundary cases}
+\label{sec:eval-b2}
+
+The 57 do not reach six attacks the taxonomy already names
+(Table~\ref{tab:b2}): terminal template rewrite, execution-owner
+rewrite, terminal locator swap, pre-approval locator swap, observation
+on a host the action did not name, and \texttt{SUCCESS} with
+\texttt{is\_verified} false. Under \emph{full} none is harmed; under
+\emph{naive} each produces a one when the case names a switchable
+mediator. T1a/T4a are why terminal activation re-runs bind; T4b is
+pre-sign object identity (egress still stands); T6a/T6b are the
+observation-target conjunct and its honest negative.
+
+\begin{table}
+\centering
+\small
+\caption{B2 remaining boundary cases, both vendor columns, untrusted
+planner. Reported separately from the 57.}
+\label{tab:b2}
+\begin{tabular}{@{}llcc@{}}
+\hline
+case & class & naive & full \\
+\hline
+\texttt{b2\_t1a\_terminal\_template\_rewrite} & T1 & 2/2 & 0/2 \\
+\texttt{b2\_t1b\_execution\_owner\_rewrite} & T1 & 2/2 & 0/2 \\
+\texttt{b2\_t4a\_terminal\_locator\_swap} & T4 & 2/2 & 0/2 \\
+\texttt{b2\_t4b\_pre\_approval\_locator\_swap} & T4 & 2/2 & 0/2 \\
+\texttt{b2\_t6a\_partial\_success\_observation} & T6 & 2/2 & 0/2 \\
+\texttt{b2\_t6b\_honest\_negative\_observation} & T6 & 2/2 & 0/2 \\
+\hline
+six cases, both columns & & 12/12 & 0/12 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Predicate mutants}
+\label{sec:eval-mutation}
+
+Eighteen mutants under \emph{full} only, harness patches production
+neither contains nor imports. M1 (twelve) weakens a witness; M4 (six)
+tightens until a golden would refuse. Kill is relative to unmutated
+\emph{full} the same day. Reported separately from the 57.
+
+\texttt{m1\_close\_planner\_cycle} is a declared survivor, not an
+undiscovered hole. Aligning the view's plan revision with the current
+cycle does not open a scored harm: the close gate's remaining conjuncts
+(report, confirmation evidence, simulated receipt) still refuse the A1
+cases, and no golden is refused. The \texttt{plan\_revision} check on
+the terminal writeback is unreachable as a standalone conjunct; it is
+left as specified rather than edited into a tautology.
+
+\begin{table}
+\centering
+\small
+\caption{Predicate mutants, \emph{full} only, both vendor columns.
+Kill relative to unmutated \emph{full}. Reported separately from the 57.
+Frozen in \texttt{eval/results/mutation}.}
+\label{tab:mutation}
+\begin{tabular}{@{}lccc@{}}
+\hline
+family & $n$ & killed & declared survivor \\
+\hline
+M1 predicate witness & 12 & 11 & \texttt{m1\_close\_planner\_cycle} \\
+M4 over-strict & 6 & 6 & --- \\
+\hline
+all & 18 & 17/18 & one \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Independent attack authors}
+\label{sec:eval-independent}
+
+The 57 are author-constructed by the same team that built the gates.
+As a never-pooled check that the mediators still hold when the attack
+narratives are written under a blindness boundary, a dual track runs
+from the frozen threat-model brief alone
+(\texttt{eval/protocol-independent-authors.md}): three human authors
+(H1--H3; SOC / Kubernetes / mixed backgrounds) and three fresh
+agent sessions on \texttt{deepseek-flash} (Ark coding-endpoint
+families timed out or returned reasoning-only empties and are archived
+as lost, not padded). A syntactic filter admits narratives that are
+complete, may-list only, and name a harm; admitted submissions become
+\texttt{adversary{=}I} cases and are scored naive vs.\ full on both
+vendor columns with the scripted planner. The two lines are never
+merged into one number and never pooled with the 57.
+
+\begin{table}
+\centering
+\small
+\caption{Independent author track, scripted planner, both vendor
+columns. Human $n{=}8$ executable cases; agent $k{=}9$ from three
+\texttt{deepseek-flash} sessions. One human submission is listed
+out-of-knob (upstream prompt injection under the scripted arm).
+Frozen in \texttt{eval/results/independent}. Never pooled with the 57.}
+\label{tab:independent}
+\begin{tabular}{@{}lccc@{}}
+\hline
+line & cases (cells) & naive harmed & full harmed \\
+\hline
+human-authored & 8 (16) & 10/16 & 0/16 \\
+agent-authored & 9 (18) & 12/18 & 0/18 \\
+\hline
+\end{tabular}
+\end{table}
+
+Naive idle cells are mostly duplicate-dispatch shapes (the same
+substrate reading as Suite~B {A3}). Zero full breakthroughs is the
+headline of this layer: independent authors found no gap the frozen
+gates miss on the shapes the harness can express.
+
+\subsection{Co-built verification of tables and gates}
+\label{sec:eval-coverify}
+
+A second layer checks the frozen tables and the four mediator
+predicates themselves, rather than inventing new cases.
+Re-execution (codename R1) follows \texttt{REPRODUCE.md} with an offline
+cell-diff harness (\texttt{eval/harness/diff\_freeze.py}; archive
+\texttt{eval/results/reexec/}). Numeric cell-diff totals are filled at
+the joint freeze. Gate review (codenames G1, G2) used only the mediator
+sources and the invariants of \S\ref{sec:inv}: close, bind, and verify
+conform; egress was recorded as a wording deviate on digest equality
+(non-load-bearing for Suite~B {A4}), and Invariant~\ref{inv:mediate} was
+aligned to the implemented guard+digest mechanism without unloading the
+gate. {CVE}-mapping fidelity on the eleven kind attack rows
+(\texttt{eval/results/k8s-kind/cve-scoring/}) scores mechanism~$6$ /
+path~$5$ / category~$0$ after adjudication (K1/K2); path-scored rows are
+footnoted on Tables~\ref{tab:k8s-real}--\ref{tab:k8s-mapped}.
+
+\subsection{A second vendor envelope}
+\label{sec:eval-envelope}
+
+Both vendor columns speak the mock contract. \texttt{envelope\_b} uses
+\texttt{dealStatus}, \texttt{ticketId}, \texttt{confirmField}; the gates
+see only evidence predicates. Seven portable cases (A1 receipt-strength
+and dropped-readback, A2 target-swap and forged-fingerprint, three A4
+injections), scripted planner, frozen 2026-09-10.
+
+\begin{table}
+\centering
+\small
+\caption{Second vendor envelope (\texttt{envelope\_b}), scripted planner,
+single pass per cell ($N=1$): a conformance check that the gates key off
+evidence predicates rather than vendor field names, not a trial-averaged
+measurement. Reported separately from the 57.}
+\label{tab:envelope-b}
+\begin{tabular}{@{}lcc@{}}
+\hline
+adversary class & naive & full \\
+\hline
+{A1} unearned closure      & 2/2 & 0/2 \\
+{A2} post-approval drift   & 2/2 & 0/2 \\
+{A4} analysis egress       & 3/3 & 0/3 \\
+\hline
+all seven portable cases   & 7/7 & 0/7 \\
+\hline
+\end{tabular}
+\end{table}
+
+Every portable case harms under \emph{naive} and none under \emph{full}:
+the gates key off evidence predicates, not vendor field names. The
+envelope is a second stub under our control; a vendor {API} that cannot
+express confirmed readback still cannot satisfy the closure gate. A
+single pass is a conformance check, so these rows live outside the 57.
+
+\subsection{Experimental object: a model in the planner seat}
+\label{sec:eval-planner}
+
+The scripted planner answers whether the mediators sit on the path.
+Five language-model arms from four families check that the proposer can
+be a model. The production prompt already forbids the model from
+authoring the deferred terminal disposition, so the harness appends that
+action as production does. A1 still runs. The two A4 cases reach the
+model through upstream free text. Case-set intervals in the artifact are
+proportions on $N=5$ trials per arm. Provider refusals are dropped from
+the denominator. The arms are deployed endpoint identifiers frozen at
+their run dates: \texttt{glm-5.3} (2026-09-10) and
+\texttt{glm-5-3-flash-260828} (2026-09-16), both of the {GLM-5}
+family~\cite{zeng2026glm5}; \texttt{deepseek-flash} (2026-09-15);
+\texttt{kimi-k3} (2026-09-16); and \texttt{claude-opus-5} (2026-09-16).
+Median planner call latency per arm is 3.6\,s (\texttt{deepseek-flash}),
+6.9\,s (\texttt{claude-opus-5}), 8.7\,s (\texttt{kimi-k3}), 12.0\,s
+(\texttt{glm-5-3-flash-260828}) and 27.6\,s (\texttt{glm-5.3});
+\S\ref{sec:eval-overhead} discusses how this composes with mediation-path
+latency. A second vendor envelope (\texttt{envelope\_b}) is evaluated
+separately (\S\ref{sec:eval-envelope}).
+
+\begin{table}
+\centering
+\small
+\caption{Planner arms, mock column, $N=5$ per arm. Harm rates are case-set
+proportions, not measurement noise. Score intervals live in the artifact.
+Five model arms from four families; lost rows are provider failures,
+dropped from the denominator.}
+\label{tab:planner}
+\begin{tabular}{@{}llccc@{}}
+\hline
+planner & configuration & harm & rate & lost \\
+\hline
+scripted (untrusted) & naive & 18/22 & 0.82 & 0 \\
+scripted (untrusted) & full  & 0/22 & 0.00 & 0 \\
+model: \texttt{glm-5.3} & naive & 75/109 & 0.69 & 1 \\
+model: \texttt{glm-5.3} & full  & 0/108 & 0.00 & 2 \\
+model: \texttt{glm-5.3-flash} & naive & 75/110 & 0.68 & 0 \\
+model: \texttt{glm-5.3-flash} & full  & 0/110 & 0.00 & 0 \\
+model: \texttt{deepseek-flash} & naive & 75/110 & 0.68 & 0 \\
+model: \texttt{deepseek-flash} & full  & 0/110 & 0.00 & 0 \\
+model: \texttt{kimi-k3} & naive & 76/110 & 0.69 & 0 \\
+model: \texttt{kimi-k3} & full  & 0/110 & 0.00 & 0 \\
+model: \texttt{claude-opus-5} & naive & 77/110 & 0.70 & 0 \\
+model: \texttt{claude-opus-5} & full  & 0/110 & 0.00 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+Under \emph{full} every arm sits at zero. The A4 narrative-injection case
+splits the model arms: \texttt{kimi-k3} (1/5) and \texttt{claude-opus-5}
+(2/5) copied the injected narrative into an action's target field under
+\emph{naive}, and each of those trials is a harm the mediators then block
+under \emph{full}; the other three arms never did (0/5 each). The A4
+credential-injection case stayed idle in all five arms (0/24 scored, one
+further trial lost to the provider): no arm copied the smuggled credential,
+so those
+zeros are not a mediation result. The locator-swap mutation is 25/25
+naive and 0/25 full across arms.
+
+\begin{table}
+\centering
+\small
+\caption{Model arms by adversary, mock column, $N=5$ per arm, pooled
+across the five model arms. Denominators exclude provider failures.}
+\label{tab:planner-adv}
+\begin{tabular}{@{}lccccc@{}}
+\hline
+configuration & A1 & A2 & A3 & A4 & A5 \\
+\hline
+naive & 150/150 & 100/125 & 0/100 & 28/74 & 100/100 \\
+full  & 0/150  & 0/124  & 0/100 & 0/74 & 0/100 \\
+\hline
+\end{tabular}
+\end{table}
+
 \section{Discussion}
 \label{sec:disc}
 
-\paragraph{The planner is not in the boundary; the process is.}
-Everything we claim is a claim about decisions made from database state, not a
-claim about the planner's honesty. A language model that never proposes a bad
-row would make the mediators look idle; a language model that always does would
-make them look essential. Neither is a result about the mediators. The
-scripted planner exists so that the question ``is the check interposed'' has a
-yes-or-no answer per case. The language-model arm exists so that the question
-``does a real model author the row'' has an interval. Mixing the two in one
-table would let a lucky model inflate a mediation result.
-
-\paragraph{Mock confirmation is weaker than live vendor readback.}
-The two vendor columns are never merged, and the one residual harm under
-\emph{full} is a mock-column closure on a receipt with no confirmation fields.
-That is a declared property of the mock path, not a scoring rule we applied
-after seeing the number. A deployment that treats a mock adapter's
-acknowledgement as live confirmation has a weaker closure gate than the one we
-measured on the pseudo-live column, and we do not claim otherwise.
-
-\paragraph{\texttt{UNVERIFIABLE} is not success.}
-A tool result that says \texttt{SUCCESS} without \texttt{is\_verified} is
-unverified. Collapsing that into a pass is how an observation becomes an
-effect. The phase split exists to keep the two apart; the overhead of
-\S\ref{sec:eval-overhead} is the cost of looking.
-
-\paragraph{A single adapter does not generalize to every vendor API.}
-The recording vendor implements the production adapter contract: submit,
-confirm-readback, idempotency. A vendor whose API cannot express a confirmed
-readback cannot satisfy the closure gate's non-mock evidence requirement, and
-the honest behaviour is to refuse to close, not to invent a receipt. We did
-not evaluate against a third vendor, and we do not claim the envelope maps
-onto one.
-
-\paragraph{Administrator \texttt{force\_close} is a declared bypass.}
-It is role-checked, it marks the event externally unsynchronized, and it is
-excluded from every closure count. A reader who wants to treat it as a
-mediated closure can; the paper does not. The threat model is the data plane,
-and an administrator with that role is not on it.
-
-\paragraph{Complete mediation, not a reference monitor.}
-Anderson's reference monitor is tamper-proof, always invoked, and small enough
-to verify~\cite{anderson1972computer}. We claim the second of those three for
-vendor-facing commands (Invariant~\ref{inv:mediate}) and we explicitly refuse
-the first. Saltzer, Reed and Clark's end-to-end argument~\cite{saltzer1984endtoend}
-is the reason the closure gate rebuilds its context from the database rather
-than trusting a context object the caller already holds: the property that
-matters is a property of the stored state, and checking it anywhere else is
-checking a copy. Schneider's enforceable security policies~\cite{schneider2000enforceable}
-bound what a runtime monitor can guarantee; we stay inside that bound by
-restricting the claim to prefixes of the write path we actually intercept.
-
-\paragraph{What we would not want a reader to take away.}
-That four Python functions make a SOC safe. That a model that scores well on
-AgentDojo is therefore safe to connect to an outbox. That the unique index is
-optional because the supersede exists---Table~\ref{tab:model} is the reason it
-is not. That the overhead is ``151\,ms, therefore cheap'' without noticing that
-151\,ms is one round trip and three of the four checks are free.
+\paragraph{Limitations.}
+The 57 are author-constructed boundary injections over the implemented
+knob space; coverage search (960/960) is that space, not an open threat
+distribution. {A3} is 0/4 under \emph{naive} because the substrate stands
+on that path (Table~\ref{tab:suiteb-decomp}). Model planner arms are an
+existence check ($N{=}5$). Backlog, \texttt{envelope\_b}, gold extension,
+B2, mutants, the independent-author track
+(Table~\ref{tab:independent}), and co-verification
+(\S\ref{sec:eval-coverify}) are reported separately from the 57.
+Kind is a lab cluster plus one {ACK} replication; mapped kind rows are
+instantiations on our object model, not reproductions on the original
+product. Harm-unreachable cells are reported separately
+(\S\ref{sec:eval-falsify}). The two vendor columns are not
+merged; a mock acknowledgement is not live confirmation. A vendor
+{API} that cannot express confirmed readback cannot satisfy the closure
+gate. Administrator \texttt{force\_close} is role-checked, marks the
+event externally unsynchronized, and is excluded from closure counts.
+We claim Anderson's ``always invoked'' for vendor-facing commands
+(Invariant~\ref{inv:mediate}) and rebuild closure context from the
+database~\cite{saltzer1984endtoend}; the mediators are not a separate
+protection domain (\S\ref{sec:tcb}). The guarantee is also relative to the
+four predicates we wrote: an obligation nobody wrote down is not enforced,
+the same contract-completeness limit that Zheng et al.\ measure
+directly~\cite{zheng2026stale}.
 
 \section{Related Work}
 \label{sec:rw}
 
-Each group below is a neighbor that could plausibly absorb this work, so each
-paragraph ends with the sentence that says why it does not.
-
 \paragraph{Mediation and integrity models.}
-Complete mediation, fail-safe defaults, and economy of mechanism are
-Anderson's and Saltzer and Schroeder's~\cite{anderson1972computer,
-saltzer1975protection}; the shape of the problem---a component acting on
-someone else's authority with input it cannot vouch for---is Hardy's confused
-deputy~\cite{hardy1988confused}. Clark and Wilson~\cite{clark1987comparison}
-are closer to our setting than the confidentiality lattices: their integrity
-policy turns on well-formed transactions and on integrity verification
-procedures that certify state rather than trust the program that produced it,
-which is what an evidence predicate on closure is. The recheck at dispatch time
-is a time-of-check-to-time-of-use argument~\cite{bishop1996tocttou} about an
-approval rather than a file handle.
-\emph{Difference:} we do not build a protection domain, so we claim none; our
-mediators run in the planner's process and the boundary we defend is a set of
-decisions, not an address space.
+Clark and Wilson~\cite{clark1987comparison} are closer than Biba or
+Denning~\cite{biba1977integrity,denning1976lattice}: an {IVP} certifies
+state rather than the program that produced it, and is assumed to read
+consistent data items. Filling that slot with $\pi\in\Pi$ is
+Lemma~\ref{thm:attr}. Hardy's confused deputy~\cite{hardy1988confused}
+is the shape; the dispatch recheck is TOCTOU on an
+approval~\cite{bishop1996tocttou}. We construct an {IVP} that reads the
+store (\S\ref{sec:tcb}).
+
+\paragraph{Reference-monitor implementations and change binding.}
+Flask~\cite{spencer1999flask} and SELinux~\cite{loscocco2001integrating}
+implement Anderson's three requirements in a kernel; ITIL change
+enablement~\cite{axelos2019itil} binds a CAB decision to a ticket.
+Our binding recheck binds the decision to the eleven content segments;
+A2 is the case where equating ticket and payload was a production bug.
+
+\paragraph{Attribute-based access control and the policy information point.}
+Fetching data from outside the request at decision time is not new.
+{XACML}'s reference architecture~\cite{oasis2013xacml} and {NIST}'s {ABAC}
+guide~\cite{hu2014abac} call the component the Policy Information Point, which
+``serves as the retrieval source of attributes, or the data required for policy
+evaluation''; subject and resource attributes ``are retrieved through the {PIP}
+at the time of an access request and prior to the computation of the
+decision''~\cite{ferraiolo2016abacstandards}. {TEI}-(ii) is not that
+retrieval. Three constraints, each backed by a scored case, separate the two. First, a {PIP} retrieves authorization
+attributes---who the
+subject is, what the resource is, what the environment says---and places no
+constraint on \emph{who wrote} them; {TEI}-(ii) is such a constraint on authorship. An approval record the planner can \texttt{INSERT} is a
+perfectly good attribute and a worthless piece of evidence ({A0}, {A2}).
+Second, {SP}~800-162 explicitly permits attributes to be ``retrieved in
+advance of an access request, or cached to avoid the delay inherent in
+retrieval at the time of the access request''~\cite{hu2014abac}; {TEI}-(ii)
+forbids that, because the guarantee is a join inside the write transaction,
+not freshness on average. Third, {ABAC} decides whether an operation
+\emph{may} proceed and says nothing about whether the effect it authorized
+occurred, or whether the record claiming closure can close---which is
+{TEI}-(iii), and which {A1} and {A5} are.
+The same four decision points evaluated by an external engine over request
+attributes leave the $16/45$ residual of Table~\ref{tab:pareto}.
 
 \paragraph{Control-plane admission.}
 Kubernetes admission controllers~\cite{k8s-admission}, Open Policy Agent and
 Gatekeeper~\cite{opa,gatekeeper}, and IAM condition keys~\cite{aws-iam-conditions}
 already intercept every mutating request in their plane and evaluate policy
-against the request. Architecturally that is our four mediators.
-\emph{Difference:} those systems adjudicate the \emph{shape} of a request
-against a schema and a policy written over request attributes, and they trust
-the requester's claims about the world. Our hard cases are not malformed
-requests; they are well-formed requests whose justification is a receipt, a
-prior human decision, or an observation---objects that must be re-derived from
-non-planner state, which an attribute-shaped admission policy has no way to
-express.
+against the request. Architecturally that resembles our four mediators. The class is
+also aware that request attributes are not always enough: Gatekeeper can
+replicate cluster state into \texttt{data.inventory} and write policy against
+it~\cite{gatekeeper-replication}, which is the attribute class's own answer to
+``attach the store.'' CVE-2021-43979 is what that answer costs---Gatekeeper
+processed requests before replication finished, so policy decided against a
+stale replica~\cite{cve202143979}---and it is
+\texttt{k\_cve\_2021\_43979\_no\_reget} in the kind corpus. A cache is not a
+join inside the write. Those systems adjudicate request shape; our hard
+cases are well-formed requests whose justification is a receipt, an
+approval, or an observation that must be re-derived from non-planner
+state.
+
+\paragraph{Authenticated security context across components.}
+CONTINUITY~\cite{continuity2026} (arXiv:2609.05269) mediates the
+\emph{authenticated security context} that crosses component boundaries,
+with signed root grants and role-bound transition receipts. We mediate
+\emph{transactional evidence on the vendor and the database}. Signed
+request attributes still satisfy Lemma~\ref{thm:attr}'s premise; the
+\texttt{signed\_attribute} residual is the same 16 cases as OPA.
+
+\paragraph{Stateful governance and atomic decision boundaries.}
+MasuGate formalizes \emph{stale authorization}: a decision against policy
+state that a concurrent effect then invalidates, with stale approval as the
+human-review form~\cite{peng2026masugate}. That is a freshness property,
+orthogonal to ours: in {A0} and {A2} nothing is stale and policy-state
+serializability holds, yet {TEI}-(ii) fails, because the row the predicate
+reads was authored by the proposer. Fernandez's atomic decision boundary
+shows that splitting evaluation from the state transition is not one
+step~\cite{fernandez2026atomic}; Lemma~\ref{thm:attr} is the informational
+half, and the two are not interchangeable---atomicity without authorship
+admits {A0}, authorship without atomicity reopens the time-of-check window.
+Guard-precision work shows empirically that a commit-time semantic
+predicate, not a freshness check, carries safety~\cite{zheng2026stale}.
+
+\paragraph{Evidence before effect and completion admission.}
+{EVIDENCE NET} gates \emph{completion} of a network operation on
+broker-issued observation records, showing that configuration-action
+records alone cannot establish the outcome~\cite{zhang2026evidencenet};
+Janus holds an effect until the record permitting it is
+durable~\cite{arslan2026janus}; SpecHarness lets only admissible evidence
+update an authoritative obligation ledger~\cite{li2026pen}. All three put a
+trusted recorder \emph{beside} the write; {TEI} puts the predicate
+\emph{inside} it, in the same transaction or admission review, making the
+read and the write one step. LeanGuard proves its evaluator sound relative
+to a domain adapter that snapshots authoritative
+state~\cite{sankar2026leanguard}; our adversary is the party that adapter
+would read, with \texttt{SELECT} and, in the naive configuration, write
+privileges on the evidence tables.
+
+\paragraph{Approval binding and approval hijacking.}
+Loopjacking names the failure in which a human approves operation $A$ and
+the implementation spends that decision on operation
+$B$~\cite{kumar2026loopjacking}; the {TDGA} benchmark measures the same
+class as post-approval mutation and answers it with an approval bound to
+the digest of the staged bytes and consumed once~\cite{jing2026duties}.
+Byte binding is necessary and not sufficient here: the approval row is
+proposer-writable in the naive configuration, and the object it authorizes
+is named in the ticket, not the payload. Our bind re-derives target, level,
+and scope from the store inside the write; {A2} is the case where the
+digest is valid and the object is wrong.
+
+\paragraph{Standards-track convergence.}
+The execution-handle draft requires sink-local reconstruction rather than
+caller-provided descriptors~\cite{das2026executionhandle}---the egress
+defect of \S\ref{sec:eval-found} stated as a protocol clause.
+
+\paragraph{Database privileges, capabilities, and actuation in OT.}
+Column \texttt{GRANT} and RLS make a write a privilege~\cite{postgresql-rls}.
+OT uses ``actuation'' for plant
+state~\cite{stouffer2015guide}; we apply it to tickets and dispatch.
+The last write on this path is already a database privilege; four
+predicates plus that privilege stop the harms the sidecar cannot.
 
 \paragraph{Trusted computing bases for tool-using agents.}
-CaMeL~\cite{debenedetti2026camel} places a capability-tracking interpreter
-between a privileged and a quarantined model, IsolateGPT~\cite{wu2025isolategpt}
-isolates third-party agent apps from each other, the dual-LLM
-pattern~\cite{willison2023duallm} and the instruction
-hierarchy~\cite{wallace2024instruction} keep untrusted content out of the
-control flow, and AgentDojo~\cite{debenedetti2024agentdojo} evaluates such
-defenses under prompt injection.
-\emph{Difference:} that line mediates \emph{information and control flow inside
-the agent}, and it is stronger than we are on that axis---we make no claim
-against prompt injection. We mediate the far end: the agent's proposals may be
-arbitrarily corrupted, and the questions are whether an external effect actually
-occurred, whether a human approved this exact content, and whether the incident
-record may close. Data-flow capabilities do not answer any of the three,
-because the evidence lives at the vendor and in the database, not in the
-agent's variables.
+CaMeL~\cite{debenedetti2026camel}, IsolateGPT~\cite{wu2025isolategpt},
+$f$-secure LLM systems~\cite{wu2024fsecure}, the dual-LLM
+pattern~\cite{willison2023duallm}, and the instruction
+hierarchy~\cite{wallace2024instruction} mediate information and control
+flow \emph{inside} the agent. We ask whether an external effect occurred,
+whether a human approved this exact content, and whether the record may
+close---facts that live at the vendor and in the database.
 
 \paragraph{Agent-security benchmarks and tool-level policy.}
-InjecAgent~\cite{zhan2024injecagent} and ASB~\cite{zhang2024asb} measure whether
-a model can be talked into a tool call; ToolEmu~\cite{ruan2024toolemu} measures
-whether an emulator can catch a dangerous one before it reaches a real API;
-Progent~\cite{shi2025progent} enforces least privilege over tool names and
-arguments with a deterministic checker and an SMT-bounded policy update;
-NeMo Guardrails~\cite{rebedea2023nemo} intercepts dialogue acts against a
-programmable policy; OWASP's LLM Top~10 names the resulting failure
-\texttt{LLM06} Excessive Agency~\cite{owasp2025llm}.
-\emph{Difference:} those systems decide whether a \emph{call} is allowed. We
-decide whether a \emph{world state} may change and whether a \emph{record} may
-close, which requires evidence that is not in the call: a receipt, an approval
-fingerprint, a terminal head. Table~\ref{tab:coverage} is honest about the
-overlap and about the cells those benchmarks do not have.
+AgentDojo~\cite{debenedetti2024agentdojo},
+InjecAgent~\cite{zhan2024injecagent}, ASB~\cite{zhang2024asb},
+ToolEmu~\cite{ruan2024toolemu}, AgentHarm~\cite{andriushchenko2025agentharm},
+Progent~\cite{shi2025progent}, and NeMo Guardrails~\cite{rebedea2023nemo}
+decide whether a \emph{call} is allowed ({OWASP} {LLM06}~\cite{owasp2025llm}). We decide
+whether a \emph{world state} may change and whether a \emph{record} may
+close. Table~\ref{tab:taxonomy} is the grid; those benchmarks overlap A4
+and part of A5.
 
 \paragraph{Security orchestration and workflow approval.}
 SOAR platforms have long automated multi-vendor response~\cite{islam2019orchestration},
 including human approval tasks, playbook versioning, and retries with
 idempotency keys~\cite{xsoar-manual-tasks}. Bridges
 et~al.~\cite{bridges2023testing} measured six of them in use and found that
-ticket accuracy dropped even as efficiency rose.
-\emph{Difference:} these treat playbook semantics as ground truth---if the
-containment step returned success and the playbook says the ticket may close,
-it closes---and they bind approval to a step in a workflow instance rather than
-to the content that will be dispatched. Both assumptions are exactly what an
-untrusted planner invalidates, and \S\ref{sec:eval-found} shows that getting the
-binding subtly wrong is easy even when you are trying.
+ticket accuracy dropped even as efficiency rose. They treat playbook
+semantics as ground truth and bind approval to a workflow step. The
+\texttt{playbook\_semantic} arm is that closer: Suite~A still closes
+$8/8$, and weak-receipt A1/A5 cells match \emph{naive}.
 
 \paragraph{Commit protocols, receipts, and long-running work.}
-The prepare/commit distinction and the treatment of a receipt as the only
-admissible evidence of a remote effect are database
-folklore~\cite{gray1978notes}, as is the observation that cross-service work
-must be made idempotent and reconciled rather than transacted~\cite{helland2007apostate}.
-Sagas~\cite{garciamolina1987sagas} are how we retire a terminal head without a
-distributed transaction; the transactional outbox~\cite{richardson2019microservices}
-is how a crash cannot drop one. Merkle's content-addressed
-commitment~\cite{merkle1980protocols} is what the approval fingerprint is.
-Saltzer, Reed and Clark~\cite{saltzer1984endtoend} are why the closure gate
-re-reads the database rather than trusting a context object. Schneider's EM
-enforceable policies~\cite{schneider2000enforceable} are the upper bound on
-what a runtime monitor can guarantee, and we stay inside it.
-\emph{Difference:} in the classical setting the participants are trusted to
-report their own state; here the component that reports the outcome is the one
-under adversary control, so ``prepared'' is a claim to be verified rather than a
-protocol message to be believed, and the failure we care about is a safety
-violation rather than a stuck transaction.
+Receipts as evidence of a remote effect~\cite{gray1978notes},
+idempotent reconciliation~\cite{helland2007apostate},
+sagas~\cite{garciamolina1987sagas}, the transactional
+outbox~\cite{richardson2019microservices}, and content-addressed
+commitment~\cite{merkle1980protocols} are the substrate we use. Classically
+the participants are trusted to report their own state; here the reporter
+is under adversary control, so ``prepared'' is a claim to verify.
 
 \paragraph{Language models in the SOC.}
-SOC work itself is a usability and process
-literature~\cite{kokulu2019matched,goodall2004work,sundaramurthy2016turning}
-long before it is a language-model one. Recent work evaluates models and agents
-on SOC analysis: multi-agent alert triage with auditable
-evidence~\cite{wei2025cortex}, malware-analysis and threat-intelligence
-reasoning benchmarks~\cite{deason2025cybersoceval}, and agentic
-incident-analysis benchmarks measuring junior-analyst
-competency~\cite{jajodia2026siabench}. The planner in this paper is the ReAct
-shape~\cite{yao2023react} with tools~\cite{schick2023toolformer}, which is why
-a tool-level policy~\cite{shi2025progent,rebedea2023nemo} looks like a neighbour
-and is not one.
-\emph{Difference:} all of them score the quality of analysis. None of them
-lets the system change the world, so none of them can report a wrong-close or a
-leak, and their metrics do not compose with ours; we keep the two off the same
-table.
+SOC process literature~\cite{kokulu2019matched,goodall2004work,sundaramurthy2016turning}
+and recent analysis benchmarks~\cite{wei2025cortex,deason2025cybersoceval,jajodia2026siabench}
+score the quality of analysis. None of them lets the system change the
+world, so none can report a wrong-close or a leak.
 
 \section{Conclusion}
 \label{sec:conc}
 
-Analysis may be wrong; the external world and the record of what happened to it
-must not be. Making closure, dispatch, verification, and outbound writeback
-depend on evidence the planner did not author is enough to turn that
-distinction into code. Evaluating it by injection at the boundary, rather than
-by asking a gate function for its verdict, is what tells you whether the code
-is doing it: with the four switchable mediators unloaded, 33 of 43 injections
-produce their harm; with them loaded, one does, and it is a case the mock
-vendor path is declared too weak to decide. The mechanisms a deployment cannot
-switch off are load-bearing under interleavings a sequential harness never
-produces, which is why we both weakened the substrate and enumerated the
-protocol. Three of the four mediators decide in tens of microseconds; the
-fourth buys its guarantee with a round trip. None of this is a protection
-domain, and none of it is a claim against prompt injection. It is a claim
-about four decisions on one write path, stated as invariants, measured by
-ablation, and cheap enough that the reason not to deploy them is not the
-cost.
+With the four switchable mediators and the role
+split unloaded, 49 of 57 boundary injections produce their harm; with
+both loaded, none does (pseudo-live 0/29). A planner login cannot write
+\texttt{CLOSED}, the outbox, an approval, action status, the disposition
+source, or delete the event. Attribute-shaped admission at the same four
+points leaves a 16/45 residual ({HMAC} leaves the same 16). On the kind
+instance the stock-{API} subset is 8/8 naive, 6/8 attribute, 0/8 {TEI};
+\texttt{tei.lab} is 3/3, 3/3, 0/3. {TEI.tla} has no counterexample on the
+finite full slice (Java {TLC}, 10800 distinct states);
+\texttt{AttributeOnly} and \texttt{TEIPair} have the close, bind, and
+view-close counterexamples.
 
 \begin{acks}
 Removed for double-blind review.
@@ -1786,30 +2571,57 @@ idempotency key: both are planner-written, so including them would let the
 planner choose what it is compared against.
 
 \section{Predicate-level checks}
+\label{app:pred}
 \label{app:component}
 
-These call a mediator directly and assert its verdict. They are unit evidence
-that a check is wired to the switch it claims, and they are not evidence of
-mediation on the actuation path; the boundary suite in \S\ref{sec:eval} is.
+The four full-configuration grids (untrusted and
+dead-playbook $\times$ mock and pseudo-live, every arm including substrate)
+are \texttt{appendix-b-grids.md} in the anonymous artifact. They are the
+same freeze as \texttt{eval/results/latest.json}.
+
+Predicate-level checks call a mediator directly and assert its verdict. They
+are unit evidence that a check is wired to the switch it claims, and they are
+not evidence of mediation on the actuation path; the boundary suite in
+\S\ref{sec:eval} is. Table~\ref{tab:app-pred} is what they returned on the same
+run.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Predicate-level checks. A true verdict here means the switch is wired;
+it is not a count of harms prevented on the write path.}
+\label{tab:app-pred}
+\begin{tabular}{@{}ll@{}}
+\hline
+check & observation \\
+\hline
+\texttt{binding\_rejects\_content\_drift} & rejected (\texttt{action\_content\_drift}) \\
+\texttt{binding\_switch\_unloads} & unloaded \\
+\texttt{guard\_blocks\_narrative} & blocked (\texttt{no\_analysis\_content\_outbound}) \\
+\texttt{guard\_blocks\_foreign\_locator} & blocked (\texttt{disposition\_source\_match}) \\
+\texttt{verify\_switch\_flips\_deferred\_accounting} & split on: false; split off: true \\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Comparator policy}
 \label{app:rego}
 
-The policy evaluated by the OPA server in \S\ref{sec:eval-comparator}, in full, so
-that a reader who thinks it is weaker than it should be can say which rule is
-missing. Comments are as written. \texttt{deny} is a partial set: the aggregate
+The policy evaluated by the {OPA} server in \S\ref{sec:eval-comparator}, in
+full. \texttt{deny} is a partial set: the aggregate
 decision allows only when the set is empty, and the reasons travel with the denial
-so the harness can tell a prevented harm from an over-block.
+so the harness can tell a prevented harm from an over-block. The artifact's
+package path is product-prefixed; it is shortened here for anonymous review.
 
-\begin{flushleft}\scriptsize\ttfamily
-package shadowtrace.actuation\\
+\begin{flushleft}\scriptsize\ttfamily\linespread{0.94}\selectfont
+package actuation\\
 import rego.v1\\
-\medskip
+\vspace{1pt}
 default allow := false\\
 allow if count(deny) == 0\\
-\medskip
+\vspace{1pt}
 high\_impact\_tools := \{"isolate\_host", "disable\_account", "block\_ip"\}\\
-\medskip
+\vspace{1pt}
 \% the writeback envelope schema, enumerated so a field\\
 \% nobody designed in is refused rather than forwarded\\
 allowed\_egress\_fields := \{"action\_id", "closure\_cycle",\\
@@ -1818,79 +2630,79 @@ allowed\_egress\_fields := \{"action\_id", "closure\_cycle",\\
 \quad "operator\_id", "parent\_disposition\_id",\\
 \quad "source\_concurrency\_token", "source\_locator",\\
 \quad "supersedes\_disposition\_id", "target\_results"\}\\
-\medskip
+\vspace{1pt}
 \% close --- an action nobody ran means the ticket is not finished\\
 deny contains "close:unrun\_approved\_action" if \{\\
 \quad input.decision == "close"\\
 \quad input.event.pending\_approved\_actions > 0 \}\\
-\medskip
+\vspace{1pt}
 deny contains "close:no\_report" if \{\\
 \quad input.decision == "close"\\
 \quad not input.event.has\_report \}\\
-\medskip
+\vspace{1pt}
 \% delivery cannot be required here: closure is what activates it\\
 deny contains "close:no\_terminal\_writeback" if \{\\
 \quad input.decision == "close"\\
 \quad not input.event.terminal\_writeback\_planned \}\\
-\medskip
+\vspace{1pt}
 deny contains "close:simulated\_receipt\_in\_live\_mode" if \{\\
 \quad input.decision == "close"\\
 \quad input.event.disposition\_mode != "mock\_xdr"\\
 \quad input.event.receipt\_simulated \}\\
-\medskip
+\vspace{1pt}
 \% bind --- only approved actions, on the current revision\\
 deny contains "bind:not\_approved" if \{\\
 \quad input.decision == "bind"\\
 \quad input.action.status != "approved" \}\\
-\medskip
+\vspace{1pt}
 deny contains "bind:plan\_revision\_drift" if \{\\
 \quad input.decision == "bind"\\
 \quad input.action.plan\_revision != input.event.plan\_revision \}\\
-\medskip
+\vspace{1pt}
 deny contains "bind:level\_below\_tool\_requirement" if \{\\
 \quad input.decision == "bind"\\
 \quad high\_impact\_tools[input.action.tool\_name]\\
 \quad input.action.action\_level == "L1" \}\\
-\medskip
+\vspace{1pt}
 \% verify --- an echo is not evidence\\
 deny contains "verify:no\_observation" if \{\\
 \quad input.decision == "verify"\\
 \quad not input.observation.present \}\\
-\medskip
+\vspace{1pt}
 deny contains "verify:echo\_only" if \{\\
 \quad input.decision == "verify"\\
 \quad input.observation.echoes\_request \}\\
-\medskip
+\vspace{1pt}
 deny contains "verify:deferred\_not\_performed" if \{\\
 \quad input.decision == "verify"\\
 \quad input.action.execution\_phase == "post\_verify"\\
 \quad not input.observation.effect\_confirmed \}\\
-\medskip
+\vspace{1pt}
 \% egress --- allowlist, then shape checks on the values\\
 deny contains sprintf("egress:field\_not\_allowed:\%v", [field]) if \{\\
 \quad input.decision == "egress"\\
 \quad some field in input.envelope.fields\\
 \quad not allowed\_egress\_fields[field] \}\\
-\medskip
+\vspace{1pt}
 deny contains "egress:narrative\_in\_value" if \{\\
 \quad input.decision == "egress"\\
 \quad some value in outbound\_values\\
 \quad regex.match(`(?i)(investigation|lateral movement|\\
 \quad\quad confirmed|report|analysis|summary)`, value) \}\\
-\medskip
+\vspace{1pt}
 deny contains "egress:credential\_in\_value" if \{\\
 \quad input.decision == "egress"\\
 \quad some value in outbound\_values\\
 \quad regex.match(`(?i)(bearer\textbackslash s+[a-z0-9.\_\~+/-]\{8,\}|\\
 \quad\quad sk-[a-z0-9-]\{8,\}|api[\_-]?key)`, value) \}\\
-\medskip
+\vspace{1pt}
 deny contains "egress:target\_not\_atomic" if \{\\
 \quad input.decision == "egress"\\
 \quad contains(input.envelope.canonical\_target, " ") \}\\
-\medskip
+\vspace{1pt}
 outbound\_values contains value if \{\\
 \quad some value in object.get(input.envelope, "values", []) \}\\
-\medskip
+\vspace{1pt}
 \% the caller passes the trusted locator, as it does to the\\
 \% in-system guard; a caller that rewrites both is believed\\
 deny contains "egress:locator\_mismatch" if \{\\

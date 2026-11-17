@@ -427,6 +427,7 @@ OUTBOX_DELIVERY_TRANSITIONS: dict[OutboxDeliveryStatus, set[OutboxDeliveryStatus
         OutboxDeliveryStatus.LEASED,
         OutboxDeliveryStatus.DEAD_LETTER,  # writeback fence blocked (ISSUE-222)
         OutboxDeliveryStatus.DELIVERED,  # provider lookup confirmed before egress (ISSUE-274)
+        OutboxDeliveryStatus.PAUSED,  # same-turn UNKNOWN before a worker lease
     },
     OutboxDeliveryStatus.LEASED: {
         OutboxDeliveryStatus.DELIVERED,
@@ -1081,15 +1082,14 @@ def _validate_closed_gate(ctx: TransitionContext) -> None:
             error_code="closed_simulated_receipt_rejected",
         )
 
-    # ISSUE-333: non-mock CLOSED rejects adapter_acknowledged / status_queried /
-    # missing evidence.  Mock P0 keeps ISSUE-227 simulated path and does not
-    # enforce evidence tiers.
-    if not ctx.disposition_is_mock and (
-        terminal.confirmation_evidence not in CLOSED_TERMINAL_STRONG_CONFIRMATION_EVIDENCE
-    ):
+    # Strong confirmation is required on every writeback-required close,
+    # including mock. An ACK is not a confirmed disposition. Mock may still
+    # stamp simulated=True (ISSUE-227); that flag is not a substitute for
+    # readback_verified / manual_confirmed.
+    if terminal.confirmation_evidence not in CLOSED_TERMINAL_STRONG_CONFIRMATION_EVIDENCE:
         raise InvalidStateTransitionError(
-            "required CLOSED gate: non-mock disposition requires strong "
-            "confirmation_evidence on terminal receipt",
+            "required CLOSED gate: writeback-required close needs strong "
+            "confirmation_evidence on the terminal receipt",
             target=EventStatus.CLOSED,
             details={
                 "confirmation_evidence": (
@@ -1097,7 +1097,7 @@ def _validate_closed_gate(ctx: TransitionContext) -> None:
                     if terminal.confirmation_evidence is not None
                     else None
                 ),
-                "disposition_is_mock": False,
+                "disposition_is_mock": ctx.disposition_is_mock,
             },
             error_code="closed_weak_confirmation_evidence",
         )

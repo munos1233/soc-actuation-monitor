@@ -17,6 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "eval" / "model"))
 
 from head_invariants import main as check_main  # noqa: E402
+from write_path_invariants import main as write_path_main  # noqa: E402
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -28,13 +29,13 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = _parse_args(None)
-    raise SystemExit(
-        check_main(
-            [
-                "--workers",
-                *[str(w) for w in args.workers],
-                "--out",
-                args.out,
-            ]
-        )
+    head = check_main(
+        [
+            "--workers",
+            *[str(w) for w in args.workers],
+            "--out",
+            args.out,
+        ]
     )
+    write_path = write_path_main(["--out", args.out])
+    raise SystemExit(head or write_path)

@@ -16,6 +16,8 @@ __all__ = [
     "dispose_session_provider",
     "get_engine",
     "get_session",
+    "get_actuation_session_factory",
+    "get_planner_session_factory",
     "get_session_factory",
     "get_session_provider",
     "peek_session_provider",
@@ -31,3 +33,13 @@ def get_engine() -> AsyncEngine:
 def get_session_factory() -> async_sessionmaker[AsyncSession]:
     """Return the process-local session factory."""
     return get_session_provider().session_factory()
+
+
+def get_actuation_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Return the factory that may write CLOSED and the outbox."""
+    return get_session_provider().actuation_session_factory()
+
+
+def get_planner_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Return the factory that may write plan content only."""
+    return get_session_provider().planner_session_factory()

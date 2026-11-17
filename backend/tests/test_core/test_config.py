@@ -13,7 +13,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError as PydanticValidationError
 
-from app.core.config import Settings, TaskMode, is_mock_disposition_mode, is_mock_source_mode
+from app.core.config import (
+    ProcessRole,
+    Settings,
+    TaskMode,
+    is_mock_disposition_mode,
+    is_mock_source_mode,
+)
 from app.core.errors import ConfigurationError, ValidationError
 from app.evaluation.threshold import confine_threshold_manifest_path
 from tests.test_support.production_settings import production_settings_kwargs
@@ -37,7 +43,55 @@ def _base_kwargs(**overrides: object) -> dict[str, object]:
 def test_production_with_all_live_modes_is_accepted() -> None:
     settings = Settings(**_base_kwargs())
     assert settings.app_env == "production"
+    assert settings.process_role is ProcessRole.PLANNER
     assert settings.production_fail_closed_violations() == []
+
+
+def test_production_rejects_monolith() -> None:
+    with pytest.raises(ConfigurationError, match="process_role=monolith"):
+        Settings(**_base_kwargs(PROCESS_ROLE="monolith"))
+
+
+def test_production_planner_rejects_writer_dsn() -> None:
+    with pytest.raises(ConfigurationError, match="forbids ACTUATION_DATABASE_URL"):
+        Settings(
+            **_base_kwargs(
+                ACTUATION_DATABASE_URL=(
+                    "postgresql+asyncpg://actuation_writer:rotated-actuation-secret@postgres:5432/app"
+                )
+            )
+        )
+
+
+def test_production_actuation_role_is_accepted() -> None:
+    settings = Settings(
+        **_base_kwargs(
+            PROCESS_ROLE="actuation",
+            PLANNER_DATABASE_URL="",
+            ACTUATION_DATABASE_URL=(
+                "postgresql+asyncpg://actuation_writer:rotated-actuation-secret@postgres:5432/app"
+            ),
+        )
+    )
+    assert settings.process_role is ProcessRole.ACTUATION
+    assert settings.production_fail_closed_violations() == []
+
+
+def test_production_rejects_missing_planner_dsn() -> None:
+    with pytest.raises(ConfigurationError, match="PLANNER_DATABASE_URL"):
+        Settings(**_base_kwargs(PLANNER_DATABASE_URL=""))
+
+
+def test_production_rejects_eval_default_planner_password() -> None:
+    with pytest.raises(ConfigurationError, match="eval-only default"):
+        Settings(
+            **_base_kwargs(
+                PLANNER_DATABASE_URL=(
+                    "postgresql+asyncpg://actuation_planner:planner_role@postgres:5432/app"
+                ),
+                PLANNER_DB_PASSWORD="planner_role",
+            )
+        )
 
 
 def test_development_allows_mock_and_simulation() -> None:

@@ -34,6 +34,12 @@ def production_settings_kwargs(**overrides: object) -> dict[str, object]:
         "SIMULATION_ENABLED": False,
         "SOCKETIO_CORS_ALLOWED_ORIGINS": "https://app.example",
         "TASK_MODE": "celery",
+        "PROCESS_ROLE": "planner",
+        "PLANNER_DATABASE_URL": (
+            "postgresql+asyncpg://actuation_planner:rotated-planner-secret@postgres:5432/app"
+        ),
+        "PLANNER_DB_PASSWORD": "rotated-planner-secret",
+        "ACTUATION_DB_PASSWORD": "rotated-actuation-secret",
     }
     for key, value in overrides.items():
         kwargs[_alias_key(key)] = value

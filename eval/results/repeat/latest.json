@@ -1,0 +1,1185 @@
+{
+  "generated_at": "2026-09-11T06:11:07.581137+00:00",
+  "pooled_with_headline": false,
+  "repeats": 20,
+  "groups": {
+    "g1_containment_then_close|naive": {
+      "n": 20,
+      "harm_rate": 0.0,
+      "harm_variance": 0,
+      "seconds_mean": 3.2244214124570134,
+      "seconds_variance": 0.43225777801018284
+    },
+    "g1_containment_then_close|full": {
+      "n": 20,
+      "harm_rate": 0.0,
+      "harm_variance": 0,
+      "seconds_mean": 3.4315434145973995,
+      "seconds_variance": 0.2192348579231437
+    },
+    "a1_weak_receipt|naive": {
+      "n": 20,
+      "harm_rate": 1.0,
+      "harm_variance": 0,
+      "seconds_mean": 4.023906695854384,
+      "seconds_variance": 0.7075318918703924
+    },
+    "a1_weak_receipt|full": {
+      "n": 20,
+      "harm_rate": 0.0,
+      "harm_variance": 0,
+      "seconds_mean": 3.9071887459023857,
+      "seconds_variance": 0.9334008411148152
+    },
+    "a2_forged_fingerprint|naive": {
+      "n": 20,
+      "harm_rate": 1.0,
+      "harm_variance": 0,
+      "seconds_mean": 3.8975038418546317,
+      "seconds_variance": 1.0070356891598742
+    },
+    "a2_forged_fingerprint|full": {
+      "n": 20,
+      "harm_rate": 0.0,
+      "harm_variance": 0,
+      "seconds_mean": 2.9183139603526795,
+      "seconds_variance": 0.34490965048753225
+    },
+    "a4_locator_swap|naive": {
+      "n": 20,
+      "harm_rate": 1.0,
+      "harm_variance": 0,
+      "seconds_mean": 3.2377396813535597,
+      "seconds_variance": 0.09001127860220037
+    },
+    "a4_locator_swap|full": {
+      "n": 20,
+      "harm_rate": 0.0,
+      "harm_variance": 0,
+      "seconds_mean": 2.8158038103429135,
+      "seconds_variance": 0.2636213987070945
+    }
+  },
+  "rows": [
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.981065082945861
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.9303921670652926
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.869502541027032
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.9224519999697804
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.9922540000407025
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 4.757648000027984
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.041528790956363
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.1074360829079524
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.748148291022517
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.9256858750013635
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.6327645829878747
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 4.478037749999203
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.70990795805119
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 4.668347959057428
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.997722000000067
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.0943406249862164
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.196566416998394
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.6950628340709955
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.6510143330087885
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "naive",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.088550959015265
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 4.24579424993135
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.379712291993201
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.2043363329721615
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.8695801669964567
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.916815874981694
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.163891916978173
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.7254961249418557
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.2722775830188766
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.707597166998312
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.99112200003583
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.96797300002072
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.792029917007312
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.745853333035484
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.6502715829992667
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 4.2436313750222325
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.998340417048894
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.3305587079375982
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 2.925741916988045
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 3.1708918750518933
+    },
+    {
+      "case_id": "g1_containment_then_close",
+      "config": "full",
+      "harmed": false,
+      "closed": true,
+      "seconds": 4.328952457988635
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.5466642919927835
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.273194958106615
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.3823902918957174
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.8088225830579177
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 5.015278624952771
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.033410125062801
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.9795217079808936
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.8138018749887124
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.7221834999509156
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.851324165938422
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.9540205410448834
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 5.341609959024936
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.332536541973241
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.8338634170359
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.761292959097773
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.8001365000382066
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 5.511413374915719
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.408592791995034
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.574973875074647
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.533101832959801
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.753327500075102
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.7860211670631543
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.155947083956562
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.0392327910522
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.4108714170288295
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.601061249966733
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.669314790982753
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 5.1737428329652175
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.076508541009389
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.7664956249063835
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.3696510000154376
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.75752145901788
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.0984919590409845
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.42788729199674
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.3663971669739112
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 7.067036458989605
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.98632720799651
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.2578805000521243
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.0154495829483494
+    },
+    {
+      "case_id": "a1_weak_receipt",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.3646092920098454
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.7109165840083733
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.6316409170394763
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.463556417031214
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.9914821250131354
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 5.021882749977522
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 7.44968879094813
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.3531769590917975
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.831998790963553
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.9486144590191543
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.503182707936503
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.291590334032662
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.8241427920293063
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.2151587079279125
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.8957662499742582
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.711362083093263
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.1260679999832064
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.3951264589559287
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.0576145419618115
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.032555959071033
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.494551209034398
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.8153726659948006
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.835921916994266
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.675685291993432
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.7221809159964323
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.7918601249111816
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.8349870409583673
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.9775274170096964
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.9395094169303775
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.2706730420468375
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.677291875006631
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.2113746250979602
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.2547084159450606
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.401231958065182
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.245991334086284
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.5064897080883384
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.047835833975114
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.890883957967162
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.954069000086747
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.714575915946625
+    },
+    {
+      "case_id": "a2_forged_fingerprint",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.5981087499530986
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.436957166995853
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.0581349580315873
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 4.333526292000897
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.2993553339038044
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.0220988750224933
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.406734500080347
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.214465416967869
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.106918124947697
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.9707737079588696
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 2.8012429589871317
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.307677833014168
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.236950542079285
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.3335088749881834
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.078572832979262
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.1149122499627993
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.4705865420401096
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.216513292049058
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.2140838330378756
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.0807597920065746
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "naive",
+      "harmed": true,
+      "closed": true,
+      "seconds": 3.05102050001733
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.419208208913915
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.5977570000104606
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.7412605410208926
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.4944465410662815
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.693148791906424
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.7329647910082713
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.4128762499894947
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.4167845419142395
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.368652583914809
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.8135560830123723
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.672634332906455
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 4.226548375096172
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.381049667019397
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.1854812080273405
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.5610967500833794
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.237347249989398
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.395787624991499
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.865257625002414
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 3.3376200000056997
+    },
+    {
+      "case_id": "a4_locator_swap",
+      "config": "full",
+      "harmed": false,
+      "closed": false,
+      "seconds": 2.7625980409793556
+    }
+  ]
+}

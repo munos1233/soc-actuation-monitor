@@ -1,0 +1,26 @@
+{
+  "note": "Classification relative to this suite, not threat-completeness. OPA and HMAC signed_attribute residuals are exactly the needs_store_join cells (16/45).",
+  "needs_store_join_case_ids": [
+    "a1_weak_receipt",
+    "a1_dropped_readback",
+    "a1_missing_outbox_revision",
+    "a2_target_swap",
+    "a2_forged_fingerprint",
+    "a2_tool_escalation",
+    "a5_unavailable_observation",
+    "a5_lying_vendor_receipt"
+  ],
+  "needs_store_join_reason": {
+    "a1_weak_receipt": "CloseOK must read vendor/observe state; the request receipt field is AttrView.",
+    "a1_dropped_readback": "CloseOK must re-read applied state; the request does not contain the store.",
+    "a1_missing_outbox_revision": "CloseOK rebuilds cycle from the outbox row.",
+    "a2_target_swap": "BindOK recomputes the approval fingerprint from durable content.",
+    "a2_forged_fingerprint": "BindOK compares plannerFp to recomputedFp, which is not in AttrView.",
+    "a2_tool_escalation": "BindOK must join the approved tool, not the request-reported tool.",
+    "a5_unavailable_observation": "Verify/close must observe isolate; unavailability is a store fact.",
+    "a5_lying_vendor_receipt": "CloseOK must not treat a self-reported CONFIRMED as a store witness."
+  },
+  "request_closed_includes": "Remaining A1–A5 cells, including A3 substrate zeros and A4 cells the attribute sidecar already decides.",
+  "cells": 16,
+  "a1_a5_cells": 45
+}

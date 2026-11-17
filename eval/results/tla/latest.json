@@ -1,0 +1,607 @@
+{
+  "generated_at": "2026-09-17T04:52:26.886049+00:00",
+  "source": "TEI.tla",
+  "engine": "tei_engine.py",
+  "tlc": {
+    "ran": true,
+    "ok": true,
+    "reason": null,
+    "checks": {
+      "full": {
+        "states_generated": 273337,
+        "distinct_states": 10800,
+        "no_error": true,
+        "violated_invariant": null,
+        "actions": [],
+        "returncode": 0,
+        "log": "eval/results/tla/tlc-full.log",
+        "spec": "TEI.tla",
+        "cfg": "tei.cfg"
+      },
+      "attribute_only": {
+        "states_generated": 43,
+        "distinct_states": 34,
+        "no_error": false,
+        "violated_invariant": "InvBind",
+        "actions": [
+          "PlannerForgeFingerprint",
+          "DispatchAccepted"
+        ],
+        "returncode": 12,
+        "log": "eval/results/tla/tlc-attribute-only.log",
+        "spec": "TEI.tla",
+        "cfg": "tei-attribute-only.cfg"
+      },
+      "view_pair": {
+        "states_generated": 404,
+        "distinct_states": 280,
+        "no_error": false,
+        "violated_invariant": "InvViewClose",
+        "actions": [
+          "PlannerStaleCycle",
+          "HonestAdvance"
+        ],
+        "returncode": 12,
+        "log": "eval/results/tla/tlc-view-pair.log",
+        "spec": "TEIPair.tla",
+        "cfg": "tei-view-pair.cfg"
+      },
+      "minus_cas": {
+        "states_generated": 417,
+        "distinct_states": 155,
+        "no_error": false,
+        "violated_invariant": "InvCAS",
+        "actions": [
+          "DispatchAccepted",
+          "SecondClaim"
+        ],
+        "returncode": 12,
+        "log": "eval/results/tla/tlc-minus-cas.log",
+        "spec": "TEI.tla",
+        "cfg": "tei-minus-cas.cfg"
+      }
+    },
+    "java": "/opt/homebrew/opt/openjdk@17/bin/java",
+    "jar": "eval/model/tla2tools.jar"
+  },
+  "results": [
+    {
+      "mechanisms": "full",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "states": 10800,
+      "transitions": 265320,
+      "violations": {},
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": true
+      }
+    },
+    {
+      "mechanisms": "minus_close",
+      "constants": {
+        "CloseRebuild": false,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "states": 18200,
+      "transitions": 454480,
+      "violations": {
+        "k8s_close": [
+          "WeakReceiptAck"
+        ],
+        "close": [
+          "PlannerStaleCycle",
+          "CloseAccepted"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": true
+      }
+    },
+    {
+      "mechanisms": "minus_bind",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": false,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "states": 17280,
+      "transitions": 428400,
+      "violations": {
+        "bind": [
+          "PlannerForgeFingerprint",
+          "DispatchAccepted"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": true
+      }
+    },
+    {
+      "mechanisms": "minus_egress",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": false,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "states": 14256,
+      "transitions": 352296,
+      "violations": {
+        "egress": [
+          "PlannerRepointLocator",
+          "DispatchAccepted",
+          "VendorSubmit"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": true
+      }
+    },
+    {
+      "mechanisms": "minus_role",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": false,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "states": 21600,
+      "transitions": 530640,
+      "violations": {
+        "role": [
+          "PlannerWriteClosed"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": true
+      }
+    },
+    {
+      "mechanisms": "minus_verify",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": false,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "states": 23400,
+      "transitions": 558360,
+      "violations": {
+        "verify": [
+          "ObserverMutate"
+        ],
+        "k8s_close": [
+          "ObserverMutate"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": true
+      }
+    },
+    {
+      "mechanisms": "minus_head",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": false,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "states": 19440,
+      "transitions": 482760,
+      "violations": {
+        "head": [
+          "DispatchAccepted",
+          "SecondHead"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": false,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": false
+      }
+    },
+    {
+      "mechanisms": "minus_cas",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": false,
+        "AttributeOnly": false
+      },
+      "states": 15120,
+      "transitions": 374040,
+      "violations": {
+        "cas": [
+          "DispatchAccepted",
+          "SecondClaim"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": false,
+        "head_unique_loaded": true
+      }
+    },
+    {
+      "mechanisms": "attribute_only",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": true
+      },
+      "states": 24960,
+      "transitions": 618800,
+      "violations": {
+        "bind": [
+          "PlannerForgeFingerprint",
+          "DispatchAccepted"
+        ],
+        "close": [
+          "PlannerStaleCycle",
+          "CloseAccepted"
+        ]
+      },
+      "cas_status_layer_holds": true,
+      "cas_lemma": {
+        "head_layer": "HeadUnique prevents dualHeads (InvHead)",
+        "status_layer": "ClaimCAS keeps claimCount<=1; second claim is lostEffect",
+        "head_holds": true,
+        "status_holds": true,
+        "claim_cas_loaded": true,
+        "head_unique_loaded": true
+      }
+    }
+  ],
+  "seeds": [
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "close",
+      "mechanisms": "minus_close",
+      "constants": {
+        "CloseRebuild": false,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "PlannerStaleCycle",
+        "CloseAccepted"
+      ],
+      "injection": {
+        "bump_revision_after_activation": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "k8s_close",
+      "mechanisms": "minus_close",
+      "constants": {
+        "CloseRebuild": false,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "WeakReceiptAck"
+      ],
+      "injection": {
+        "weak_ack": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "bind",
+      "mechanisms": "minus_bind",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": false,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "PlannerForgeFingerprint",
+        "DispatchAccepted"
+      ],
+      "injection": {
+        "mutate_after_approval": "target_forged_fingerprint"
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "egress",
+      "mechanisms": "minus_egress",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": false,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "PlannerRepointLocator",
+        "DispatchAccepted",
+        "VendorSubmit"
+      ],
+      "injection": {
+        "locator_swap": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "role",
+      "mechanisms": "minus_role",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": false,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "PlannerWriteClosed"
+      ],
+      "injection": {
+        "sql_bypass": "close"
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "verify",
+      "mechanisms": "minus_verify",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": false,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "ObserverMutate"
+      ],
+      "injection": {
+        "observer_mutate": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "k8s_close",
+      "mechanisms": "minus_verify",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": false,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "ObserverMutate"
+      ],
+      "injection": {
+        "observer_mutate": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "head",
+      "mechanisms": "minus_head",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": false,
+        "ClaimCAS": true,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "DispatchAccepted",
+        "SecondHead"
+      ],
+      "injection": {
+        "race_terminal_heads": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "cas",
+      "mechanisms": "minus_cas",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": false,
+        "AttributeOnly": false
+      },
+      "trace": [
+        "DispatchAccepted",
+        "SecondClaim"
+      ],
+      "injection": {
+        "duplicate_entity_dispatch": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "close",
+      "mechanisms": "attribute_only",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": true
+      },
+      "trace": [
+        "PlannerStaleCycle",
+        "CloseAccepted"
+      ],
+      "injection": {
+        "bump_revision_after_activation": true
+      }
+    },
+    {
+      "source": "TEI.tla/TLC",
+      "invariant": "bind",
+      "mechanisms": "attribute_only",
+      "constants": {
+        "CloseRebuild": true,
+        "BindRecompute": true,
+        "VerifySplit": true,
+        "EgressWitness": true,
+        "RoleRevoke": true,
+        "HeadUnique": true,
+        "ClaimCAS": true,
+        "AttributeOnly": true
+      },
+      "trace": [
+        "PlannerForgeFingerprint",
+        "DispatchAccepted"
+      ],
+      "injection": {
+        "mutate_after_approval": "target_forged_fingerprint"
+      }
+    }
+  ],
+  "view": {
+    "attr_view": [
+      2,
+      "true",
+      true,
+      "copy-true",
+      "strong"
+    ],
+    "same_view": true,
+    "close_ok_honest": true,
+    "close_ok_stale": false,
+    "honest_action": "HonestAdvance",
+    "stale_action": "PlannerStaleCycle",
+    "engine_pair": {
+      "states": 277,
+      "transitions": 12721,
+      "inv_view_close_ce": [
+        "A_PlannerStaleCycle",
+        "B_HonestAdvance"
+      ],
+      "inv_view_close_holds": false
+    }
+  }
+}

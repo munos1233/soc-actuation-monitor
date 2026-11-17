@@ -1,0 +1,167 @@
+[
+  {
+    "family": "deepseek-flash",
+    "session": 1,
+    "http_status": 200,
+    "endpoint": "https://api.deepseek.com",
+    "lost": false,
+    "out": "eval/results/independent/raw/deepseek-flash-session1.md"
+  },
+  {
+    "family": "deepseek-flash",
+    "session": 2,
+    "http_status": 200,
+    "endpoint": "https://api.deepseek.com",
+    "lost": false,
+    "out": "eval/results/independent/raw/deepseek-flash-session2.md"
+  },
+  {
+    "family": "deepseek-flash",
+    "session": 3,
+    "http_status": 200,
+    "endpoint": "https://api.deepseek.com",
+    "lost": false,
+    "out": "eval/results/independent/raw/deepseek-flash-session3.md"
+  },
+  {
+    "family": "claude-opus-5",
+    "session": 1,
+    "http_status": 200,
+    "endpoint": "https://sub2api.52ai.pro",
+    "api_style": "anthropic",
+    "lost": false,
+    "started_at": "2026-09-17T15:23:04.994401+00:00",
+    "finished_at": "2026-09-17T15:24:21.259549+00:00",
+    "out": "eval/results/independent/raw/claude-opus-5-session1.md"
+  },
+  {
+    "family": "claude-opus-5",
+    "session": 2,
+    "http_status": 200,
+    "endpoint": "https://sub2api.52ai.pro",
+    "api_style": "anthropic",
+    "lost": false,
+    "started_at": "2026-09-17T15:24:23.264538+00:00",
+    "finished_at": "2026-09-17T15:26:47.525910+00:00",
+    "out": "eval/results/independent/raw/claude-opus-5-session2.md"
+  },
+  {
+    "family": "claude-opus-5",
+    "session": 3,
+    "http_status": 200,
+    "endpoint": "https://sub2api.52ai.pro",
+    "api_style": "anthropic",
+    "lost": false,
+    "started_at": "2026-09-17T15:26:49.533803+00:00",
+    "finished_at": "2026-09-17T15:27:40.792648+00:00",
+    "out": "eval/results/independent/raw/claude-opus-5-session3.md"
+  },
+  {
+    "family": "kimi-k3",
+    "model": "kimi-k3",
+    "session": 1,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-17T16:08:56.045529+00:00",
+    "finished_at": "2026-09-17T16:10:02.533527+00:00",
+    "out": "eval/results/independent/raw/kimi-k3-session1.md"
+  },
+  {
+    "family": "kimi-k3",
+    "model": "kimi-k3",
+    "session": 2,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-17T16:10:04.534949+00:00",
+    "finished_at": "2026-09-17T16:10:38.513623+00:00",
+    "out": "eval/results/independent/raw/kimi-k3-session2.md"
+  },
+  {
+    "family": "kimi-k3",
+    "model": "kimi-k3",
+    "session": 3,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-17T16:10:40.518495+00:00",
+    "finished_at": "2026-09-17T16:11:46.578891+00:00",
+    "out": "eval/results/independent/raw/kimi-k3-session3.md"
+  },
+  {
+    "family": "glm-5.3",
+    "model": "glm-5.3",
+    "session": 1,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-17T16:12:32.470564+00:00",
+    "finished_at": "2026-09-17T16:16:34.524152+00:00",
+    "out": "eval/results/independent/raw/glm-5.3-session1.md"
+  },
+  {
+    "family": "glm-5.3",
+    "model": "glm-5.3",
+    "session": 2,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-17T16:16:36.527032+00:00",
+    "finished_at": "2026-09-17T16:20:31.179168+00:00",
+    "out": "eval/results/independent/raw/glm-5.3-session2.md"
+  },
+  {
+    "family": "glm-5.3",
+    "model": "glm-5.3",
+    "session": 3,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-18T01:32:58.282327+00:00",
+    "finished_at": "2026-09-18T01:38:04.908426+00:00",
+    "out": "eval/results/independent/raw/glm-5.3-session3.md"
+  },
+  {
+    "family": "glm-5.3-flash",
+    "model": "glm-5-3-flash-260828",
+    "session": 1,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-18T01:38:06.997477+00:00",
+    "finished_at": "2026-09-18T01:40:12.056192+00:00",
+    "out": "eval/results/independent/raw/glm-5.3-flash-session1.md"
+  },
+  {
+    "family": "glm-5.3-flash",
+    "model": "glm-5-3-flash-260828",
+    "session": 2,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-18T01:40:14.062816+00:00",
+    "finished_at": "2026-09-18T01:42:42.248163+00:00",
+    "out": "eval/results/independent/raw/glm-5.3-flash-session2.md"
+  },
+  {
+    "family": "glm-5.3-flash",
+    "model": "glm-5-3-flash-260828",
+    "session": 3,
+    "http_status": 200,
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_style": "openai",
+    "lost": false,
+    "started_at": "2026-09-18T01:42:44.260423+00:00",
+    "finished_at": "2026-09-18T01:44:42.135045+00:00",
+    "out": "eval/results/independent/raw/glm-5.3-flash-session3.md"
+  }
+]

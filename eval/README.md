@@ -3,9 +3,10 @@
 Two suites, both driven through the production service chain against a real
 PostgreSQL and a vendor stub:
 
-- **Suite B** injects adversaries A1–A5 at the system boundary — rows a planner
-  writes, receipts and observation answers a vendor returns, repeated dispatch —
-  and scores harm from database and vendor-side facts afterwards.
+- **Suite B** injects adversaries A0–A5 at the system boundary — rows a planner
+  writes, receipts and observation answers a vendor returns, repeated dispatch,
+  and planner-login SQL — and scores harm from database and vendor-side facts
+  afterwards.
 - **Suite A** runs the golden path under exactly the same `full` configuration
   and reports closure rate, over-block, extra manual steps, and extra worker
   passes. `force_close` is forbidden there (`gold.py::FORCE_CLOSE_FORBIDDEN`):
@@ -22,7 +23,10 @@ is not evidence of mediation on the actuation path.
 |---|---|
 | `backend/app/eval_suite/chain.py` | one case, end to end: plan → dispatch → verify → activate → close |
 | `backend/app/eval_suite/cases.py` | the adversary set, with the mediator each case is a claim about |
-| `backend/app/eval_suite/gold.py` | suite A |
+| `backend/app/eval_suite/gold.py` | suite A substrate (g1–g4, frozen 2026-09-10) |
+| `backend/app/eval_suite/gold_ext.py` | suite A extension (g5–g11); never pooled with g1–g4 |
+| `backend/app/eval_suite/b2_cases.py` | construction-closure attacks; never pooled with the 57 |
+| `backend/app/eval_suite/mutants.py` | 18 harness-only mediator mutants; production imports nothing |
 | `backend/app/eval_suite/world.py` | isolated world: migrations, services, vendor, observation surface |
 | `backend/app/eval_suite/vendor.py` | vendor stub: receipt profiles, writeback records, readback |
 | `backend/app/eval_suite/observation.py` | what a verification query is allowed to learn, and how it can lie |
@@ -30,6 +34,18 @@ is not evidence of mediation on the actuation path.
 | `eval/harness/run_suite.py` | CLI |
 | `eval/cases/adversary_set.json` | generated case registry (`--export-cases`) |
 | `eval/results/` | recorded runs (`latest.json`, `latest.md`) |
+| `backend/app/eval_suite/backlog.py` | mixed gold / fail-closed arrivals; global READY depth |
+| `backend/app/eval_suite/search.py` | coverage search over implemented Injection knobs |
+| `backend/app/eval_suite/process_split.py` | planner child / actuation parent: writer factory refused |
+| `eval/taxonomy/tei_threats.md` | TEI definition and published threat grid |
+| `eval/model/TEI.tla` | TEI specification; `tei_engine.py` is the same `Next` |
+| `eval/model/TEIPair.tla` | Twin spec for AttrView / CloseOK; `view_lemma.md` |
+| `eval/k8s/` | Kubernetes lab + kind/Gatekeeper/TEI webhook |
+| `eval/taxonomy/sampling.md` | external-sample protocol (written before cases) |
+| `eval/taxonomy/external_sample.json` | frozen retrieval log + mappings |
+| `backend/app/eval_suite/k8s_chain.py` | fixture 22/22 CI path; not pooled with the 57 |
+| `backend/app/eval_suite/heldout_cases.py` | SOC held-out from the sample; not in 57 |
+| `backend/app/eval_suite/kind_corpus.py` | kind C5 corpus from the sample; not fixture 22 |
 
 ## Switches (production default: every mediator loaded)
 
@@ -46,8 +62,14 @@ accident fails to start rather than serving traffic with a gate missing. That is
 a guard against operator error, not tamper-proofness: these switches are not a
 security mechanism and are excluded from the trusted boundary the paper claims.
 
-Configurations: `naive`, the four single-gate configurations, `full`, and the
-four leave-one-out configurations `full_minus_{close,bind,verify,egress}`.
+Configurations: `naive`, the four single-gate configurations, `full`, the
+four leave-one-out configurations `full_minus_{close,bind,verify,egress}`,
+and the two interaction pairs `close_and_verify` and `bind_and_egress`.
+Four further 2-gate cells (`close_and_bind`, `close_and_egress`,
+`bind_and_verify`, `verify_and_egress`) are `LATTICE_CONFIGS` and
+`make paper-eval-lattice`; they are not in the frozen 17-config matrix.
+A third vendor envelope (`envelope_b`) is a separate target and is never
+merged into the headline mock/pseudo-live denominator.
 
 ## Substrate arms
 
@@ -111,6 +133,11 @@ about. `REPRODUCE.md` is the full recipe; the short version:
 make paper-eval-up        # isolated postgres :55432 / redis :56379
 make paper-eval-matrix    # every configuration, both columns, both planners
 make paper-eval-quick     # naive vs full, mock column only — minutes
+make paper-eval-heldout   # sample-derived SOC cases; not pooled with 57
+make paper-eval-playbook-semantic  # closer assumption; not a product eval
+make paper-eval-lattice   # 2^4 live 4×57 (needs the eval DB)
+make paper-eval-k8s       # fixture 22/22 CI
+make paper-eval-k8s-kind  # C5 headline; fails if kind cannot start
 make paper-eval-cases     # regenerate eval/cases/adversary_set.json
 make paper-eval-down
 ```
@@ -118,7 +145,9 @@ make paper-eval-down
 Equivalently, by hand:
 
 ```bash
-export DATABASE_URL=postgresql+asyncpg://shadowtrace:shadowtrace@localhost:55432/shadowtrace
+# Prefer the Make targets. They point at the isolated Compose project.
+# Hand-export only if you already have that project's owner DSN.
+export DATABASE_URL='postgresql+asyncpg://<eval-owner>:<eval-owner>@localhost:55432/<eval-db>'
 export REDIS_URL=redis://localhost:56379/0
 python eval/harness/run_suite.py --out eval/results
 ```

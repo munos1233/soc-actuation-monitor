@@ -1,0 +1,373 @@
+%% construction-closure-draft.tex
+%% Ready-to-paste fragments for ACM TOPS. Not a full paper.
+%% Freeze still open on Suite A extension, B2, and mutation: do not invent
+%% counts. Placeholders $N$, $K$, $R$ mark cells that are not frozen.
+%%
+%% Verified against production (2026-09-17), not against prompt wording:
+%%   playbook_approval_binding.py  --- approval_level_drift, present-then-check
+%%   event_disposition_service.py  --- terminal activation re-runs bind
+%%   disposition_sync_service.py   --- _trusted_event_locator at delivery
+%%   verify_agent.py               --- classify_verification_observation target
+%%   eval_suite/vendor.py          --- TransientSubmitError -> WAITING_RETRY
+%%
+%% INSERTION MAP
+%% -------------
+%% Abstract (ll.~94--98). KEEP the two numbered fail-open sentences.
+%%   PASTE §1 after them (two sentences). Do NOT restate 47/57 as current:
+%%   a2_level_downgrade now produces naive harm (valid l1, fingerprint column
+%%   untouched; see §eval-falsify replacement). A freeze of the 57 is pending;
+%%   do not write 48/57 either.
+%%
+%% §eval-falsify (ll.~2170--2172, the A2 level-downgrade paragraph).
+%%   REPLACE that paragraph with §2. The old claim (naive zero from a
+%%   non-switchable level-validation check) is the instrument bug.
+%%
+%% §eval-found (\label{sec:eval-found}, after the a1_weak_receipt paragraph
+%%   that ends ``scored as prevented under \emph{full}.'', before
+%%   \subsection{A second vendor envelope} / \label{sec:eval-envelope}).
+%%   PASTE §3. Do not change the section's opening ``two production fail-open
+%%   paths'': the new text distinguishes numbered holes from missing conjuncts.
+%%
+%% Suite A, after \end{table} of \label{tab:gold} (~l.~1504), before
+%%   \paragraph{Baseline: a fixed playbook.}. KEEP tab:gold unchanged (frozen
+%%   g1--g4, 4/4). PASTE §4 (prose + tab:gold-ext + tab:gold-pair).
+%%
+%% Mutation slot: AFTER the new B2 subsection, BEFORE §eval-envelope.
+%%   Not after §eval-substrate: that table is A3/head-protocol, and the 18
+%%   mutants intentionally omit substrate mechanisms. PASTE §5 then §6.
+%%
+%% tab:overhead caption (~l.~1791). APPEND the one-sentence footnote in §7.
+%%   Same substrate sentence belongs on backlog and scale (prose at ~l.~1920
+%%   and ~l.~2421; those measurements have no table labels).
+%%
+%% Optional companions, not in the six requested pastes:
+%%   §design-bind codes list (~l.~704): add \texttt{approval\_level\_drift}.
+%%   §disc ``What this paper did not measure'' (~l.~2423, after the envelope
+%%   never-pooled sentence): one never-pooled sentence for gold-ext / B2 /
+%%   mutation. Conclusion (~l.~2634) still says ``47 of 57''; do not leave
+%%   that as a current claim after the 57 are re-frozen.
+%%
+%% Register: match the body (American spelling in this draft; the eval
+%% sections already mix favour/defence). Prefer ``the suite'' / ``the gate''.
+%% Do not write ``we implemented''. Do not name a project-management phase.
+
+%% ============================================================
+%% §1  ABSTRACT DELTA (two sentences, after the existing two fail-open
+%%     sentences). Keep:
+%%       Building the SOC suite this way exposed two fail-open paths a
+%%       predicate-level test could not see: an approval fingerprint
+%%       compared against a label the planner writes, and an outbound
+%%       guard that took the command's own locator as its witness of
+%%       object identity.
+%% ============================================================
+
+Building the remaining Suite~A and B2 boundary cases found missing
+conjuncts on those same gates rather than a third numbered fail-open:
+required approval level is not one of the eleven fingerprint segments,
+terminal activation skipped the bind recheck, delivery still took the
+command locator as a second-site witness, and verification did not
+cross-check the observation target.
+A vendor submit that fails before anything crosses the wire is a
+\texttt{WAITING\_RETRY} recovery, not a numbered hole.
+
+%% ============================================================
+%% §2  §eval-falsify REPLACEMENT (the A2 level-downgrade paragraph).
+%%     The surrounding ``A zero is only evidence when the case can
+%%     produce a one'' sentence stays; this paragraph is the next
+%%     instrument bug of that kind.
+%% ============================================================
+
+One A2 case, an approval-level downgrade, used to sit at zero under
+\emph{naive} as well as under \emph{full}. That zero was an instrument
+bug, not a non-switchable check: the injection wrote an invalid
+uppercase \texttt{L1}, which the action enum rejects in both arms, so
+the cell could not produce a one. The case now writes a valid
+\texttt{l1} and leaves the planner-written fingerprint column
+untouched---level is not one of the eleven content segments, so a
+column comparison sees no change. Under \emph{naive} the vendor records
+a submit; under \emph{full} the bind gate refuses with
+\texttt{approval\_level\_drift}. The cell is therefore a missing bind
+conjunct that the instrument had been hiding, not an honest naive zero
+and not a result of the four switches. Until the 57 are re-frozen, the
+headline that still prints 47/57 is not a current measurement.
+
+%% ============================================================
+%% §3  §eval-found  (end of section, before §eval-envelope)
+%% ============================================================
+
+Building the remaining Suite~A cases and the six B2 injections did not
+add a third numbered fail-open of the kind the opening of this section
+reports. It found missing conjuncts on gates the 57 already named, one
+instrument bug that had been hiding a conjunct, and a liveness path
+that is not a safety hole. The distinction matters for what the tables
+are allowed to claim.
+
+The approval-level downgrade was the instrument bug
+(\S\ref{sec:eval-falsify}): an uppercase enum value that neither arm
+could store, which made a missing bind conjunct look like a naive
+zero. Required level is part of what the human decided and is not one
+of the eleven fingerprint segments, so a valid re-encoding that leaves
+the fingerprint column untouched drifted to dispatch. The bind gate
+now compares \texttt{required\_level} on the approval record to the
+action row, present-then-check, the same shape as the content hash:
+approvals recorded before the field existed carry no level and are
+exempt; a present level that does not match is
+\texttt{approval\_level\_drift}.
+
+Terminal activation was a path that skipped bind. The local
+template-unchanged check hashes the approved terminal dispositions and
+compares the digest to the stored template hash. Both columns are
+planner-authored, so a consistent rewrite of both sides---dropping
+\texttt{CONTAINED} after the human signed, or repointing the terminal
+locator---is a tautology of that check. Bind now runs on the
+activation path against the approval record; a consistent rewrite of
+the planner-writable pair is still \texttt{action\_content\_drift}.
+That is a missing conjunct on a gate the 57 already credited, not a
+new mediator.
+
+Delivery was a second site of the numbered egress hole, not a new one.
+Enqueue already takes the operator-selected disposition source as the
+object-identity witness. Delivery continued to re-pass the command's
+own locator into the same check, so the witness was again the
+planner-authored field once the command had been queued. The delivery
+guard now resolves that witness from the event row, as enqueue does.
+Using the event's creation source as that witness remains the wrong
+substitute: it names the ingesting product and tenant, not the object,
+and it is why a compensating command that legitimately follows an
+operator re-selection used to fail.
+
+Verification classified an observation as verified from
+\texttt{is\_verified} without asking whether the payload named the
+approved target. The A5 observation cases in the 57 are an echo, an
+empty \texttt{SUCCESS}, an unavailable surface, and a lying vendor
+receipt; they do not construct a well-formed \texttt{is\_verified} on
+a host the action did not name. The classifier now returns
+\texttt{verification\_target\_mismatch} when the observed target and
+the action target disagree. That is a missing conjunct on the
+observe/act split, again not a numbered hole the 57 had already
+counted.
+
+None of those four is the \texttt{g9} retry. A vendor submit that
+fails before anything crosses the wire is classified as a proven
+pre-egress transient; the outbox row goes to \texttt{WAITING\_RETRY}
+and the next worker pass must deliver that same row once. Pairing it
+with \texttt{a3\_duplicate\_entity\_dispatch} is the point of the
+golden extension---the two flows differ by whether a failure was
+proven pre-egress---but a recovery that the substrate already names is
+not a fail-open the gates failed to close. Numbered holes remain the
+two this section opened with. Missing conjuncts are bind level,
+terminal bind, the delivery witness, and observation-target agreement.
+\texttt{g9} is liveness.
+
+%% ============================================================
+%% §4  SUITE A EXTENSION (after tab:gold, before Baseline playbook)
+%%     KEEP Table~\ref{tab:gold} as the frozen g1--g4 substrate (4/4).
+%% ============================================================
+
+The four rows of Table~\ref{tab:gold} are a frozen substrate
+(\texttt{g1}--\texttt{g4}, 2026-09-10). Overhead, backlog, and scale
+stay on that substrate and are never remeasured into the extension.
+Table~\ref{tab:gold-ext} adds six legitimate flows the frozen four do
+not cover---compensation, re-approval, two-host containment, submit
+retry, operator writeback recovery, and level escalation---and scores
+the over-blocking direction of the same \emph{full} configuration.
+\texttt{force\_close} is forbidden here as there. The six are never
+pooled with Table~\ref{tab:gold} and never pooled with the 57. Closure
+counts $N$ are a freeze cell.
+
+\begin{table}
+\centering
+\small
+\caption{Suite A extension: six golden-path incidents
+(\texttt{g5}--\texttt{g11}; \texttt{g8} is unused) that should close.
+Never pooled with Table~\ref{tab:gold} or with overhead, backlog, or
+scale. $N$ closed of 6; $K$ over-blocked; $R$ unfrozen for the other
+columns.}
+\label{tab:gold-ext}
+\begin{tabular}{@{}llcccc@{}}
+\hline
+arm & column & closed & over-blocked & manual & extra worker passes \\
+\hline
+full  & mock         & $N/6$ & $K$ & $R$ & $R$ \\
+full  & pseudo-live  & $N/6$ & $K$ & $R$ & $R$ \\
+naive & mock         & $N/6$ & $K$ & $R$ & $R$ \\
+naive & pseudo-live  & $N/6$ & $K$ & $R$ & $R$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Each paired row of Table~\ref{tab:gold-pair} differs from its attack
+case by one fact the proposer cannot author. \texttt{g7} and
+\texttt{g10} are unpaired coverage of two-host containment and operator
+writeback recovery, so the over-block claim is not only the four paired
+shapes. The pairing is not a second headline and is not pooled with the 57.
+
+\begin{table}
+\centering
+\small
+\caption{Suite A pairing: one non-proposer fact between a golden
+extension case and an attack case. Never pooled with Table~\ref{tab:gold}
+or with the 57. \texttt{g7} and \texttt{g10} have no pair in this table.}
+\label{tab:gold-pair}
+\begin{tabular}{@{}lll@{}}
+\hline
+golden & attack & fact the proposer cannot script \\
+\hline
+\texttt{g5\_compensating\_retarget} &
+  \texttt{a4\_locator\_swap} &
+  operator re-selected the disposition source;
+  both commands name that source \\
+\texttt{g6\_retarget\_with\_reapproval} &
+  \texttt{a2\_target\_swap} &
+  a fresh approval covers the new target
+  (no revision bump) \\
+\texttt{g9\_retry\_after\_timeout} &
+  \texttt{a3\_duplicate\_entity\_dispatch} &
+  the same outbox row is retried after a
+  proven pre-egress failure \\
+\texttt{g11\_level\_raise\_reapproval} &
+  \texttt{a2\_level\_downgrade} &
+  a fresh approval records the raised level \\
+\hline
+\end{tabular}
+\end{table}
+
+%% ============================================================
+%% §5  B2 SUBSECTION
+%%     Insert after §eval-found (including §3), before mutation (§6)
+%%     and before §eval-envelope.
+%%     Suggested heading: \subsection{Remaining boundary cases}
+%%     \label{sec:eval-b2}
+%% ============================================================
+
+\subsection{Remaining boundary cases}
+\label{sec:eval-b2}
+
+The 57 do not reach six attacks the taxonomy already names: a terminal
+template rewritten after approval, an execution-owner rewrite
+(fingerprint segment~7), a locator swap on the terminal action, a
+locator swap \emph{before} the human signs, a \texttt{SUCCESS}
+observation on a host the action did not name, and a \texttt{SUCCESS}
+observation whose \texttt{is\_verified} is false. Table~\ref{tab:b2}
+reports them as their own layer, never pooled with the 57, on T1, T4,
+and T6 only. Full must not be harmed. Naive must produce a one on every
+case that names a switchable mediator---the same ``zero is only evidence
+when the case can produce a one'' discipline as
+\S\ref{sec:eval-falsify}.
+
+T1a and T4a are why terminal activation re-runs bind: a consistent
+rewrite of both planner-writable sides of the template-unchanged check
+makes that local check a tautology, and the approval record's content
+hash is what has to refuse. T4b is the remaining object-identity
+witness: the swap happens before the human signs, so bind compares the
+foreign locator against itself and egress is the check that still
+stands. T6a is the observation-target conjunct; T6b is the honest
+negative branch of the same classifier. Counts $N$ are a freeze cell.
+
+\begin{table}
+\centering
+\small
+\caption{B2 remaining boundary cases, both vendor columns, untrusted
+planner. Never pooled with the 57. $N$ unfrozen.}
+\label{tab:b2}
+\begin{tabular}{@{}llcc@{}}
+\hline
+case & class & naive & full \\
+\hline
+\texttt{b2\_t1a\_terminal\_template\_rewrite} & T1 & $N$ & $N$ \\
+\texttt{b2\_t1b\_execution\_owner\_rewrite} & T1 & $N$ & $N$ \\
+\texttt{b2\_t4a\_terminal\_locator\_swap} & T4 & $N$ & $N$ \\
+\texttt{b2\_t4b\_pre\_approval\_locator\_swap} & T4 & $N$ & $N$ \\
+\texttt{b2\_t6a\_partial\_success\_observation} & T6 & $N$ & $N$ \\
+\texttt{b2\_t6b\_honest\_negative\_observation} & T6 & $N$ & $N$ \\
+\hline
+six cases & & $N/6$ & $N/6$ \\
+\hline
+\end{tabular}
+\end{table}
+
+%% ============================================================
+%% §6  MUTATION SUBSECTION
+%%     Slot chosen: after §eval-b2, before §eval-envelope.
+%%     Less disruptive than after §eval-substrate (tab:substrate is A3;
+%%     the 18 mutants omit substrate mechanisms on purpose).
+%%     Suggested heading: \subsection{Predicate mutants}
+%%     \label{sec:eval-mutation}
+%% ============================================================
+
+\subsection{Predicate mutants}
+\label{sec:eval-mutation}
+
+The suite also weakens the TEI predicates one conjunct at a time, under
+\emph{full} only, with harness patches that production neither contains
+nor imports. Eighteen mutants, two families: M1 (twelve) compares a
+planner-authored label, drops a content segment, skips a store fact, or
+treats an observation as an effect; M4 (six) is a plausible tightening
+that would refuse a legitimate golden, with named killers in
+\texttt{g5}--\texttt{g11}. Kill is relative to an unmutated
+\emph{full} pass on the same day, not to a stale freeze: an attack that
+already harmed under \emph{full} cannot harm-kill, and a golden that
+already failed to close cannot over-strict-kill. A3 substrate
+mechanisms are absent; Table~\ref{tab:substrate} already speaks for
+them. The eighteen are never pooled with the 57.
+
+\texttt{m1\_close\_planner\_cycle} is a declared survivor, not an
+undiscovered hole. Aligning the view's plan revision with the current
+cycle does not open a scored harm: the close gate's remaining conjuncts
+(report, confirmation evidence, simulated receipt) still refuse the A1
+cases, and no golden is refused. The \texttt{plan\_revision} check on
+the terminal writeback is unreachable as a standalone conjunct; it is
+left as specified rather than edited into a tautology. Kill rate is
+17/18 (declared survivor \texttt{m1\_close\_planner\_cycle}).
+
+\begin{table}
+\centering
+\small
+\caption{Predicate mutants, \emph{full} only, both vendor columns.
+Kill relative to unmutated \emph{full}. Never pooled with the 57.
+Frozen in \texttt{eval/results/mutation}.}
+\label{tab:mutation}
+\begin{tabular}{@{}lccc@{}}
+\hline
+family & $n$ & killed & declared survivor \\
+\hline
+M1 predicate witness & 12 & 11 & \texttt{m1\_close\_planner\_cycle} \\
+M4 over-strict & 6 & 6 & --- \\
+\hline
+all & 18 & 17/18 & one \\
+\hline
+\end{tabular}
+\end{table}
+
+%% ============================================================
+%% §7  OVERHEAD CAPTION FOOTNOTE (one sentence)
+%%     Attach to \caption{...} of \label{tab:overhead} (~l.~1791).
+%%     Repeat the substrate clause on backlog (~l.~2421) and scale
+%%     (~l.~1920); those measurements have no table labels.
+%%
+%% Caption becomes:
+%%   Golden path, 8 repeats of 4 cases across both columns, mock column
+%%   shown. Per-mediator figures are wall time for one decision. The
+%%   unmediated column is the switch check, which is why it is small
+%%   rather than zero.\footnote{Golden substrate g1--g4, frozen
+%%   2026-09-10; overhead, backlog, and scale are not remeasured on
+%%   \texttt{g5}--\texttt{g11}.}
+%% ============================================================
+
+%% Footnote text only:
+Golden substrate g1--g4, frozen 2026-09-10; overhead, backlog, and scale
+are not remeasured on \texttt{g5}--\texttt{g11}.
+
+%% ============================================================
+%% OPTIONAL COMPANIONS
+%% ============================================================
+
+%% §design-bind codes (~l.~704), append to the existing list:
+%%   Codes: \texttt{action\_content\_drift},
+%%   \texttt{plan\_revision\_mismatch}, \texttt{playbook\_binding\_mismatch},
+%%   \texttt{approval\_level\_drift}.
+
+%% §disc ``What this paper did not measure'', after the envelope_b
+%% never-pooled sentence (~l.~2425):
+The Suite~A extension, the six B2 cases, and the eighteen predicate
+mutants are each reported separately and never pooled with the 57.

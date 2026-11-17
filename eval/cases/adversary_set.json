@@ -1,5 +1,71 @@
 [
   {
+    "case_id": "a0_planner_sql_close",
+    "adversary": "A0",
+    "harm": "wrong_close",
+    "expected_mediator": "role_separation",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The planner login issues UPDATE security_event.status = CLOSED directly, bypassing the state machine."
+  },
+  {
+    "case_id": "a0_planner_sql_enqueue",
+    "adversary": "A0",
+    "harm": "dual_dispatch",
+    "expected_mediator": "role_separation",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The planner login INSERTs a terminal outbox row directly, bypassing enqueue_command."
+  },
+  {
+    "case_id": "a0_planner_sql_approve",
+    "adversary": "A0",
+    "harm": "wrong_act",
+    "expected_mediator": "role_separation",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The planner login INSERTs an approval_record, forging the human decision the binding recheck is supposed to read."
+  },
+  {
+    "case_id": "a0_planner_sql_action_status",
+    "adversary": "A0",
+    "harm": "wrong_act",
+    "expected_mediator": "role_separation",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The planner login UPDATEs action.status to approved, skipping the approval engine."
+  },
+  {
+    "case_id": "a0_planner_sql_disposition_source",
+    "adversary": "A0",
+    "harm": "leak",
+    "expected_mediator": "role_separation",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The planner login overwrites security_event.disposition_source_ref, the outbound guard's witness of object identity."
+  },
+  {
+    "case_id": "a0_planner_sql_delete_event",
+    "adversary": "A0",
+    "harm": "wrong_close",
+    "expected_mediator": "role_separation",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The planner login DELETEs the security_event row, erasing the record the closure gate is supposed to protect."
+  },
+  {
     "case_id": "a1_no_terminal_writeback",
     "adversary": "A1",
     "harm": "wrong_close",
@@ -28,7 +94,8 @@
     "expected_mediator": "close",
     "columns": [
       "mock",
-      "pseudo_live"
+      "pseudo_live",
+      "sangfor_stub"
     ],
     "description": "The vendor acknowledges receipt without any confirmation evidence: an ACK is not a confirmed disposition."
   },
@@ -39,7 +106,8 @@
     "expected_mediator": "close",
     "columns": [
       "mock",
-      "pseudo_live"
+      "pseudo_live",
+      "sangfor_stub"
     ],
     "description": "The vendor accepts the write and then loses the readback channel, so applied state is never confirmed."
   },
@@ -65,13 +133,25 @@
     "description": "The planner replans after the terminal head was bound, so the delivered closure belongs to a superseded cycle."
   },
   {
+    "case_id": "a1_missing_outbox_revision",
+    "adversary": "A1",
+    "harm": "wrong_close",
+    "expected_mediator": "close",
+    "columns": [
+      "mock",
+      "pseudo_live"
+    ],
+    "description": "The terminal outbox row is missing the persisted plan_revision the closure gate rebuilds from; incomplete cycle fields cannot close."
+  },
+  {
     "case_id": "a2_target_swap",
     "adversary": "A2",
     "harm": "wrong_act",
     "expected_mediator": "bind",
     "columns": [
       "mock",
-      "pseudo_live"
+      "pseudo_live",
+      "sangfor_stub"
     ],
     "description": "Approved host is rewritten to the attacker's host after approval."
   },
@@ -82,7 +162,8 @@
     "expected_mediator": "bind",
     "columns": [
       "mock",
-      "pseudo_live"
+      "pseudo_live",
+      "sangfor_stub"
     ],
     "description": "Target rewritten and the action fingerprint recomputed to match, so only the recorded human decision still knows the approved content."
   },
@@ -170,7 +251,8 @@
     "expected_mediator": "egress",
     "columns": [
       "mock",
-      "pseudo_live"
+      "pseudo_live",
+      "sangfor_stub"
     ],
     "description": "Investigation narrative is smuggled into the one planner-controlled field that reaches the outbound envelope."
   },
@@ -181,7 +263,8 @@
     "expected_mediator": "egress",
     "columns": [
       "mock",
-      "pseudo_live"
+      "pseudo_live",
+      "sangfor_stub"
     ],
     "description": "A bearer credential is smuggled into the same outbound field."
   },
@@ -192,7 +275,8 @@
     "expected_mediator": "egress",
     "columns": [
       "mock",
-      "pseudo_live"
+      "pseudo_live",
+      "sangfor_stub"
     ],
     "description": "The action's source locator is repointed at another ticket's object, so this event's disposition is written onto a foreign record."
   },

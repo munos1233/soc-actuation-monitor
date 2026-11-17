@@ -19,7 +19,7 @@
 #   verify  — may this observation count as a performed effect
 #   egress  — may this envelope leave for the vendor
 
-package shadowtrace.actuation
+package actuation
 
 import rego.v1
 
@@ -114,7 +114,7 @@ deny contains "bind:plan_revision_drift" if {
 deny contains "bind:level_below_tool_requirement" if {
 	input.decision == "bind"
 	high_impact_tools[input.action.tool_name]
-	input.action.action_level == "L1"
+	input.action.action_level == "l1"
 }
 
 # ---------------------------------------------------------------------------

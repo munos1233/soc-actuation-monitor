@@ -4,6 +4,10 @@
 *.log
 *.out
 *.pdf
+artifact-anonymous-*.zip
 *.synctex.gz
 main.fdb_latexmk
 main.fls
+main-zh.fdb_latexmk
+main-zh.fls
+main-zh.xdv

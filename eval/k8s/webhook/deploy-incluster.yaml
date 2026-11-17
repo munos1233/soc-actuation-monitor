@@ -1,0 +1,99 @@
+# In-cluster TEI webhook for hosted clusters (ACK tested). Same server.py as
+# the kind lab, running as a pod with in-cluster re-GET (TEI_WEBHOOK_INCLUSTER=1).
+# Code is mounted from ConfigMap tei-webhook-code; TLS from Secret tei-webhook-tls.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tei-webhook
+  namespace: tei-lab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tei-webhook
+  namespace: tei-lab
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]
+  - apiGroups: ["tei.lab"]
+    resources: ["approvals", "isolates"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tei-webhook
+  namespace: tei-lab
+subjects:
+  - kind: ServiceAccount
+    name: tei-webhook
+    namespace: tei-lab
+roleRef:
+  kind: Role
+  name: tei-webhook
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tei-webhook
+  namespace: tei-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tei-webhook
+  template:
+    metadata:
+      labels:
+        app: tei-webhook
+    spec:
+      serviceAccountName: tei-webhook
+      containers:
+        - name: server
+          # docker.io is unreachable from cn-hangzhou; DaoCloud public mirror.
+          image: m.daocloud.io/docker.io/library/python:3.12-slim
+          command: ["python", "/app/server.py"]
+          env:
+            - name: TEI_WEBHOOK_INCLUSTER
+              value: "1"
+            - name: TEI_WEBHOOK_PORT
+              value: "9443"
+            - name: TEI_WEBHOOK_TLS_CRT
+              value: /tls/tls.crt
+            - name: TEI_WEBHOOK_TLS_KEY
+              value: /tls/tls.key
+          ports:
+            - containerPort: 9443
+          volumeMounts:
+            - name: code
+              mountPath: /app
+              readOnly: true
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 9443
+            initialDelaySeconds: 2
+            periodSeconds: 5
+      volumes:
+        - name: code
+          configMap:
+            name: tei-webhook-code
+        - name: tls
+          secret:
+            secretName: tei-webhook-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tei-webhook
+  namespace: tei-lab
+spec:
+  selector:
+    app: tei-webhook
+  ports:
+    - port: 443
+      targetPort: 9443

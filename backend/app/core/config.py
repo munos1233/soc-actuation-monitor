@@ -64,6 +64,21 @@ class TaskMode(StrEnum):
     CELERY = "celery"
 
 
+class ProcessRole(StrEnum):
+    """Which database logins this OS process is allowed to construct.
+
+    Production forbids ``monolith``. ``planner`` refuses the writer factory
+    even if ``ACTUATION_DATABASE_URL`` is present. ``actuation`` may hold the
+    writer login and is the only role that may close or enqueue. ``monolith``
+    remains for unit tests and explicit local debug (``TASK_MODE=background``).
+    This is a process-role gate, not a protection domain.
+    """
+
+    MONOLITH = "monolith"
+    PLANNER = "planner"
+    ACTUATION = "actuation"
+
+
 class Settings(BaseSettings):
     """Runtime configuration. Defaults target Docker Compose service names."""
 
@@ -94,6 +109,33 @@ class Settings(BaseSettings):
     database_url: str = Field(
         default="postgresql+asyncpg://shadowtrace:shadowtrace@postgres:5432/shadowtrace",
         alias="DATABASE_URL",
+    )
+    planner_database_url: str = Field(
+        default="",
+        alias="PLANNER_DATABASE_URL",
+        description=(
+            "Login that may write plan content but cannot set CLOSED or insert "
+            "outbox rows. Empty derives actuation_planner from DATABASE_URL."
+        ),
+    )
+    actuation_database_url: str = Field(
+        default="",
+        alias="ACTUATION_DATABASE_URL",
+        description=(
+            "Login that is allowed to write event status and the outbox. "
+            "Empty derives actuation_writer from DATABASE_URL."
+        ),
+    )
+    planner_db_password: str = Field(default="planner_role", alias="PLANNER_DB_PASSWORD")
+    actuation_db_password: str = Field(default="actuation_role", alias="ACTUATION_DB_PASSWORD")
+    process_role: ProcessRole = Field(
+        default=ProcessRole.MONOLITH,
+        alias="PROCESS_ROLE",
+        description=(
+            "Development default is monolith for local debug. Production must "
+            "be planner or actuation. planner refuses the writer factory; "
+            "actuation is the only role that may close or enqueue."
+        ),
     )
     redis_url: str = Field(default="redis://redis:6379/0", alias="REDIS_URL")
 
@@ -844,6 +886,53 @@ class Settings(BaseSettings):
             violations.append("execution_job_fixture_enabled=true")
         if self.eval_harness_mode:
             violations.append("eval_harness_mode=true: ablation build forbidden in production")
+        from sqlalchemy.engine.url import make_url
+
+        from app.db.actuation_roles import DEFAULT_ACTUATION_PASSWORD, DEFAULT_PLANNER_PASSWORD
+
+        if self.process_role is ProcessRole.MONOLITH:
+            violations.append(
+                "process_role=monolith: production must split planner and actuation processes"
+            )
+        owner_user = make_url(self.database_url).username
+        if self.process_role is ProcessRole.PLANNER:
+            if (self.actuation_database_url or "").strip():
+                violations.append(
+                    "PROCESS_ROLE=planner forbids ACTUATION_DATABASE_URL in the environment"
+                )
+            if not (self.planner_database_url or "").strip():
+                violations.append(
+                    "PLANNER_DATABASE_URL unset: production planner process must set an explicit planner DSN"
+                )
+            else:
+                planner_url = make_url(self.resolved_planner_database_url())
+                planner_user = planner_url.username
+                if planner_user and owner_user and planner_user == owner_user:
+                    violations.append("planner database login must not be the owner login")
+                planner_password = planner_url.password or self.planner_db_password
+                if planner_password == DEFAULT_PLANNER_PASSWORD:
+                    violations.append(
+                        "planner database password is the eval-only default; rotate for deployment"
+                    )
+        if self.process_role is ProcessRole.ACTUATION:
+            if not (self.actuation_database_url or "").strip():
+                violations.append(
+                    "ACTUATION_DATABASE_URL unset: production actuation process must set an explicit writer DSN"
+                )
+            else:
+                actuation_url = make_url(self.resolved_actuation_database_url())
+                actuation_user = actuation_url.username
+                if actuation_user and owner_user and actuation_user == owner_user:
+                    violations.append("actuation database login must not be the owner login")
+                actuation_password = actuation_url.password or self.actuation_db_password
+                if actuation_password == DEFAULT_ACTUATION_PASSWORD:
+                    violations.append(
+                        "actuation database password is the eval-only default; rotate for deployment"
+                    )
+                if (self.planner_database_url or "").strip():
+                    planner_url = make_url(self.resolved_planner_database_url())
+                    if planner_url.username and actuation_user == planner_url.username:
+                        violations.append("planner and actuation database logins must differ")
         if self.task_mode is TaskMode.BACKGROUND:
             violations.append("task_mode=background: volatile execution forbidden in production")
         if self.react_enabled and not self.tool_call_grant_required:
@@ -897,6 +986,24 @@ class Settings(BaseSettings):
         if "*" in hosts:
             violations.append("TRUSTED_PROXY_ALLOWLIST must not contain wildcard '*'")
         return violations
+
+    def resolved_planner_database_url(self) -> str:
+        from app.db.actuation_roles import derived_planner_url
+
+        return derived_planner_url(
+            self.database_url,
+            explicit=self.planner_database_url,
+            password=self.planner_db_password,
+        )
+
+    def resolved_actuation_database_url(self) -> str:
+        from app.db.actuation_roles import derived_actuation_url
+
+        return derived_actuation_url(
+            self.database_url,
+            explicit=self.actuation_database_url,
+            password=self.actuation_db_password,
+        )
 
     def configured_socketio_cors_origins(self) -> list[str]:
         """Parse ``SOCKETIO_CORS_ALLOWED_ORIGINS`` into a deduplicated list."""

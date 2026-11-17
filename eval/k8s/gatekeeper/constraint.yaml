@@ -1,0 +1,11 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredApprovalRef
+metadata:
+  name: np-must-name-approval
+spec:
+  match:
+    kinds:
+      - apiGroups: ["networking.k8s.io"]
+        kinds: ["NetworkPolicy"]
+      - apiGroups: ["tei.lab"]
+        kinds: ["NetworkPolicy"]

@@ -19,6 +19,7 @@ columns and never as a live deployment.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -35,6 +36,7 @@ from app.models.disposition import (
     SourceObjectLocator,
     parse_entity_effect_target,
 )
+from app.core.errors import DependencyUnavailableError
 from app.models.enums import (
     CapabilityState,
     ConfirmationEvidence,
@@ -78,9 +80,29 @@ class ReceiptProfile(StrEnum):
     has to survive, and the retry it forces is counted as extra work.
     """
 
+    READBACK_FAIL_ONCE = "readback_fail_once"
+    """The vendor's terminal read API loses its first call after submit.
+
+    Submit still lands ACCEPTED. The first ``confirm_readback`` returns
+    UNKNOWN, which pauses the head for operator lookup; a later
+    ``retry_writeback`` confirms through the idempotency key. Raising
+    from confirm_readback would be swallowed and leave DELIVERED+ACCEPTED,
+    which is not operator-retryable.
+    """
+
 
 class ReadbackError(RuntimeError):
     """Raised when the vendor refuses or loses the readback."""
+
+
+class TransientSubmitError(DependencyUnavailableError):
+    """Raised when the vendor's submit surface is transiently unavailable.
+
+    Nothing crossed the wire when this is raised: production classifies
+    ``DependencyUnavailableError`` as a proven pre-egress transient, so the
+    outbox goes to ``WAITING_RETRY`` rather than pausing for lookup. The
+    delivery retry must then submit exactly once.
+    """
 
 
 class RecordingVendor(BaseDispositionAdapter):
@@ -93,11 +115,35 @@ class RecordingVendor(BaseDispositionAdapter):
         profile: ReceiptProfile = ReceiptProfile.STRONG,
         simulated: bool = True,
         entity_effect_verified: bool = True,
+        envelope: str = "mock",
+        readback_delay_ms: float = 0.0,
     ) -> None:
         self.name = product
         self.profile = profile
         self.simulated = simulated
         self.entity_effect_verified = entity_effect_verified
+        self.envelope = envelope
+        # Artificial latency on the confirmation read-back surface, for the
+        # vendor-latency sensitivity scan: a real vendor's read API can be
+        # slow, and the scan measures where that slowness lands. Zero in
+        # every other experiment.
+        self.readback_delay_ms = readback_delay_ms
+        # Transient submit outage for the golden retry case (g9): the first
+        # *entity* submit fails before anything crosses the wire. Terminal
+        # writebacks are a different command and must not consume the fault.
+        self.fail_first_submit = False
+        self._failed_entity_submit_ids: set[str] = set()
+        # First terminal confirm_readback per action returns UNKNOWN
+        # (READBACK_FAIL_ONCE / g10). A global counter would fire on the
+        # wrong action if cases share a vendor; a per-action set matches
+        # fail_first_submit.
+        self._unknown_confirm_ids: set[str] = set()
+        # Vendor can answer "did my submission land?" by idempotency key.
+        # Off for the plain mock (the operator-retry lookup path is then
+        # capability-blocked, which is itself a scored behaviour); on for
+        # the golden retry cases where the lookup decides reconcile vs
+        # re-enqueue.
+        self.supports_lookup = False
         self._default_profile = profile
         self._default_simulated = simulated
         self._default_entity_effect_verified = entity_effect_verified
@@ -131,6 +177,10 @@ class RecordingVendor(BaseDispositionAdapter):
         self.profile = self._default_profile
         self.simulated = self._default_simulated
         self.entity_effect_verified = self._default_entity_effect_verified
+        self.fail_first_submit = False
+        self._failed_entity_submit_ids.clear()
+        self._unknown_confirm_ids.clear()
+        self.supports_lookup = False
 
     def received_payloads(self) -> list[dict[str, Any]]:
         return list(self.received)
@@ -188,7 +238,11 @@ class RecordingVendor(BaseDispositionAdapter):
             supports_idempotency=True,
             supports_status_query=False,
             supports_concurrency_token=True,
-            supports_lookup_by_idempotency=False,
+            # READBACK_FAIL_ONCE vendors expose the idempotency lookup the
+            # operator retry reconciles through; the mock default does not.
+            supports_lookup_by_idempotency=(
+                self.supports_lookup or self.profile is ReceiptProfile.READBACK_FAIL_ONCE
+            ),
             supports_readback_confirmation=self.profile not in {ReceiptProfile.LYING_SUCCESS},
             supports_entity_effect_readback=True,
         )
@@ -206,11 +260,30 @@ class RecordingVendor(BaseDispositionAdapter):
 
     async def submit(self, command: DispositionCommand) -> DispositionReceipt:
         self.submit_calls += 1
+        if (
+            self.fail_first_submit
+            and command.action_id not in self._failed_entity_submit_ids
+            and command.intent_kind is DispositionIntentKind.ENTITY_ACTION_SUBMIT
+        ):
+            # Transient outage: nothing has crossed the wire yet. The outbox
+            # delivery retry is the legitimate recovery, and it must deliver
+            # exactly once — the failed attempt recorded no receipt. Scoped
+            # to this action so leftover outboxes cannot consume the fault.
+            self._failed_entity_submit_ids.add(command.action_id)
+            raise TransientSubmitError("vendor submit surface unavailable")
         # A vendor that advertises idempotency collapses a replayed key onto the
         # first effect, so a delivery retry must not look like a second action.
         # The payload is still recorded: egress scoring cares about what crossed
         # the wire, not about how many distinct effects it caused.
         payload = command.model_dump(mode="json")
+        if self.envelope == "sangfor_stub":
+            # Second vendor envelope: dealStatus / ticket fields, not mock names.
+            # The closure and egress gates must still key off evidence predicates.
+            payload["vendor_envelope"] = {
+                "dealStatus": "processed",
+                "ticketId": command.disposition_id,
+                "confirmField": "dealStatus",
+            }
         self.received.append(payload)
         if self.tally_sink is not None:
             await self.tally_sink(payload)
@@ -248,6 +321,11 @@ class RecordingVendor(BaseDispositionAdapter):
 
     async def confirm_readback(self, command: DispositionCommand) -> DispositionReceipt | None:
         self.readback_calls += 1
+        if self.readback_delay_ms > 0:
+            # Simulated slow vendor read API. The sleep sits on the read-back
+            # surface only: the submit path keeps its normal cost, which is
+            # what lets the scan attribute the added latency to the read.
+            await asyncio.sleep(self.readback_delay_ms / 1000.0)
         if self.profile in {ReceiptProfile.DROPPED_READBACK, ReceiptProfile.FLAKY_READBACK}:
             raise ReadbackError("vendor readback surface unavailable")
         now = datetime.now(UTC)
@@ -262,6 +340,21 @@ class RecordingVendor(BaseDispositionAdapter):
             "observed_at": now,
             "confirmed_at": now,
         }
+        if self.profile is ReceiptProfile.READBACK_FAIL_ONCE:
+            if command.action_id not in self._unknown_confirm_ids:
+                self._unknown_confirm_ids.add(command.action_id)
+                return DispositionReceipt(
+                    writeback_id=base["writeback_id"],
+                    sequence=2,
+                    disposition_id=command.disposition_id,
+                    action_id=command.action_id,
+                    source_record_id=command.source_locator.source_object_id,
+                    status=WritebackStatus.UNKNOWN,
+                    submitted_at=now,
+                    observed_at=now,
+                    simulated=self.simulated,
+                    provider_code="readback_unavailable",
+                )
         if self.profile is ReceiptProfile.WEAK_ACK:
             return DispositionReceipt(
                 **base,
@@ -288,7 +381,24 @@ class RecordingVendor(BaseDispositionAdapter):
         idempotency_key: str,
         source_locator: SourceObjectLocator,
     ) -> DispositionReceipt | None:
-        _ = (idempotency_key, source_locator)
+        stored = self._receipts_by_key.get(idempotency_key)
+        if stored is not None:
+            now = datetime.now(UTC)
+            return DispositionReceipt(
+                writeback_id=stored.writeback_id,
+                sequence=stored.sequence + 1,
+                disposition_id=stored.disposition_id,
+                action_id=stored.action_id,
+                source_record_id=stored.source_record_id,
+                status=WritebackStatus.CONFIRMED,
+                confirmation_evidence=ConfirmationEvidence.READBACK_VERIFIED,
+                submitted_at=stored.submitted_at,
+                observed_at=now,
+                confirmed_at=now,
+                simulated=self.simulated,
+                provider_code="lookup_confirmed",
+            )
+        _ = source_locator
         return None
 
     async def read_entity_effect_completion(
@@ -334,4 +444,4 @@ def _canonical_target(command: DispositionCommand) -> str:
     return str(getattr(command.operation_params, "canonical_target", "") or "")
 
 
-__all__ = ["ReadbackError", "ReceiptProfile", "RecordingVendor"]
+__all__ = ["ReadbackError", "ReceiptProfile", "RecordingVendor", "TransientSubmitError"]

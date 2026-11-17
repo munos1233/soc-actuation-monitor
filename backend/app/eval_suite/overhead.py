@@ -186,10 +186,70 @@ def render_overhead_markdown(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+async def run_scale_overhead(
+    *,
+    column: VendorColumn = VendorColumn.MOCK,
+    events: int = 120,
+    repeats: int = 1,
+) -> dict[str, Any]:
+    """Queue depth and tail latency on a 100+ event golden load.
+
+    Fail-closed cost is backlog, not the 151 ms verify round trip. This arm
+    seeds many golden events under full, records wall p50/p95/p99, and counts
+    how many outbox rows remain READY after one worker pass.
+    """
+    from app.eval_suite.gold import GOLDEN_CASES
+
+    walls: list[float] = []
+    backlog: list[int] = []
+    closed = 0
+    with harness_context(FULL, column):
+        async with eval_world(column) as world:
+            for index in range(max(1, events)):
+                case = GOLDEN_CASES[index % len(GOLDEN_CASES)]
+                started = time.perf_counter()
+                outcome = await run_case(
+                    world,
+                    case,
+                    config_name=FULL.name,
+                )
+                walls.append(time.perf_counter() - started)
+                if outcome.closed:
+                    closed += 1
+                ready = await world.outbox_rows(str(outcome.notes.get("event_id") or ""))
+                backlog.append(
+                    sum(1 for row in ready if row.delivery_status == "ready")
+                )
+                if index + 1 >= events:
+                    break
+    _ = repeats
+    return {
+        "events": len(walls),
+        "closed": closed,
+        "wall_p50": _p(walls, 0.50),
+        "wall_p95": _p(walls, 0.95),
+        "wall_p99": _p(walls, 0.99),
+        "backlog_mean": statistics.fmean(backlog) if backlog else 0.0,
+        "backlog_p95": float(_p([float(item) for item in backlog], 0.95)),
+    }
+
+
+def render_scale_markdown(report: dict[str, Any]) -> str:
+    return (
+        f"events={report['events']} closed={report['closed']} "
+        f"wall_p50={report['wall_p50'] * 1000:.0f}ms "
+        f"wall_p95={report['wall_p95'] * 1000:.0f}ms "
+        f"wall_p99={report['wall_p99'] * 1000:.0f}ms "
+        f"backlog_mean={report['backlog_mean']:.2f}"
+    )
+
+
 __all__ = [
     "DEFAULT_REPEATS",
     "StatementCounter",
     "count_statements",
     "render_overhead_markdown",
+    "render_scale_markdown",
     "run_overhead_probe",
+    "run_scale_overhead",
 ]

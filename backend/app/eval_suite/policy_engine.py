@@ -23,13 +23,29 @@ had to be trusted to report.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 import os
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
 
-DEFAULT_OPA_URL = "http://127.0.0.1:58181/v1/data/shadowtrace/actuation"
+# Facts a sidecar would have to join from the caller's database. Signing the
+# request document does not add them — that is Theorem 1's premise.
+FORBIDDEN_JOIN_KEYS = frozenset(
+    {
+        "approval_row",
+        "writeback_head",
+        "vendor_readback",
+        "rebuilt_cycle",
+        "recomputed_fingerprint",
+        "observe_reread",
+    }
+)
+
+DEFAULT_OPA_URL = "http://127.0.0.1:58181/v1/data/actuation"
 
 DECISION_CLOSE = "close"
 DECISION_BIND = "bind"
@@ -81,6 +97,7 @@ class ExternalPolicyEngine:
             raise PolicyEngineUnavailable(str(exc)[:200]) from exc
 
     async def decide(self, decision: str, document: dict[str, Any]) -> PolicyDecision:
+        self._assert_attribute_only(document)
         payload = {"input": {"decision": decision, **document}}
         try:
             response = await self._client.post(self.url, json=payload)
@@ -97,6 +114,14 @@ class ExternalPolicyEngine:
         if not allow:
             self.denials.extend(deny or ("policy_deny",))
         return PolicyDecision(decision=decision, allow=allow, deny=deny)
+
+    def _assert_attribute_only(self, document: dict[str, Any]) -> None:
+        blob = json.dumps(document, sort_keys=True, default=str)
+        for key in FORBIDDEN_JOIN_KEYS:
+            if key in blob:
+                raise PolicyEngineUnavailable(
+                    f"attribute document must not carry {key}"
+                )
 
     def summary(self) -> dict[str, Any]:
         by_reason: dict[str, int] = {}
@@ -215,6 +240,35 @@ def egress_document(
     }
 
 
+class SignedAttributeEngine(ExternalPolicyEngine):
+    """Integrity-protected request attributes; still no database join.
+
+    CONTINUITY-shaped: the document is HMAC'd so the sidecar can trust that
+    the caller-reported attributes were not rewritten in flight. TEI-(ii)
+    still fails because the signed facts are the proposer's reports.
+    """
+
+    def __init__(self, *, url: str | None = None, timeout: float = 5.0) -> None:
+        super().__init__(url=url, timeout=timeout)
+        secret = os.environ.get("EVAL_ATTRIBUTE_HMAC", "tei-signed-attribute")
+        self._secret = secret.encode("utf-8")
+
+    def sign(self, document: dict[str, Any]) -> str:
+        canonical = json.dumps(document, sort_keys=True, default=str).encode("utf-8")
+        return hmac.new(self._secret, canonical, hashlib.sha256).hexdigest()
+
+    def verify(self, document: dict[str, Any], signature: str) -> bool:
+        expected = self.sign(document)
+        return hmac.compare_digest(expected, signature)
+
+    async def decide(self, decision: str, document: dict[str, Any]) -> PolicyDecision:
+        self._assert_attribute_only(document)
+        signature = self.sign(document)
+        if not self.verify(document, signature):
+            raise PolicyEngineUnavailable("signed attribute HMAC failed")
+        return await super().decide(decision, document)
+
+
 class PolicyEngineOutboundGuard:
     """Consults the sidecar where the in-system egress guard would have run.
 
@@ -266,10 +320,12 @@ __all__ = [
     "DECISION_EGRESS",
     "DECISION_VERIFY",
     "DEFAULT_OPA_URL",
+    "FORBIDDEN_JOIN_KEYS",
     "ExternalPolicyEngine",
     "PolicyDecision",
     "PolicyEngineOutboundGuard",
     "PolicyEngineUnavailable",
+    "SignedAttributeEngine",
     "bind_document",
     "close_document",
     "egress_document",

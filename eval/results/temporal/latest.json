@@ -1,0 +1,754 @@
+{
+  "generated_at": "2026-09-16T12:07:25.066279+00:00",
+  "method": "temporal_update_handlers",
+  "server": "temporal single-binary dev server (bundled in temporalio SDK, server 1.32, in-memory persistence)",
+  "pooled_with_57": false,
+  "pooled_with_kind": false,
+  "arms": {
+    "temporal_naive": [
+      {
+        "case_id": "tm_unearned_close",
+        "adversary": "A1",
+        "source_class": "a1_unearned_closure family (Suite B A1)",
+        "arm": "temporal_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_close"
+        ],
+        "final_state": {
+          "closed": true,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "naive:trusts_claimed_confirmation"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_weak_receipt_close",
+        "adversary": "A1",
+        "source_class": "a1_weak_receipt (Suite B A1)",
+        "arm": "temporal_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_close"
+        ],
+        "final_state": {
+          "closed": true,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "adapter_acknowledged"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "naive:trusts_request"
+            },
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "naive:trusts_claimed_confirmation"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_target_drift",
+        "adversary": "A2",
+        "source_class": "a2_target_swap / a2_forged_fingerprint (Suite B A2)",
+        "arm": "temporal_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "naive:trusts_request"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_side_field_egress",
+        "adversary": "A4",
+        "source_class": "a4_narrative_in_target (Suite B A4)",
+        "arm": "temporal_naive",
+        "harmed": true,
+        "harms": [
+          "leak"
+        ],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "naive:trusts_request"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_false_verify",
+        "adversary": "A5",
+        "source_class": "a5 observation-as-verification (Suite B A5)",
+        "arm": "temporal_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_close",
+          "false_verify"
+        ],
+        "final_state": {
+          "closed": true,
+          "verified": true,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "verify",
+              "reason": "naive:trusts_claim"
+            },
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "naive:trusts_claimed_confirmation"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_dual_dispatch",
+        "adversary": "A3",
+        "source_class": "a3 duplicate terminal write (Suite B A3)",
+        "arm": "temporal_naive",
+        "harmed": true,
+        "harms": [
+          "dual_dispatch"
+        ],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "naive:trusts_request"
+            },
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "naive:trusts_request"
+            }
+          ]
+        },
+        "vendor_submits": 2,
+        "vendor_effect_counts": {
+          "disp-1": 2
+        }
+      },
+      {
+        "case_id": "tm_missing_approval_ref",
+        "adversary": "A2",
+        "source_class": "malformed request, attribute-catchable (kind twin)",
+        "arm": "temporal_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "naive:trusts_request"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_golden_closure",
+        "adversary": "GOLDEN",
+        "source_class": "g1_containment_then_close (Suite A golden)",
+        "arm": "temporal_naive",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": true,
+          "verified": true,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "naive:trusts_request"
+            },
+            {
+              "accepted": true,
+              "handler": "verify",
+              "reason": "naive:trusts_claim"
+            },
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "naive:trusts_claimed_confirmation"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      }
+    ],
+    "temporal_attribute": [
+      {
+        "case_id": "tm_unearned_close",
+        "adversary": "A1",
+        "source_class": "a1_unearned_closure family (Suite B A1)",
+        "arm": "temporal_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_close"
+        ],
+        "final_state": {
+          "closed": true,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "attribute:request_field_present"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_weak_receipt_close",
+        "adversary": "A1",
+        "source_class": "a1_weak_receipt (Suite B A1)",
+        "arm": "temporal_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_close"
+        ],
+        "final_state": {
+          "closed": true,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "adapter_acknowledged"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "attribute:request_consistent"
+            },
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "attribute:request_field_present"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_target_drift",
+        "adversary": "A2",
+        "source_class": "a2_target_swap / a2_forged_fingerprint (Suite B A2)",
+        "arm": "temporal_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "attribute:request_consistent"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_side_field_egress",
+        "adversary": "A4",
+        "source_class": "a4_narrative_in_target (Suite B A4)",
+        "arm": "temporal_attribute",
+        "harmed": true,
+        "harms": [
+          "leak"
+        ],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "attribute:request_consistent"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_false_verify",
+        "adversary": "A5",
+        "source_class": "a5 observation-as-verification (Suite B A5)",
+        "arm": "temporal_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_close",
+          "false_verify"
+        ],
+        "final_state": {
+          "closed": true,
+          "verified": true,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "verify",
+              "reason": "attribute:payload_present"
+            },
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "attribute:request_field_present"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_dual_dispatch",
+        "adversary": "A3",
+        "source_class": "a3 duplicate terminal write (Suite B A3)",
+        "arm": "temporal_attribute",
+        "harmed": true,
+        "harms": [
+          "dual_dispatch"
+        ],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "attribute:request_consistent"
+            },
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "attribute:request_consistent"
+            }
+          ]
+        },
+        "vendor_submits": 2,
+        "vendor_effect_counts": {
+          "disp-1": 2
+        }
+      },
+      {
+        "case_id": "tm_missing_approval_ref",
+        "adversary": "A2",
+        "source_class": "malformed request, attribute-catchable (kind twin)",
+        "arm": "temporal_attribute",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": false,
+              "handler": "propose",
+              "reason": "attribute:missing_approval_ref"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_golden_closure",
+        "adversary": "GOLDEN",
+        "source_class": "g1_containment_then_close (Suite A golden)",
+        "arm": "temporal_attribute",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": true,
+          "verified": true,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "attribute:request_consistent"
+            },
+            {
+              "accepted": true,
+              "handler": "verify",
+              "reason": "attribute:payload_present"
+            },
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "attribute:request_field_present"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      }
+    ],
+    "temporal_tei": [
+      {
+        "case_id": "tm_unearned_close",
+        "adversary": "A1",
+        "source_class": "a1_unearned_closure family (Suite B A1)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": false,
+              "handler": "close",
+              "reason": "tei:no_dispatch_record"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_weak_receipt_close",
+        "adversary": "A1",
+        "source_class": "a1_weak_receipt (Suite B A1)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "adapter_acknowledged"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "tei:approved"
+            },
+            {
+              "accepted": false,
+              "handler": "close",
+              "reason": "tei:weak_confirmation_evidence"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_target_drift",
+        "adversary": "A2",
+        "source_class": "a2_target_swap / a2_forged_fingerprint (Suite B A2)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": false,
+              "handler": "propose",
+              "reason": "tei:content_drift"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_side_field_egress",
+        "adversary": "A4",
+        "source_class": "a4_narrative_in_target (Suite B A4)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": false,
+              "handler": "propose",
+              "reason": "tei:egress_allowlist"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_false_verify",
+        "adversary": "A5",
+        "source_class": "a5 observation-as-verification (Suite B A5)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": false,
+              "handler": "verify",
+              "reason": "tei:no_readback_record"
+            },
+            {
+              "accepted": false,
+              "handler": "close",
+              "reason": "tei:no_dispatch_record"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_dual_dispatch",
+        "adversary": "A3",
+        "source_class": "a3 duplicate terminal write (Suite B A3)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "tei:approved"
+            },
+            {
+              "accepted": false,
+              "handler": "propose",
+              "reason": "tei:already_dispatched"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      },
+      {
+        "case_id": "tm_missing_approval_ref",
+        "adversary": "A2",
+        "source_class": "malformed request, attribute-catchable (kind twin)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": false,
+          "verified": false,
+          "dispatches": [],
+          "readback_evidence": {},
+          "decisions": [
+            {
+              "accepted": false,
+              "handler": "propose",
+              "reason": "tei:content_drift"
+            }
+          ]
+        },
+        "vendor_submits": 0,
+        "vendor_effect_counts": {}
+      },
+      {
+        "case_id": "tm_golden_closure",
+        "adversary": "GOLDEN",
+        "source_class": "g1_containment_then_close (Suite A golden)",
+        "arm": "temporal_tei",
+        "harmed": false,
+        "harms": [],
+        "final_state": {
+          "closed": true,
+          "verified": true,
+          "dispatches": [
+            "disp-1"
+          ],
+          "readback_evidence": {
+            "disp-1": "confirmed"
+          },
+          "decisions": [
+            {
+              "accepted": true,
+              "handler": "propose",
+              "reason": "tei:approved"
+            },
+            {
+              "accepted": true,
+              "handler": "verify",
+              "reason": "tei:readback_confirmed"
+            },
+            {
+              "accepted": true,
+              "handler": "close",
+              "reason": "tei:evidence_converged"
+            }
+          ]
+        },
+        "vendor_submits": 1,
+        "vendor_effect_counts": {
+          "disp-1": 1
+        }
+      }
+    ]
+  }
+}

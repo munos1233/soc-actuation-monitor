@@ -1,6 +1,6 @@
 """Run the actuation-integrity evaluation.
 
-Suite B drives adversaries A1–A5 at the system boundary — planner-authored
+Suite B drives adversaries A0–A5 at the system boundary — planner-authored
 rows, vendor receipts, vendor observation answers, repeated dispatch — through
 the production service chain against a real PostgreSQL, and scores harm from
 database and vendor-side facts. Suite A runs the golden path under exactly the
@@ -9,8 +9,8 @@ same Full configuration and reports closure rate and over-block.
 The suite needs a database and Redis it is allowed to write to. Never point it
 at a deployment you care about::
 
-    docker compose -p shadowtrace-eval up -d postgres redis   # ports of your choosing
-    export DATABASE_URL=postgresql+asyncpg://shadowtrace:shadowtrace@localhost:55432/shadowtrace
+    docker compose -p actuation-evalchain up -d postgres redis   # ports of your choosing
+    export DATABASE_URL='postgresql+asyncpg://<eval-owner>:<eval-owner>@localhost:55432/<eval-db>'
     export REDIS_URL=redis://localhost:56379/0
     python eval/harness/run_suite.py --out eval/results
 
@@ -30,7 +30,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "eval" / "harness"))
 sys.path.insert(0, str(ROOT / "backend"))
+
+from gitmeta import git_dirty, git_head  # noqa: E402
 
 
 def _load_backend_env() -> str | None:
@@ -81,6 +84,7 @@ from app.eval_suite.policy_engine import (  # noqa: E402
     PolicyEngineUnavailable,
 )
 from app.eval_suite.runner import (  # noqa: E402
+    interaction_table,
     leave_one_out_table,
     pareto_table,
     planner_table,
@@ -130,6 +134,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=0,
         help="stop authoring plans once this many provider tokens are spent (0 = no cap)",
     )
+    parser.add_argument(
+        "--llm-model",
+        default="",
+        help=(
+            "override LLM_PRIMARY_MODEL for the llm_planner arm "
+            "(default: the value already in the environment or backend/.env)"
+        ),
+    )
     parser.add_argument("--skip-gold", action="store_true", help="skip suite A")
     parser.add_argument("--skip-suite-b", action="store_true", help="skip suite B")
     parser.add_argument(
@@ -175,6 +187,8 @@ async def _run(args: argparse.Namespace) -> int:
 
     report: dict[str, Any] = {
         "generated_at": datetime.now(UTC).isoformat(),
+        "commit": git_head(),
+        "tree_dirty": git_dirty(),
         "columns": [column.value for column in columns],
         "configs": [config.name for config in configs],
         "planners": [planner.value for planner in planners],
@@ -202,8 +216,15 @@ async def _run(args: argparse.Namespace) -> int:
         llm_planner: LLMPlanner | None = None
         if PlannerModel.LLM_PLANNER in planners:
             env_path = _load_backend_env()
+            if args.llm_model:
+                import os
+
+                os.environ["LLM_PRIMARY_MODEL"] = args.llm_model
             get_settings.cache_clear()
-            llm_planner = LLMPlanner(token_budget=args.llm_token_budget or None)
+            llm_planner = LLMPlanner(
+                token_budget=args.llm_token_budget or None,
+                model_name=args.llm_model or None,
+            )
             if llm_planner.settings.llm_mode.strip().lower() == "mock":
                 raise SystemExit(
                     "the llm_planner arm needs LLM_MODE=openai_compatible and provider "
@@ -238,6 +259,9 @@ async def _run(args: argparse.Namespace) -> int:
                 policy=policy,
             )
         finally:
+            from app.eval_suite.planner_peer import shutdown_planner_peer
+
+            shutdown_planner_peer()
             if llm_planner is not None:
                 report.setdefault("llm_planner", {})["telemetry"] = llm_planner.telemetry.summary()
                 await llm_planner.aclose()
@@ -265,6 +289,22 @@ async def _run(args: argparse.Namespace) -> int:
                 f"| {'—' if marginal is None else f'+{marginal}'} |"
             )
         markdown.append("")
+        report["interaction"] = interaction_table(
+            [row for row in rows if row["planner"] == PlannerModel.UNTRUSTED_PLANNER.value]
+        )
+        if len(report["interaction"]) > 1:
+            markdown.append("### interaction pairs: close+verify and bind+egress")
+            markdown.append("")
+            markdown.append("| configuration | loaded | harm | marginal |")
+            markdown.append("|---|---|---|---|")
+            for entry in report["interaction"]:
+                marginal = entry.get("marginal_harm")
+                markdown.append(
+                    f"| {entry['config']} | {', '.join(entry['loaded'])} "
+                    f"| {entry['harmed']}/{entry['total']} "
+                    f"| {'—' if marginal is None else f'+{marginal}'} |"
+                )
+            markdown.append("")
         report["substrate_ablation"] = substrate_table(
             [row for row in rows if row["planner"] == PlannerModel.UNTRUSTED_PLANNER.value]
         )
@@ -381,6 +421,9 @@ async def _run(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import os
+
+    os.environ.setdefault("PROCESS_ROLE", "actuation")
     args = _parse_args(argv)
     if args.export_cases:
         path = Path(args.export_cases)

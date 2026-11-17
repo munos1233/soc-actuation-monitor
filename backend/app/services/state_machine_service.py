@@ -302,6 +302,12 @@ async def _build_terminal_writeback_view(
     )
     if outbox is None:
         return None
+    # ISSUE-092: a head that never persisted its plan revision cannot close.
+    # The gate rebuilds from current rows; a missing cycle field is incomplete
+    # evidence, not a default of "whatever the action says".
+    persisted_revision = getattr(outbox, "plan_revision", None)
+    if persisted_revision is None or int(persisted_revision) != int(deferred_action.plan_revision):
+        return None
 
     # Parse writeback status.
     wb_status = WritebackStatus.PENDING
@@ -388,8 +394,10 @@ class StateMachineService:
         event_bus: EventBus | None = None,
         audit_log: EventAuditLogService | None = None,
         degraded_flags: DegradedFlagService | None = None,
+        write_session_factory: async_sessionmaker[AsyncSession] | None = None,
     ) -> None:
         self._session_factory = session_factory
+        self._write_session_factory = write_session_factory or session_factory
         self._store = store
         self._bus = event_bus
         self._audit_log = audit_log
@@ -451,11 +459,11 @@ class StateMachineService:
 
         if target is EventStatus.CLOSED:
             await reconcile_stale_executions_before_close(
-                self._session_factory,
+                self._write_session_factory,
                 event_id,
             )
 
-        async with self._session_factory() as session:
+        async with self._write_session_factory() as session:
             async with session.begin():
                 # 1. Row-lock the event.
                 row = await session.get(orm.SecurityEvent, event_id, with_for_update=True)
@@ -555,7 +563,7 @@ class StateMachineService:
             operator = f"principal:{operator}"
         projection_id = ""
 
-        async with self._session_factory() as session:
+        async with self._write_session_factory() as session:
             async with session.begin():
                 row = await session.get(orm.SecurityEvent, event_id, with_for_update=True)
                 if row is None:

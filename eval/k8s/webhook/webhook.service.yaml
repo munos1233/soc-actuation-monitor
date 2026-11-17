@@ -1,0 +1,36 @@
+# In-cluster variant for hosted clusters: clientConfig.service instead of url.
+# caBundle matches Secret tei-webhook-tls (SAN tei-webhook.tei-lab.svc).
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: tei-evidence
+webhooks:
+  - name: tei.lab.evidence
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+    clientConfig:
+      service:
+        namespace: tei-lab
+        name: tei-webhook
+        path: /admit
+        port: 443
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURjakNDQWxxZ0F3SUJBZ0lVRHBtUVpxbGhLOTNNYjBzZjNvdEJBY0RTMm9Fd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0lqRWdNQjRHQTFVRUF3d1hkR1ZwTFhkbFltaHZiMnN1ZEdWcExXeGhZaTV6ZG1Nd0hoY05Nall3T1RFMgpNVEV5TURReFdoY05Nall4TURFMk1URXlNRFF4V2pBaU1TQXdIZ1lEVlFRRERCZDBaV2t0ZDJWaWFHOXZheTUwClpXa3RiR0ZpTG5OMll6Q0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQU85eEo0VXgKS1hqNzg3THFMa3RycHZCaXZXL3cyUVlCRFdLVVYyNjBnVnd4bDlXMVgvUFRoa3ZJVklzTW9zaXJzUjB0VUZ4Nwo5VzU1dW04RGt3a3ZXQlNhV2FQMU1NUjhuR21TSytmYjMwYVRJMGFGZjhXQUw1eVpUY0E0cHBkRFJNNmtlK0NtCi9yYjc3cHQvclc1bk1yTU5ja3RlK1ExbklIUHdmVGxwa1c2R0RRenZUa09zcUdiWmVtSjBTeFB6TFdwUkVuOUcKWmZtQ2wxWlE4K1UwTmYyWWZ6dzk0dDgvakJwT2lzbXBsdUsvZ3NTaG56VjF1YzlVUm9SUWNyVFNvVWpaWGFXTwo2NGRhOWxaVkpiekhwcUY2REFRNHZDMGRHM3FnaVZvSE5BSUF2YWxCTXFPRXhiZVFmUkZYT3NRZ1R3VllmUzlvCk5tMHl5WGpPd2o3YWxYOENBd0VBQWFPQm56Q0JuREFkQmdOVkhRNEVGZ1FVcG9yYm1IVDE3alM3TTlsSlpkYmkKSEtDMCt5UXdId1lEVlIwakJCZ3dGb0FVcG9yYm1IVDE3alM3TTlsSlpkYmlIS0MwK3lRd0R3WURWUjBUQVFILwpCQVV3QXdFQi96QkpCZ05WSFJFRVFqQkFnaGQwWldrdGQyVmlhRzl2YXk1MFpXa3RiR0ZpTG5OMlk0SWxkR1ZwCkxYZGxZbWh2YjJzdWRHVnBMV3hoWWk1emRtTXVZMngxYzNSbGNpNXNiMk5oYkRBTkJna3Foa2lHOXcwQkFRc0YKQUFPQ0FRRUF4RkFSdURQN3BxVzRhMGRNYmE0cU5kcTRQbWoxOGx0OW5nMHI3R3hGVStEaGlkbU9OcDhDdm9Zbwp0OXdPU0w1U3g1dk9ZNys0Y3BUcENyQVBTWXhaYmh1ZVBJZUczc0hxU3lrc2JKMjd2YXN2R2FoYjlnYWxFR0RGCkhwc01tQzMxU3ZUREFQYWpEVkIvOGhjak1Ya1Mwc2prcW9YalpMb2tGZFZSWVhLMkN5SHJNRC9FaDFBQWlVdDUKMWRyMUpRODlJWFRkbTZRdDE5OEIrV0UycDI5d1k3RnpNaU96MTNoN01HSFdJK3U5cG5wNjduRjFCSy9pdVhxRwprdzZYQXdZR2h5NkRJK2t5alN3ZjFBL1M3WVZ1UHJ4UWxPMUZ3NVkwMlVCd1Vjcms4NTduWjRtUktsNXZxQncyClljMzl1SGZjNXZNcVpVNFpQRjQ4dUcreGpvbVhNUT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    rules:
+      - apiGroups: ["tei.lab"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE", "DELETE"]
+        resources: ["approvals", "isolates", "networkpolicies"]
+      - apiGroups: ["networking.k8s.io"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE", "DELETE"]
+        resources: ["networkpolicies"]
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["configmaps"]
+      - apiGroups: ["rbac.authorization.k8s.io"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE", "DELETE"]
+        resources: ["clusterroles"]
+    timeoutSeconds: 5

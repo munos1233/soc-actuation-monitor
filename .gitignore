@@ -52,6 +52,7 @@ eval/k8s/webhook/*.log
 eval/k8s/webhook/*.pid
 eval/k8s/bin/
 eval/model/tla2tools.jar
+doc-fetch-resources/
 
 # Large binary decks belong in release assets, not in the source tree
 *.pptx

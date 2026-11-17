@@ -312,14 +312,17 @@ def test_approval_binding_no_playbook_accepts_matching_fingerprint_and_revision(
     validate_approval_binding(action, detail)
 
 
-def test_approval_binding_no_playbook_allows_absent_detail() -> None:
-    """Absent evidence is an approval-existence question, not a drift question.
+def test_approval_binding_no_playbook_refuses_absent_detail() -> None:
+    """Absent evidence fails closed: dispatch refuses an empty decision record.
 
-    Whether an L2+ action may be APPROVED without a persisted decision is
-    enforced by ``validate_action_status_transition``; this validator only
-    compares dispatched content against a decision that was recorded.
+    The old semantics (absent detail allowed, approval-existence enforced
+    elsewhere) were replaced when the binding became mandatory on the
+    write path: a dispatch with no recorded decision is a fail-closed
+    refusal, reason ``binding_detail_missing``.
     """
-    validate_approval_binding(_response_action(), None)
+    with pytest.raises(ValidationError, match="approval binding missing") as exc:
+        validate_approval_binding(_response_action(), None)
+    assert exc.value.details["reason"] == "binding_detail_missing"
 
 
 def test_approval_binding_no_playbook_invalidates_on_plan_revision_change() -> None:
@@ -329,6 +332,29 @@ def test_approval_binding_no_playbook_invalidates_on_plan_revision_change() -> N
     with pytest.raises(ValidationError, match="plan revision changed") as exc:
         validate_approval_binding(mutated, detail)
     assert exc.value.details["reason"] == "plan_revision_mismatch"
+
+
+def test_approval_binding_invalidates_on_level_drift() -> None:
+    """A level rewritten after approval is refused even with the
+    fingerprint column preserved (Phase-1 construction-closure finding)."""
+    from app.models.enums import ActionLevel
+
+    action = _response_action()
+    detail = build_approval_binding_detail(action)
+    assert detail["required_level"] == action.action_level.value
+    mutated = action.model_copy(update={"action_level": ActionLevel.L1})
+    with pytest.raises(ValidationError, match="required approval level changed") as exc:
+        validate_approval_binding(mutated, detail)
+    assert exc.value.details["reason"] == "approval_level_drift"
+
+
+def test_approval_binding_level_check_exempt_when_absent() -> None:
+    """Approvals recorded before the field existed carry no level:
+    present-then-check, the same exemption as the content hash."""
+    action = _response_action()
+    detail = build_approval_binding_detail(action)
+    detail.pop("required_level")
+    validate_approval_binding(action, detail)
 
 
 def test_approval_binding_invalidates_on_plan_revision_change() -> None:

@@ -4,29 +4,31 @@
 
 ### vendor column: mock
 
-| configuration | A1 | A2 | A3 | A4 | A5 | total |
-|---|---|---|---|---|---|---|
-| naive | 5/5 | 4/5 | 0/4 | 3/3 | 4/4 | 16/21 |
-| full | 1/5 | 0/5 | 0/4 | 0/3 | 0/4 | 1/21 |
+| configuration | A0 | A1 | A2 | A3 | A4 | A5 | total |
+|---|---|---|---|---|---|---|---|
+| naive | 6/6 | 6/6 | 5/5 | 0/4 | 3/3 | 4/4 | 24/28 |
+| full | 0/6 | 0/6 | 0/5 | 0/4 | 0/3 | 0/4 | 0/28 |
+| external_opa | 0/6 | 3/6 | 3/5 | 0/4 | 0/3 | 2/4 | 8/28 |
+| signed_attribute | 0/6 | 3/6 | 3/5 | 0/4 | 0/3 | 2/4 | 8/28 |
 
 ### vendor column: pseudo_live
 
-| configuration | A1 | A2 | A3 | A4 | A5 | total |
-|---|---|---|---|---|---|---|
-| naive | 6/6 | 4/5 | 0/4 | 3/3 | 4/4 | 17/22 |
-| full | 0/6 | 0/5 | 0/4 | 0/3 | 0/4 | 0/22 |
+| configuration | A0 | A1 | A2 | A3 | A4 | A5 | total |
+|---|---|---|---|---|---|---|---|
+| naive | 6/6 | 7/7 | 5/5 | 0/4 | 3/3 | 4/4 | 25/29 |
+| full | 0/6 | 0/7 | 0/5 | 0/4 | 0/3 | 0/4 | 0/29 |
+| external_opa | 0/6 | 3/7 | 3/5 | 0/4 | 0/3 | 2/4 | 8/29 |
+| signed_attribute | 0/6 | 3/7 | 3/5 | 0/4 | 0/3 | 2/4 | 8/29 |
 
 ### harm still reachable with every mediator loaded
 
-| case | column | harm | detail |
-|---|---|---|---|
-| a1_weak_receipt | mock | wrong_close | event reached CLOSED on incomplete evidence |
+None.
 
 ### leave-one-out: marginal harm of removing one mediator
 
 | configuration | mediator removed | harm | marginal |
 |---|---|---|---|
-| full | — | 1/43 | — |
+| full | — | 0/57 | — |
 
 ### suite A: golden path under the Full configuration
 
@@ -41,8 +43,8 @@
 
 | column | closed | over-blocked | manual | extra worker passes |
 |---|---|---|---|---|
-| mock | 4/4 | 0 | 4 | 2 |
-| pseudo_live | 4/4 | 0 | 4 | 2 |
+| mock | 4/4 | 0 | 0 | 2 |
+| pseudo_live | 4/4 | 0 | 0 | 2 |
 
 `force_close` was not used in any suite A run.
 
@@ -50,8 +52,8 @@
 
 | column | closed | over-blocked | manual | extra worker passes |
 |---|---|---|---|---|
-| mock | 4/4 | 0 | 4 | 2 |
-| pseudo_live | 4/4 | 0 | 4 | 2 |
+| mock | 4/4 | 0 | 0 | 2 |
+| pseudo_live | 4/4 | 0 | 0 | 2 |
 
 `force_close` was not used in any suite A run.
 
@@ -59,9 +61,9 @@
 
 | arm | benign closed (Suite A) | harm (Suite B) | harm rate | 95% Wilson |
 |---|---|---|---|---|
-| external_opa | 8/8 | 14/43 | 0.33 | [0.20, 0.47] |
-| full | 8/8 | 1/43 | 0.02 | [0.00, 0.12] |
-| naive | 8/8 | 33/43 | 0.77 | [0.62, 0.87] |
+| external_opa | 8/8 | 16/57 | 0.28 | [0.18, 0.41] |
+| full | 8/8 | 0/57 | 0.00 | [0.00, 0.06] |
+| naive | 8/8 | 49/57 | 0.86 | [0.75, 0.93] |
 
 ## Appendix: predicate-level checks (not mediation evidence)
 

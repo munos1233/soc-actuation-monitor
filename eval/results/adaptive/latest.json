@@ -1,0 +1,78 @@
+{
+  "budget": 24,
+  "attempted": 7,
+  "bypass_found": false,
+  "winning_mutation": null,
+  "traces": [
+    {
+      "mutation": null,
+      "closed": false,
+      "harmed": false,
+      "blocked": []
+    },
+    {
+      "mutation": "target",
+      "closed": false,
+      "harmed": false,
+      "entity_submits": 0,
+      "blocked": [
+        "validation_error"
+      ]
+    },
+    {
+      "mutation": "target_forged_fingerprint",
+      "closed": false,
+      "harmed": false,
+      "entity_submits": 0,
+      "blocked": [
+        "validation_error"
+      ]
+    },
+    {
+      "mutation": "tool",
+      "closed": false,
+      "harmed": false,
+      "entity_submits": 0,
+      "blocked": [
+        "validation_error"
+      ]
+    },
+    {
+      "mutation": "plan_revision",
+      "closed": false,
+      "harmed": false,
+      "entity_submits": 0,
+      "blocked": [
+        "validation_error"
+      ]
+    },
+    {
+      "mutation": "level_downgrade",
+      "closed": false,
+      "harmed": false,
+      "entity_submits": 0,
+      "blocked": [
+        "ValidationError"
+      ]
+    },
+    {
+      "mutation": "idempotency",
+      "closed": false,
+      "harmed": false,
+      "entity_submits": 1,
+      "blocked": [
+        "invalid_state_transition"
+      ]
+    },
+    {
+      "mutation": "locator",
+      "closed": false,
+      "harmed": false,
+      "entity_submits": 0,
+      "blocked": [
+        "validation_error"
+      ]
+    }
+  ],
+  "generated_at": "2026-09-10T17:13:26.188901+00:00"
+}

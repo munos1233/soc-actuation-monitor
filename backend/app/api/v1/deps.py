@@ -18,6 +18,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import get_settings
 from app.core.redis_client import RedisClient
 from app.db.session_provider import get_session_provider, reset_session_provider
+from app.services.actuation_remote import (
+    RemoteDispositionSync,
+    RemoteStateMachine,
+    planner_must_not_build_writer,
+)
 
 if TYPE_CHECKING:
     from app.orchestration.graph_resume_observability import ResumeStatus
@@ -73,6 +78,15 @@ _execution_job_query: ExecutionJobQueryService | None = None
 
 def _get_session_factory() -> async_sessionmaker[AsyncSession]:
     return get_session_provider().session_factory()
+
+
+def _get_actuation_session_factory() -> async_sessionmaker[AsyncSession]:
+    return get_session_provider().actuation_session_factory()
+
+
+def _get_planner_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Login that may write plan content and cannot write CLOSED or the outbox."""
+    return get_session_provider().planner_session_factory()
 
 
 def _get_redis() -> RedisClient:
@@ -232,14 +246,18 @@ async def get_behavior_observation_service() -> Any:
 async def get_state_machine() -> Any:
     global _state_machine
     if _state_machine is None:
-        from app.services.state_machine_service import StateMachineService
+        if planner_must_not_build_writer():
+            _state_machine = RemoteStateMachine()
+        else:
+            from app.services.state_machine_service import StateMachineService
 
-        _state_machine = StateMachineService(
-            _get_session_factory(),
-            _get_context_store(),
-            audit_log=_get_audit_log(),
-            degraded_flags=_get_degraded_flags(),
-        )
+            _state_machine = StateMachineService(
+                _get_session_factory(),
+                _get_context_store(),
+                audit_log=_get_audit_log(),
+                degraded_flags=_get_degraded_flags(),
+                write_session_factory=_get_actuation_session_factory(),
+            )
     return _state_machine
 
 
@@ -492,18 +510,21 @@ async def get_manual_resolution_service() -> Any:
 async def get_disposition_sync() -> Any:
     global _disposition_sync
     if _disposition_sync is None:
-        from app.core.guardrails import OutboundDispositionGuard
-        from app.services.disposition_sync_service import DispositionSyncService
+        if planner_must_not_build_writer():
+            _disposition_sync = RemoteDispositionSync()
+        else:
+            from app.core.guardrails import OutboundDispositionGuard
+            from app.services.disposition_sync_service import DispositionSyncService
 
-        _disposition_sync = DispositionSyncService(
-            _get_session_factory(),
-            context_store=_get_context_store(),
-            adapter_registry=_get_adapter_registry(),
-            outbound_guard=OutboundDispositionGuard(),
-            event_bus=_get_event_bus(),
-            resume_investigation=_resume_investigation,
-            manual_resolution=await get_manual_resolution_service(),
-        )
+            _disposition_sync = DispositionSyncService(
+                _get_actuation_session_factory(),
+                context_store=_get_context_store(),
+                adapter_registry=_get_adapter_registry(),
+                outbound_guard=OutboundDispositionGuard(),
+                event_bus=_get_event_bus(),
+                resume_investigation=_resume_investigation,
+                manual_resolution=await get_manual_resolution_service(),
+            )
     return _disposition_sync
 
 
@@ -566,7 +587,7 @@ async def _build_production_investigation_graph(
         trace_service=stack["trace_service"],
         event_bus=event_bus,
         event_service=stack["event_service"],
-        session_factory=stack["session_factory"],
+        session_factory=stack["planner_session_factory"],
         playbook_kb_service=stack.get("playbook_kb_service"),
         playbook_release_service=stack.get("playbook_release_service"),
         **live_overrides,
@@ -835,6 +856,7 @@ async def _build_investigation_agents() -> dict[str, Any]:
     state_machine = await get_state_machine()
     wm = await _get_wm()
     session_factory = _get_session_factory()
+    planner_session_factory = _get_planner_session_factory()
     budget_service = BudgetService(
         redis=_get_redis(),
         settings=settings,
@@ -1055,6 +1077,7 @@ async def _build_investigation_agents() -> dict[str, Any]:
         "state_machine": state_machine,
         "wm": wm,
         "session_factory": session_factory,
+        "planner_session_factory": planner_session_factory,
         "trace_service": trace_service,
         "triage": triage,
         "evidence": evidence,

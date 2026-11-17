@@ -1689,8 +1689,11 @@ async def _upsert_action_row(session: AsyncSession, action: Action) -> str:
     )
     payload = action.model_dump(mode="json")
     if existing is not None:
-        existing.status = payload["status"]
+        # Status is an actuation column. The planner login cannot write it;
+        # content refresh must not smuggle a status transition into the upsert.
         existing.reason = payload.get("reason")
+        existing.target = payload.get("target")
+        existing.parameters = payload.get("parameters") or existing.parameters
         existing.updated_at = datetime.now(UTC)
         await session.flush()
         return existing.action_id
@@ -1763,7 +1766,6 @@ async def _supersede_undeployed_deferred(
             ),
         )
         .values(
-            status=ActionStatus.SUPERSEDED.value,
             writeback_applicable=False,
             superseded_by_revision=new_revision,
             updated_at=datetime.now(UTC),

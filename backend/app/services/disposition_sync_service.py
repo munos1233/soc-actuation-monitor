@@ -13,7 +13,7 @@ from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.adapters._util import sanitize_disposition_receipt, sanitize_raw_result
@@ -379,6 +379,7 @@ class DispositionSyncService:
             action_id=command.action_id,
             event_id=event_id,
             closure_cycle=command.closure_cycle,
+            plan_revision=command.closure_cycle,
             source_record_id=source_record_id,
             source_locator_hash=self._factory.locator_hash(command.source_locator),
             source_sequence=source_sequence,
@@ -839,36 +840,46 @@ class DispositionSyncService:
         ``intent_kind=EVENT_STATUS_UPDATE`` outbox for the event and then
         delegates to :meth:`retry_writeback`.
 
-        NOTE: The query filters by ``event_id`` and
-        ``intent_kind=EVENT_STATUS_UPDATE`` ordered by ``created_at DESC LIMIT 1``.
-        In multi-replan scenarios where a single event produces multiple
-        ``EVENT_STATUS_UPDATE`` outbox rows across different plan revisions,
-        this may resolve to a non-current revision's disposition.  The current
-        single-disposition-per-event flow is unaffected.
-
-        TODO(ISSUE-092): persist ``plan_revision`` / ``closure_cycle`` on the
-        ``DispositionOutbox`` row so this method can add a WHERE filter on the
-        current revision rather than relying on ``created_at DESC LIMIT 1``
-        ordering alone.
+        The query binds to the event's current ``closure_cycle`` and, when
+        ``plan_revision`` is supplied, to the action row that carries that
+        revision (ISSUE-092). A LIMIT 1 over the whole event would activate a
+        stale head after replan.
         """
-        if plan_revision is None:
-            logger.warning(
-                "activate_deferred_disposition: plan_revision not provided "
-                "for event=%s — LIMIT 1 query may resolve to a non-current "
-                "revision's writeback in multi-replan scenarios; see ISSUE-092",
-                event_id,
-            )
-
         async with self._session_factory() as session:
-            outbox = await session.scalar(
+            event_row = await session.get(orm.SecurityEvent, event_id)
+            if event_row is None:
+                raise EventNotFoundError(
+                    f"security_event not found: {event_id}",
+                    details={"event_id": event_id},
+                )
+            stmt = (
                 select(orm.DispositionOutbox)
+                .join(orm.Action, orm.Action.action_id == orm.DispositionOutbox.action_id)
                 .where(
                     orm.DispositionOutbox.event_id == event_id,
                     orm.DispositionOutbox.intent_kind
                     == DispositionIntentKind.EVENT_STATUS_UPDATE.value,
                 )
-                .order_by(orm.DispositionOutbox.created_at.desc())
-                .limit(1)
+            )
+            if plan_revision is not None:
+                revision = int(plan_revision)
+                stmt = stmt.where(
+                    orm.Action.plan_revision == revision,
+                    orm.DispositionOutbox.closure_cycle == revision,
+                    orm.DispositionOutbox.plan_revision == revision,
+                )
+            else:
+                current_cycle = await session.scalar(
+                    select(func.max(orm.DispositionOutbox.closure_cycle)).where(
+                        orm.DispositionOutbox.event_id == event_id,
+                        orm.DispositionOutbox.intent_kind
+                        == DispositionIntentKind.EVENT_STATUS_UPDATE.value,
+                    )
+                )
+                if current_cycle is not None:
+                    stmt = stmt.where(orm.DispositionOutbox.closure_cycle == current_cycle)
+            outbox = await session.scalar(
+                stmt.order_by(orm.DispositionOutbox.created_at.desc()).limit(1)
             )
             if outbox is None:
                 raise EventNotFoundError(
@@ -1201,8 +1212,9 @@ class DispositionSyncService:
                         orm.DispositionOutbox.outbox_id == outbox_id
                     )
                 )
+                event_row = None
                 if outbox_event_id is not None:
-                    await session.get(
+                    event_row = await session.get(
                         orm.SecurityEvent,
                         outbox_event_id,
                         with_for_update=True,
@@ -1248,6 +1260,32 @@ class DispositionSyncService:
                     if outbox.lease_expires_at is None or outbox.lease_expires_at <= now:
                         self._release_leased_outbox_after_lease_expiry(outbox, now=now)
                         return
+                elif delivery_status in {
+                    OutboxDeliveryStatus.READY,
+                    OutboxDeliveryStatus.WAITING_RETRY,
+                }:
+                    # Same-turn deliver_outbox (EventDispositionService) never
+                    # goes through OutboxWorker._claim_batch. Without a lease,
+                    # UNKNOWN cannot pause (READY→PAUSED used to be illegal)
+                    # and the transaction rolls back with the vendor already
+                    # holding the submit.
+                    if (
+                        delivery_status is OutboxDeliveryStatus.WAITING_RETRY
+                        and outbox.next_retry_at is not None
+                        and outbox.next_retry_at > now
+                    ):
+                        return
+                    validate_outbox_delivery_transition(
+                        delivery_status,
+                        OutboxDeliveryStatus.LEASED,
+                    )
+                    outbox.delivery_status = OutboxDeliveryStatus.LEASED.value
+                    outbox.locked_by = self._worker_id
+                    outbox.locked_at = now
+                    outbox.lease_expires_at = now + timedelta(
+                        seconds=_DEFAULT_LEASE_SECONDS
+                    )
+                    outbox.updated_at = now
                 # ISSUE-235: lock the action row for the delivery-time approval
                 # re-check so a concurrent revoke cannot slip in between the
                 # check and the adapter submit (TOCTOU 纵深防御).
@@ -1364,11 +1402,21 @@ class DispositionSyncService:
                 # and analysis content but does not re-derive the approved list.
                 # ISSUE-235/290 adds a separate action-row status/supersede
                 # re-check for side-effect intents above.
+                # Same witness as enqueue: the operator-selected event source,
+                # never the command's own locator (that is planner-authored).
+                # Delivery used to re-pass ``command.source_locator`` as trusted,
+                # which made the object-identity check a self-witness after the
+                # enqueue-time fix. Found by construction closure (B2 T4).
                 await self._guard.validate(
                     command,
                     {
                         "event_id": outbox.event_id,
-                        "source_locator": command.source_locator,
+                        "source_locator": (
+                            _trusted_event_locator(event_row)
+                            if event_row is not None
+                            else None
+                        )
+                        or command.source_locator,
                     },
                 )
                 adapter = self._resolve_adapter(outbox)
@@ -3433,6 +3481,18 @@ class OutboxWorker:
         for outbox_id in claimed:
             try:
                 await self._service._deliver_outbox(outbox_id)
+            except DependencyUnavailableError as exc:
+                _kind, code = classify_disposition_delivery_error(exc)
+                logger.warning(
+                    "outbox delivery pre-egress transient outbox=%s error_code=%s",
+                    outbox_id,
+                    code,
+                )
+                await self._service._mark_delivery_waiting_retry(
+                    outbox_id,
+                    error_code=code or "dependency_unavailable",
+                    error_detail=str(exc),
+                )
             except (
                 GuardrailViolationError,
                 WritebackConflictError,

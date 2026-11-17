@@ -11,6 +11,7 @@ from app.adapters.disposition.error_classification import (
     is_deterministic_adapter_rejection_code,
 )
 from app.core.errors import (
+    DependencyUnavailableError,
     GuardrailViolationError,
     ValidationError,
     WritebackConflictError,
@@ -76,6 +77,11 @@ def test_bounded_dead_letter_error_code_maps_unknown_to_bucket() -> None:
             GuardrailViolationError("blocked"),
             DispositionDeliveryErrorKind.GUARDRAIL,
             "guardrail_failed",
+        ),
+        (
+            DependencyUnavailableError("vendor submit surface unavailable"),
+            DispositionDeliveryErrorKind.TRANSIENT_PRE_EGRESS,
+            "dependency_unavailable",
         ),
     ],
 )

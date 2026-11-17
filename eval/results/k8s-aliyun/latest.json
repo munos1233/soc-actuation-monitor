@@ -1,0 +1,524 @@
+{
+  "generated_at": "2026-09-16T14:10:05.075393+00:00",
+  "method": "hosted_ack_2node",
+  "attribute_baseline": "validatingadmissionpolicy",
+  "pooled_with_57": false,
+  "fixture_22": false,
+  "copied_fixture_22": false,
+  "arms": {
+    "kind_naive": [
+      {
+        "case_id": "k_cve_2021_25735_stale_old",
+        "sample_id": "s-cve-2021-25735",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2023_2727_side_field",
+        "sample_id": "s-cve-2023-2727",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2021_43979_no_reget",
+        "sample_id": "s-cve-2021-43979",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_gk_latest_self_witness",
+        "sample_id": "s-gk-latest-tag-2025",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "leak"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2023_39347_label_identity",
+        "sample_id": "s-cve-2023-39347",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "leak"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_fail_open_ignore",
+        "sample_id": "s-k8s-fail-open",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "wrong_close"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2025_1974_validate_mutates",
+        "sample_id": "s-cve-2025-1974",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "false_verify"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2025_5187_ownerref_delete",
+        "sample_id": "s-cve-2025-5187",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "privilege"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2019_11247_wrong_scope",
+        "sample_id": "s-cve-2019-11247",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "privilege"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2023_2728_sa_sidebind",
+        "sample_id": "s-cve-2023-2728",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "privilege"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2021_25742_annotation_cargo",
+        "sample_id": "s-cve-2021-25742",
+        "arm": "kind_naive",
+        "harmed": true,
+        "harms": [
+          "leak"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_golden_np_legit",
+        "sample_id": "g-kind-legit-np",
+        "arm": "kind_naive",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_golden_isolate_legit",
+        "sample_id": "g-kind-legit-isolate",
+        "arm": "kind_naive",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "golden_persisted"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      }
+    ],
+    "kind_attribute": [
+      {
+        "case_id": "k_cve_2021_25735_stale_old",
+        "sample_id": "s-cve-2021-25735",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2023_2727_side_field",
+        "sample_id": "s-cve-2023-2727",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2021_43979_no_reget",
+        "sample_id": "s-cve-2021-43979",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_act"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_gk_latest_self_witness",
+        "sample_id": "s-gk-latest-tag-2025",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "leak"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2023_39347_label_identity",
+        "sample_id": "s-cve-2023-39347",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "leak"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_fail_open_ignore",
+        "sample_id": "s-k8s-fail-open",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "wrong_close"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2025_1974_validate_mutates",
+        "sample_id": "s-cve-2025-1974",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "false_verify"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2025_5187_ownerref_delete",
+        "sample_id": "s-cve-2025-5187",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "privilege"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2019_11247_wrong_scope",
+        "sample_id": "s-cve-2019-11247",
+        "arm": "kind_attribute",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2023_2728_sa_sidebind",
+        "sample_id": "s-cve-2023-2728",
+        "arm": "kind_attribute",
+        "harmed": true,
+        "harms": [
+          "privilege"
+        ],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2021_25742_annotation_cargo",
+        "sample_id": "s-cve-2021-25742",
+        "arm": "kind_attribute",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_golden_np_legit",
+        "sample_id": "g-kind-legit-np",
+        "arm": "kind_attribute",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_golden_isolate_legit",
+        "sample_id": "g-kind-legit-isolate",
+        "arm": "kind_attribute",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "golden_persisted"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      }
+    ],
+    "kind_tei": [
+      {
+        "case_id": "k_cve_2021_25735_stale_old",
+        "sample_id": "s-cve-2021-25735",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2023_2727_side_field",
+        "sample_id": "s-cve-2023-2727",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2021_43979_no_reget",
+        "sample_id": "s-cve-2021-43979",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_gk_latest_self_witness",
+        "sample_id": "s-gk-latest-tag-2025",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2023_39347_label_identity",
+        "sample_id": "s-cve-2023-39347",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_fail_open_ignore",
+        "sample_id": "s-k8s-fail-open",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2025_1974_validate_mutates",
+        "sample_id": "s-cve-2025-1974",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      },
+      {
+        "case_id": "k_cve_2025_5187_ownerref_delete",
+        "sample_id": "s-cve-2025-5187",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2019_11247_wrong_scope",
+        "sample_id": "s-cve-2019-11247",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2023_2728_sa_sidebind",
+        "sample_id": "s-cve-2023-2728",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_cve_2021_25742_annotation_cargo",
+        "sample_id": "s-cve-2021-25742",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=False"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_golden_np_legit",
+        "sample_id": "g-kind-legit-np",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "apply=True"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "real_api"
+      },
+      {
+        "case_id": "k_golden_isolate_legit",
+        "sample_id": "g-kind-legit-isolate",
+        "arm": "kind_tei",
+        "harmed": false,
+        "harms": [],
+        "notes": [
+          "golden_persisted"
+        ],
+        "method": "hosted_ack_2node",
+        "surface": "tei_lab_mapped"
+      }
+    ]
+  }
+}

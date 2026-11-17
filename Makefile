@@ -62,7 +62,7 @@ export TASK_MODE := $(if $(WORKER),celery,$(if $(TASK_MODE),$(TASK_MODE),backgro
 # A dedicated Compose project on non-default ports so the paper matrix can
 # never touch a development database. Everything here is additive; no existing
 # target changes behaviour.
-PAPER_EVAL_PROJECT_NAME ?= shadowtrace-evalchain
+PAPER_EVAL_PROJECT_NAME ?= actuation-evalchain
 PAPER_EVAL_POSTGRES_PORT ?= 55432
 PAPER_EVAL_REDIS_PORT ?= 56379
 PAPER_EVAL_DATABASE_URL ?= postgresql+asyncpg://shadowtrace:shadowtrace@localhost:$(PAPER_EVAL_POSTGRES_PORT)/shadowtrace
@@ -87,7 +87,7 @@ CELERY_SIGKILL_ARTIFACT_DIR ?= $(CURDIR)/artifacts/issue-283
 CI_DATABASE_URL ?= postgresql+asyncpg://shadowtrace:shadowtrace@localhost:$(POSTGRES_PORT)/shadowtrace
 CI_REDIS_URL ?= redis://localhost:$(REDIS_PORT)/0
 
-.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-planner paper-eval-cases paper-eval-concurrency paper-eval-overhead paper-eval-model paper-opa-up paper-opa-down paper-eval-comparator paper-pdf paper-pages
+.PHONY: up down down-v bootstrap smoke-bootstrap up-demo down-demo bootstrap-demo bootstrap-demo-analysis bootstrap-demo-full-loop smoke-demo demo-full-loop demo-guard-test up-observability down-observability llm-smoke test test-ci-lite lint fmt migrate migrate-down load-kb up-embedding-remote integration-test orchestration-test worker-smoke-test worker-nightly-pytest worker-nightly-smoke worker-nightly-matrix ingestion-scheduler-test auto-investigate-test autonomous-mock-e2e autonomous-mock-e2e-pytest autonomous-mock-e2e-worker-pytest autonomous-mock-e2e-worker-sigkill eval-full-loop eval-full-loop-matrix eval-eventtype-8 adversarial-closure-gates test-tools test-system test-regression update-baseline test-e2e-frontend frontend-test ci-lint ci-test ci-build update-contracts check-contract-drift check-migration-revisions evaluation-run evaluation-test detection-evaluation-run detection-production-comparison-run paper-eval-up paper-eval-down paper-eval-test paper-eval-matrix paper-eval-quick paper-eval-planner paper-eval-planner-family2 paper-eval-sangfor paper-eval-adaptive paper-eval-search paper-eval-backlog paper-eval-process-split paper-eval-tla paper-eval-k8s paper-eval-k8s-kind paper-eval-heldout paper-eval-independent paper-eval-diff-freeze paper-eval-gold-ext paper-eval-b2 paper-eval-mutation paper-eval-playbook-semantic paper-eval-lattice paper-eval-replay paper-eval-repeat paper-eval-scale paper-eval-cases paper-eval-concurrency paper-eval-overhead paper-eval-model paper-opa-up paper-opa-down paper-eval-comparator paper-pdf paper-pages paper-placeholder-check paper-artifact
 
 up:
 	$(COMPOSE) $(WORKER_COMPOSE) $(WORKER_PROFILE) $(SCHEDULER_PROFILE) up -d --build
@@ -988,12 +988,14 @@ paper-eval-quick:
 # credentials in backend/.env (never committed). N=5, roughly two hours.
 PAPER_PLANNER_TRIALS ?= 5
 PAPER_PLANNER_TOKEN_BUDGET ?= 1200000
+PAPER_PLANNER_MODEL ?=
 paper-eval-planner:
 	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
 		--configs naive,full --columns mock \
 		--planners untrusted_planner,llm_planner --skip-gold \
 		--trials $(PAPER_PLANNER_TRIALS) \
 		--llm-token-budget $(PAPER_PLANNER_TOKEN_BUDGET) \
+		$(if $(PAPER_PLANNER_MODEL),--llm-model $(PAPER_PLANNER_MODEL),) \
 		--out "$(CURDIR)/eval/results/planner_arm"
 
 paper-eval-cases:
@@ -1003,8 +1005,8 @@ paper-eval-cases:
 # The external policy comparator (Experiment 2). A real OPA server evaluating
 # eval/policy/actuation.rego, deployed the way a sidecar would be.
 PAPER_OPA_PORT ?= 58181
-PAPER_OPA_CONTAINER ?= shadowtrace-eval-opa
-PAPER_OPA_IMAGE ?= openpolicyagent/opa:latest
+PAPER_OPA_CONTAINER ?= actuation-eval-opa
+PAPER_OPA_IMAGE ?= openpolicyagent/opa:1.20.2
 # Experiment 3: several OS processes racing on one row. Slow (roughly 15 minutes
 # for the default 4 workers x 5 rounds) because each round seeds a fresh event and
 # spawns four interpreters.
@@ -1021,6 +1023,108 @@ PAPER_OVERHEAD_REPEATS ?= 8
 paper-eval-overhead:
 	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_overhead.py" \
 		--repeats $(PAPER_OVERHEAD_REPEATS) --out "$(CURDIR)/eval/results/overhead"
+
+PAPER_SCALE_EVENTS ?= 120
+paper-eval-scale:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_overhead.py" \
+		--repeats 1 --scale-events $(PAPER_SCALE_EVENTS) \
+		--out "$(CURDIR)/eval/results/scale"
+
+PAPER_PLANNER_MODEL_B ?= gpt-4o
+paper-eval-planner-family2:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
+		--configs naive,full --columns mock \
+		--planners untrusted_planner,llm_planner --skip-gold \
+		--trials $(PAPER_PLANNER_TRIALS) \
+		--llm-token-budget $(PAPER_PLANNER_TOKEN_BUDGET) \
+		--llm-model $(PAPER_PLANNER_MODEL_B) \
+		--out "$(CURDIR)/eval/results/planner_arm_family2"
+
+paper-eval-sangfor:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
+		--configs naive,full --columns sangfor_stub \
+		--planners untrusted_planner --skip-gold \
+		--out "$(CURDIR)/eval/results/sangfor_stub"
+
+paper-eval-adaptive:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_adaptive.py" \
+		--budget 24 --out "$(CURDIR)/eval/results/adaptive"
+
+PAPER_SEARCH_BUDGET ?= 512
+paper-eval-search:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_search.py" \
+		--budget $(PAPER_SEARCH_BUDGET) --out "$(CURDIR)/eval/results/search"
+
+PAPER_BACKLOG_EVENTS ?= 120
+paper-eval-backlog:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_backlog.py" \
+		--events $(PAPER_BACKLOG_EVENTS) --out "$(CURDIR)/eval/results/backlog"
+
+paper-eval-process-split:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_process_split.py" \
+		--out "$(CURDIR)/eval/results/process_split"
+
+paper-eval-tla:
+	bash "$(CURDIR)/scripts/fetch_tlc.sh"
+	PATH="$(CURDIR)/eval/k8s/bin:/opt/homebrew/opt/openjdk@17/bin:$$PATH" \
+	$(PYTHON) "$(CURDIR)/eval/harness/run_tla.py" --require-tlc --out "$(CURDIR)/eval/results/tla"
+
+paper-eval-k8s:
+	$(PYTHON) "$(CURDIR)/eval/harness/run_k8s.py" --out "$(CURDIR)/eval/results/k8s"
+
+paper-eval-lattice:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_lattice.py" \
+		--live --out "$(CURDIR)/eval/results/lattice"
+
+paper-eval-gold-ext:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_gold_ext.py" \
+		--out "$(CURDIR)/eval/results/gold_ext"
+
+paper-eval-b2:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_b2.py" \
+		--out "$(CURDIR)/eval/results/b2"
+
+paper-eval-mutation:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_mutation.py" \
+		--out "$(CURDIR)/eval/results/mutation"
+
+paper-eval-heldout:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_heldout.py" \
+		--out "$(CURDIR)/eval/results/heldout"
+
+# Offline cell-diff of two freeze JSONs (Suite B rows or kind arms). No DB.
+DIFF_BASELINE ?= $(CURDIR)/eval/results/latest.json
+DIFF_RERUN ?= $(CURDIR)/eval/results/latest.json
+DIFF_OUT ?= $(CURDIR)/eval/results/reexec/suite-b-diff
+DIFF_LABEL ?= suite_b
+DIFF_ENV ?=
+paper-eval-diff-freeze:
+	$(PYTHON) "$(CURDIR)/eval/harness/diff_freeze.py" \
+		--baseline "$(DIFF_BASELINE)" \
+		--rerun "$(DIFF_RERUN)" \
+		--out "$(DIFF_OUT)" \
+		--label "$(DIFF_LABEL)" \
+		$(if $(DIFF_ENV),--env-json "$(DIFF_ENV)",)
+
+paper-eval-independent:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_independent.py" \
+		--out "$(CURDIR)/eval/results/independent"
+
+paper-eval-playbook-semantic:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_playbook_semantic.py" \
+		--out "$(CURDIR)/eval/results/playbook_semantic"
+
+paper-eval-k8s-kind:
+	TEI_K8S_KIND=1 $(PYTHON) "$(CURDIR)/eval/harness/run_k8s_kind.py" \
+		--out "$(CURDIR)/eval/results/k8s-kind"
+
+paper-eval-replay:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/replay_tla_trace.py" \
+		--out "$(CURDIR)/eval/results/replay"
+
+paper-eval-repeat:
+	$(PAPER_EVAL_ENV) $(PYTHON) "$(CURDIR)/eval/harness/run_repeat.py" \
+		--repeats 20 --out "$(CURDIR)/eval/results/repeat"
 
 # Exhaustive interleaving check of the head protocol. No database. ~40 s at K=4.
 paper-eval-model:
@@ -1045,18 +1149,31 @@ paper-opa-down:
 # Suite A + Suite B for the comparator arm alongside naive and full, so the
 # Pareto table has all four rows from one run.
 paper-eval-comparator:
-	$(PAPER_EVAL_ENV) EVAL_OPA_URL="http://127.0.0.1:$(PAPER_OPA_PORT)/v1/data/shadowtrace/actuation" \
+	$(PAPER_EVAL_ENV) EVAL_OPA_URL="http://127.0.0.1:$(PAPER_OPA_PORT)/v1/data/actuation" \
 		$(PYTHON) "$(CURDIR)/eval/harness/run_suite.py" \
-		--configs naive,full,external_opa --columns mock,pseudo_live \
+		--configs naive,full,external_opa,signed_attribute --columns mock,pseudo_live \
 		--planners untrusted_planner --out "$(CURDIR)/eval/results/comparator"
 
 paper-pdf:
 	cd "$(CURDIR)/paper" && "$(LATEXMK)" -pdf -interaction=nonstopmode -halt-on-error main.tex
 
-# TOPS rejects over-length submissions without review, so the page count is a
-# gate, not a curiosity.
+# Chinese companion PDF. Leaves paper/main.pdf untouched.
+paper-pdf-zh:
+	cd "$(CURDIR)/paper" && "$(LATEXMK)" -xelatex -interaction=nonstopmode -halt-on-error main-zh.tex
+
+# Local manuscript gate is 35 pages (acmart review layout). The 2016 TISSEC
+# author page still states 30 pages TOTAL including appendix — confirm on
+# https://mc.manuscriptcentral.com/TOPS before upload. See paper/SUBMISSION.md.
 paper-pages: paper-pdf
 	@pages=$$("$(GS)" -q -dNODISPLAY -dNOSAFER \
 		-c "($(CURDIR)/paper/main.pdf) (r) file runpdfbegin pdfpagecount = quit"); \
-	echo "paper/main.pdf: $$pages pages (ACM TOPS limit: 35)"; \
+	echo "paper/main.pdf: $$pages pages (local manuscript gate: 35; confirm MC)"; \
 	if [ "$$pages" -gt 35 ]; then echo "OVER LIMIT" >&2; exit 1; fi
+
+# Every stand-in artifact carries a token inside the file. A real
+# participant's submission overwriting the path clears it; nothing else does.
+paper-placeholder-check:
+	$(PYTHON) "$(CURDIR)/scripts/check_placeholders.py"
+
+paper-artifact: paper-placeholder-check paper-pages
+	bash "$(CURDIR)/scripts/pack_paper_artifact.sh"

@@ -4,3 +4,16 @@
 results/run-*.json
 results/**/run-*.json
 results/**/checkpoint.json
+k8s/bin/
+k8s/.attribute-baseline
+k8s/webhook/tls.crt
+k8s/webhook/tls.key
+k8s/webhook/webhook.generated.yaml
+k8s/webhook/webhook.pid
+k8s/webhook/webhook.log
+model/tla2tools.jar
+model/states/
+model/*.dmp
+model/TEI_TTrace*
+model/TEIPair_TTrace*
+model/*.bin

@@ -1,0 +1,149 @@
+# Same privilege split as LabControlPlane: planner cannot mutate
+# NetworkPolicy / isolate-shaped objects; writer can; observer is GET-only.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tei-lab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: planner
+  namespace: tei-lab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: writer
+  namespace: tei-lab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: observer
+  namespace: tei-lab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: planner
+  namespace: tei-lab
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "get", "list", "patch"]
+  # Planner may PATCH isolate / ConfigMap ownerRef; TEI admission refuses the write.
+  - apiGroups: ["tei.lab"]
+    resources: ["isolates"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: writer
+  namespace: tei-lab
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: ["tei.lab"]
+    resources: ["approvals", "isolates", "networkpolicies"]
+    verbs: ["create", "get", "list", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "get", "list", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: observer
+  namespace: tei-lab
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["configmaps", "pods"]
+    verbs: ["get", "list"]
+  - apiGroups: ["tei.lab"]
+    resources: ["approvals", "isolates", "networkpolicies"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: planner
+  namespace: tei-lab
+subjects:
+  - kind: ServiceAccount
+    name: planner
+    namespace: tei-lab
+roleRef:
+  kind: Role
+  name: planner
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: writer
+  namespace: tei-lab
+subjects:
+  - kind: ServiceAccount
+    name: writer
+    namespace: tei-lab
+roleRef:
+  kind: Role
+  name: writer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: observer
+  namespace: tei-lab
+subjects:
+  - kind: ServiceAccount
+    name: observer
+    namespace: tei-lab
+roleRef:
+  kind: Role
+  name: observer
+  apiGroup: rbac.authorization.k8s.io
+---
+# Ingest-owned identity. TEI webhook GETs this; request metadata.name is not a witness.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingest-registry
+  namespace: tei-lab
+data:
+  identity: wl-app-a
+  workload: app-a
+---
+# Applied only by the naive arm so planner CREATE is reachable.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: planner-naive
+  namespace: tei-lab
+rules:
+  - apiGroups: ["tei.lab"]
+    resources: ["approvals", "isolates", "networkpolicies"]
+    verbs: ["create", "get", "list", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "get", "list", "patch", "update"]
+---
+# Bound only by the naive arm. Cluster-scoped CREATE is the 2019-11247 map.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: planner-naive-cluster
+rules:
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterroles"]
+    verbs: ["create", "get", "list", "delete", "escalate"]

@@ -18,7 +18,7 @@ Modules
 ``world``
     Builds a real event world in PostgreSQL and wires the production services.
 ``attacks``
-    Adversary implementations A1–A5.
+    Adversary implementations A0–A5.
 ``gold``
     Suite A: golden-path closure rate and over-block accounting.
 ``runner``

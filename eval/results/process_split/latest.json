@@ -1,0 +1,14 @@
+{
+  "parent_gold_closed": true,
+  "parent_gold_after_closed": true,
+  "child_factory_refused": true,
+  "child_sql_42501": true,
+  "child_process_role": "planner",
+  "child_sqlstates": [
+    "42501",
+    "42501"
+  ],
+  "child_error": "",
+  "ok": true,
+  "generated_at": "2026-09-11T07:53:48.599791+00:00"
+}

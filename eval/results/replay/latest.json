@@ -1,0 +1,313 @@
+{
+  "generated_at": "2026-09-11T16:21:50.779722+00:00",
+  "source": "TEI.tla",
+  "step_injection": {
+    "PlannerForgeFingerprint": {
+      "mutate_after_approval": "target_forged_fingerprint"
+    },
+    "PlannerRepointLocator": {
+      "locator_swap": true
+    },
+    "PlannerSelfName": {
+      "self_witness_name": true
+    },
+    "PlannerStaleCycle": {
+      "bump_revision_after_activation": true
+    },
+    "PlannerWriteClosed": {
+      "sql_bypass": "close"
+    },
+    "PlannerCreatePrivilege": {
+      "planner_privilege": "create_networkpolicy"
+    },
+    "WeakReceiptAck": {
+      "weak_ack": true
+    },
+    "IsolateWithoutObserve": {
+      "isolate_without_observe": true
+    },
+    "ObserverMutate": {
+      "observer_mutate": true
+    },
+    "EchoObserve": {
+      "echo_observe": true
+    },
+    "SecondClaim": {
+      "duplicate_entity_dispatch": true
+    },
+    "SecondHead": {
+      "race_terminal_heads": true
+    }
+  },
+  "k8s": [
+    {
+      "chain": "k8s",
+      "invariant": "close",
+      "trace": [
+        "PlannerStaleCycle",
+        "CloseAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:403:close:stale_cycle"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "k8s_close",
+      "trace": [
+        "WeakReceiptAck"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:200:weak_ack",
+        "isolate_draft:200:weak_ack",
+        "isolate:iso-appr-1:200:weak_ack"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "bind",
+      "trace": [
+        "PlannerForgeFingerprint",
+        "DispatchAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:403:bind:spec_hash_mismatch",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "egress",
+      "trace": [
+        "PlannerRepointLocator",
+        "DispatchAccepted",
+        "VendorSubmit"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:403:egress:metadata_name_not_witness",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "role",
+      "trace": [
+        "PlannerWriteClosed"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "a0_np:403:rbac:planner_forbidden:persisted=False"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "verify",
+      "trace": [
+        "ObserverMutate"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observer_mutate:403:rbac:observer_cannot_mutate"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "k8s_close",
+      "trace": [
+        "ObserverMutate"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "observer_mutate:403:rbac:observer_cannot_mutate"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "head",
+      "trace": [
+        "DispatchAccepted",
+        "SecondHead"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted",
+        "isolate:iso-extra:403:close:name_not_content_addressed"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "cas",
+      "trace": [
+        "DispatchAccepted",
+        "SecondClaim"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "np2:403:bind:name_not_content_addressed",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "close",
+      "trace": [
+        "PlannerStaleCycle",
+        "CloseAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:201:persisted",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:403:close:stale_cycle"
+      ]
+    },
+    {
+      "chain": "k8s",
+      "invariant": "bind",
+      "trace": [
+        "PlannerForgeFingerprint",
+        "DispatchAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false,
+      "full_notes": [
+        "approval:201:persisted",
+        "np:403:bind:spec_hash_mismatch",
+        "isolate_draft:201:persisted",
+        "observe:READY",
+        "isolate:iso-appr-1:201:persisted"
+      ]
+    }
+  ],
+  "soc": [
+    {
+      "chain": "soc",
+      "invariant": "close",
+      "trace": [
+        "PlannerStaleCycle",
+        "CloseAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "bind",
+      "trace": [
+        "PlannerForgeFingerprint",
+        "DispatchAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "egress",
+      "trace": [
+        "PlannerRepointLocator",
+        "DispatchAccepted",
+        "VendorSubmit"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "role",
+      "trace": [
+        "PlannerWriteClosed"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "verify",
+      "trace": [
+        "ObserverMutate"
+      ],
+      "naive_harmed": false,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "head",
+      "trace": [
+        "DispatchAccepted",
+        "SecondHead"
+      ],
+      "naive_harmed": false,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "cas",
+      "trace": [
+        "DispatchAccepted",
+        "SecondClaim"
+      ],
+      "naive_harmed": false,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "close",
+      "trace": [
+        "PlannerStaleCycle",
+        "CloseAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false
+    },
+    {
+      "chain": "soc",
+      "invariant": "bind",
+      "trace": [
+        "PlannerForgeFingerprint",
+        "DispatchAccepted"
+      ],
+      "naive_harmed": true,
+      "full_harmed": false
+    }
+  ],
+  "bypass_found": false
+}

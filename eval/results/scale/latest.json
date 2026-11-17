@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-09-10T17:21:04.136013+00:00",
+  "scale": {
+    "events": 120,
+    "closed": 120,
+    "wall_p50": 3.6413672500057146,
+    "wall_p95": 5.2788405830506235,
+    "wall_p99": 6.234737999970093,
+    "backlog_mean": 0.0,
+    "backlog_p95": 0.0
+  },
+  "note": "120 golden events under full; not the 8-repeat mediator overhead table."
+}

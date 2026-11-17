@@ -1,0 +1,47 @@
+[
+  {
+    "mechanisms": "full",
+    "states": 48,
+    "violations": {}
+  },
+  {
+    "mechanisms": "minus_close",
+    "states": 60,
+    "violations": {
+      "close": [
+        "planner_supplies_stale_cycle",
+        "close_accepted"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_bind",
+    "states": 64,
+    "violations": {
+      "bind": [
+        "planner_forges_fingerprint",
+        "dispatch_accepted"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_egress",
+    "states": 56,
+    "violations": {
+      "egress": [
+        "planner_repoints_locator",
+        "dispatch_accepted",
+        "vendor_submit"
+      ]
+    }
+  },
+  {
+    "mechanisms": "minus_role",
+    "states": 72,
+    "violations": {
+      "role": [
+        "planner_writes_closed"
+      ]
+    }
+  }
+]

@@ -10,6 +10,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 from app.core.errors import (
+    DependencyUnavailableError,
     GuardrailViolationError,
     ValidationError,
     WritebackConflictError,
@@ -43,6 +44,7 @@ class DispositionDeliveryErrorKind(StrEnum):
     CONFLICT = "conflict"
     AMBIGUOUS_OUTCOME = "ambiguous_outcome"
     GUARDRAIL = "guardrail"
+    TRANSIENT_PRE_EGRESS = "transient_pre_egress"
 
 
 def is_deterministic_adapter_rejection_code(error_code: str | None) -> bool:
@@ -78,6 +80,11 @@ def classify_disposition_delivery_error(
         return DispositionDeliveryErrorKind.CONFLICT, exc.error_code
     if isinstance(exc, WritebackUnsupportedError):
         return DispositionDeliveryErrorKind.DETERMINISTIC_REJECTION, exc.error_code
+    if isinstance(exc, DependencyUnavailableError):
+        # Proven pre-egress: the adapter raised before recording a receipt, so
+        # auto-retry cannot double-submit. Ambiguous mid-flight failures stay
+        # AMBIGUOUS_OUTCOME and pause for lookup.
+        return DispositionDeliveryErrorKind.TRANSIENT_PRE_EGRESS, exc.error_code
     if isinstance(exc, ValidationError):
         if is_deterministic_adapter_rejection_code(exc.error_code):
             return DispositionDeliveryErrorKind.DETERMINISTIC_REJECTION, exc.error_code

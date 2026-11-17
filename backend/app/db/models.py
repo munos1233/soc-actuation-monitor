@@ -400,6 +400,7 @@ class DispositionOutbox(Base):
         String, ForeignKey("security_event.event_id"), nullable=False, index=True
     )
     closure_cycle: Mapped[int] = mapped_column(Integer, nullable=False)
+    plan_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source_record_id: Mapped[str] = mapped_column(
         String, ForeignKey("source_object.source_record_id"), nullable=False, index=True
     )

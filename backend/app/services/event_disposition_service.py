@@ -34,6 +34,7 @@ from app.models.workflow import validate_action_status_transition
 from app.services.context_service import EventContextStore
 from app.services.disposition_command_factory import DispositionCommandFactory
 from app.services.disposition_sync_service import DispositionSyncService
+from app.services.playbook_approval_binding import validate_approval_binding
 from app.services.terminal_disposition_resolver import TerminalDispositionResolver
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ class DispositionActivationResult(BaseModel):
             "terminal_not_in_approved_set",
             "verdict_not_terminal",
             "concurrent_head_conflict",
+            "binding_drift",
         ]
         | None
     ) = None
@@ -289,6 +291,26 @@ class EventDispositionService:
                         )
                     action = _action_from_row(row)
                     closure_cycle = int(action.plan_revision)
+
+                    approval_detail = await session.scalar(
+                        select(orm.ApprovalRecordORM.detail)
+                        .where(
+                            orm.ApprovalRecordORM.action_id == action.action_id,
+                            orm.ApprovalRecordORM.decided_at.is_not(None),
+                        )
+                        .order_by(orm.ApprovalRecordORM.decided_at.desc())
+                        .limit(1)
+                    )
+                    if isinstance(approval_detail, dict):
+                        try:
+                            validate_approval_binding(action, approval_detail)
+                        except ValidationError:
+                            return DispositionActivationResult(
+                                action_id=action.action_id,
+                                activated=False,
+                                skipped_reason="binding_drift",
+                                derived_disposition=resolve.disposition,
+                            )
 
                     existing = await _find_active_terminal_outbox(
                         session,

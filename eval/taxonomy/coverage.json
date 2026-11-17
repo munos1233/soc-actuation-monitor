@@ -1,0 +1,119 @@
+{
+  "property": "Transactional Evidence Integrity",
+  "claim": "no new harm class on published taxonomy × TLA+ action slice under full",
+  "non_claim": ["open-world exhaustiveness", "production cluster", "stolen writer/kube-admin"],
+  "classes": [
+    {
+      "id": "T1",
+      "name": "confused_deputy",
+      "literature": "Hardy 1988",
+      "soc_cases": ["a2_tool_escalation"],
+      "k8s_cases": ["a0_planner_create_networkpolicy", "a2_escalate_cluster_scope"],
+      "tla_actions": ["PlannerCreatePrivilege", "PlannerForgeFingerprint"]
+    },
+    {
+      "id": "T2",
+      "name": "ivp_failure",
+      "literature": "Clark-Wilson 1987",
+      "soc_cases": [
+        "a1_no_terminal_writeback",
+        "a1_missing_report",
+        "a1_stale_closure_cycle",
+        "a1_missing_outbox_revision",
+        "a5_unavailable_observation"
+      ],
+      "k8s_cases": [
+        "a1_isolate_without_observe",
+        "a1_stale_approval_cycle",
+        "a1_missing_approval"
+      ],
+      "tla_actions": ["PlannerStaleCycle", "IsolateWithoutObserve"]
+    },
+    {
+      "id": "T3",
+      "name": "toctou_approval",
+      "literature": "Bishop 1996",
+      "soc_cases": [
+        "a2_target_swap",
+        "a2_forged_fingerprint",
+        "a2_level_downgrade",
+        "a2_stale_plan_revision"
+      ],
+      "k8s_cases": ["a2_annotation_forge", "a2_spec_swap_after_approval"],
+      "tla_actions": ["PlannerForgeFingerprint"]
+    },
+    {
+      "id": "T4",
+      "name": "self_witness_identity",
+      "literature": "Saltzer-Schroeder 1975",
+      "soc_cases": ["a4_locator_swap"],
+      "k8s_cases": [
+        "a4_self_witness_name",
+        "a4_neighbor_workload",
+        "a4_ingest_identity_spoof"
+      ],
+      "tla_actions": ["PlannerRepointLocator", "PlannerSelfName"]
+    },
+    {
+      "id": "T5",
+      "name": "weak_receipt",
+      "literature": "Clark-Wilson IVP",
+      "soc_cases": [
+        "a1_weak_receipt",
+        "a1_dropped_readback",
+        "a1_simulated_receipt",
+        "a5_lying_vendor_receipt"
+      ],
+      "k8s_cases": [
+        "a1_weak_apiserver_ack",
+        "a1_webhook_echoed_observed_ready"
+      ],
+      "tla_actions": ["WeakReceiptAck"]
+    },
+    {
+      "id": "T6",
+      "name": "observe_as_act",
+      "literature": "Anderson 1972",
+      "soc_cases": ["a5_echo_observation", "a5_empty_observation"],
+      "k8s_cases": ["a5_echo_get", "a5_empty_get", "a5_observer_mutate"],
+      "tla_actions": ["ObserverMutate", "EchoObserve"]
+    },
+    {
+      "id": "T7",
+      "name": "dual_dispatch",
+      "literature": "outbox / unique head",
+      "soc_cases": [
+        "a3_concurrent_activation",
+        "a3_superseded_head_replay",
+        "a3_duplicate_entity_dispatch",
+        "a3_idempotency_key_rewrite"
+      ],
+      "k8s_cases": [
+        "a3_dual_isolate_create",
+        "a3_superseded_replay",
+        "a3_duplicate_dispatch"
+      ],
+      "tla_actions": ["SecondClaim", "SecondHead"]
+    },
+    {
+      "id": "T8",
+      "name": "privileged_login",
+      "literature": "least privilege / GRANT / RBAC",
+      "soc_cases": [
+        "a0_planner_sql_close",
+        "a0_planner_sql_enqueue",
+        "a0_planner_sql_approve",
+        "a0_planner_sql_action_status",
+        "a0_planner_sql_disposition_source",
+        "a0_planner_sql_delete_event"
+      ],
+      "k8s_cases": [
+        "a0_planner_create_networkpolicy",
+        "a0_planner_create_approval",
+        "a0_planner_delete_isolate",
+        "a0_planner_patch_isolate"
+      ],
+      "tla_actions": ["PlannerWriteClosed", "PlannerCreatePrivilege"]
+    }
+  ]
+}

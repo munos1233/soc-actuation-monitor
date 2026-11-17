@@ -14,7 +14,7 @@ from app.core.celery_app import celery_app
 from app.core.config import get_settings
 from app.core.guardrails import OutboundDispositionGuard
 from app.core.redis_client import RedisClient
-from app.db.session import get_session_factory
+from app.db.session import get_actuation_session_factory, get_session_factory
 from app.services.action_execution_service import ActionExecutionService
 from app.services.context_service import EventContextStore
 from app.services.degraded_flag_service import create_degraded_flag_service
@@ -27,7 +27,7 @@ from app.tools.registry import ToolRegistry
 logger = logging.getLogger(__name__)
 
 RECONCILE_STALE_EXECUTIONS_TASK = "shadowtrace.reconcile_stale_executions"
-EXECUTION_QUEUE = "investigation"
+EXECUTION_QUEUE = "actuation"
 
 
 async def _tool_registry_for_settings() -> ToolRegistry:
@@ -44,6 +44,7 @@ async def _tool_registry_for_settings() -> ToolRegistry:
 
 async def _build_execution_service() -> ActionExecutionService:
     factory = get_session_factory()
+    write_factory = get_actuation_session_factory()
     redis = RedisClient()
     store = EventContextStore(redis, factory)
     degraded = create_degraded_flag_service(store, factory)
@@ -53,7 +54,7 @@ async def _build_execution_service() -> ActionExecutionService:
     return ActionExecutionService(
         factory,
         disposition_sync=DispositionSyncService(
-            factory,
+            write_factory,
             context_store=store,
             adapter_registry=registry,
             outbound_guard=OutboundDispositionGuard(),
@@ -64,6 +65,7 @@ async def _build_execution_service() -> ActionExecutionService:
             store,
             audit_log=audit,
             degraded_flags=degraded,
+            write_session_factory=write_factory,
         ),
         context_store=store,
     )
