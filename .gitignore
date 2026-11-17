@@ -37,6 +37,12 @@ frontend/playwright-report/
 .vscode/
 *.swp
 .cursor/
+.workbuddy/
+
+# Contest briefs and local translations stay off the public tree.
+# paper/*.pdf is already ignored under paper/.gitignore.
+/*.pdf
+/*.docx
 
 # Large binary decks belong in release assets, not in the source tree
 *.pptx
