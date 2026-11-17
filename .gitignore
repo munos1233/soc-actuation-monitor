@@ -43,6 +43,15 @@ frontend/playwright-report/
 # paper/*.pdf is already ignored under paper/.gitignore.
 /*.pdf
 /*.docx
+paper/artifact-anonymous-*.zip
+
+# Local cluster material: private keys, binaries, and model-checker jars.
+eval/k8s/webhook/tls.key
+eval/k8s/webhook/tls.crt
+eval/k8s/webhook/*.log
+eval/k8s/webhook/*.pid
+eval/k8s/bin/
+eval/model/tla2tools.jar
 
 # Large binary decks belong in release assets, not in the source tree
 *.pptx
